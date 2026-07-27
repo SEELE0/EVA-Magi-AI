@@ -1,0 +1,61 @@
+export const AGENT_IDS = ['MELCHIOR-1', 'BALTHASAR-2', 'CASPER-3'] as const;
+
+export type AgentId = (typeof AGENT_IDS)[number];
+export type Vote = 'approve' | 'reject' | 'abstain' | 'pending';
+export type AgentHealth = 'nominal' | 'degraded' | 'offline';
+export type DecisionStatus = 'draft' | 'running' | 'completed' | 'failed';
+export type Verdict = 'approved' | 'rejected' | 'review' | 'pending';
+export type EventKind = 'created' | 'scan' | 'vote' | 'verdict' | 'failure';
+export type ConnectionMode = 'mock' | 'remote';
+
+export interface Agent {
+  id: AgentId;
+  role: string;
+  health: AgentHealth;
+  latencyMs: number;
+  vote: Vote;
+}
+
+export interface SystemStatus {
+  systemName: string;
+  connection: 'online' | 'degraded' | 'offline';
+  source: ConnectionMode;
+  protocol: string;
+  uptimeSeconds: number;
+  updatedAt: string;
+  notice?: string;
+}
+
+export interface DecisionRequest {
+  subject: string;
+  priority: 'low' | 'normal' | 'critical';
+  simulationHint?: 'standard' | 'reject' | 'review';
+}
+
+export interface Decision {
+  id: string;
+  subject: string;
+  priority: DecisionRequest['priority'];
+  status: DecisionStatus;
+  verdict: Verdict;
+  votes: Record<AgentId, Vote>;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface DecisionEvent {
+  id: string;
+  decisionId: string;
+  kind: EventKind;
+  timestamp: string;
+  message: string;
+  agentId?: AgentId;
+}
+
+export interface ApiErrorBody {
+  error: {
+    code: string;
+    message: string;
+    requestId?: string;
+  };
+}

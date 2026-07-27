@@ -1,0 +1,314 @@
+openapi: 3.1.0
+info:
+  title: MAGI Decision System API
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://magi.local/license
+  description: |
+    MAGI CRT Decision Console 的后端 REST 契约。
+    首版使用 REST 轮询事件；未来可新增 SSE 而不改变本规范中的现有路由。
+servers:
+  - url: https://api.magi.local
+    description: Replace with the local FastAPI or Spring Boot development server.
+security:
+  - {}
+  - BearerToken: []
+paths:
+  /v1/system/status:
+    get:
+      operationId: getSystemStatus
+      summary: Read system connectivity and protocol status
+      responses:
+        '200':
+          description: System status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+        '503':
+          $ref: '#/components/responses/ApiError'
+        '429':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /v1/agents:
+    get:
+      operationId: getAgents
+      summary: List MAGI agent nodes
+      responses:
+        '200':
+          description: Fixed MAGI agent list
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 3
+                maxItems: 3
+                items:
+                  $ref: '#/components/schemas/Agent'
+        '503':
+          $ref: '#/components/responses/ApiError'
+        '429':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /v1/decisions:
+    post:
+      operationId: createDecision
+      summary: Create a decision packet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '201':
+          description: Decision packet created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        '400':
+          $ref: '#/components/responses/ApiError'
+        '422':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /v1/decisions/{decisionId}:
+    parameters:
+      - $ref: '#/components/parameters/DecisionId'
+    get:
+      operationId: getDecision
+      summary: Read current decision and vote state
+      responses:
+        '200':
+          description: Decision state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        '404':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /v1/decisions/{decisionId}/execute:
+    parameters:
+      - $ref: '#/components/parameters/DecisionId'
+    post:
+      operationId: executeDecision
+      summary: Start an idempotent multi-agent vote
+      responses:
+        '200':
+          description: Current decision state after execution has been started or resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        '404':
+          $ref: '#/components/responses/ApiError'
+        '409':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+  /v1/decisions/{decisionId}/events:
+    parameters:
+      - $ref: '#/components/parameters/DecisionId'
+    get:
+      operationId: getDecisionEvents
+      summary: List decision events in ascending timestamp order
+      parameters:
+        - name: after
+          in: query
+          required: false
+          description: Return only events newer than this ISO 8601 UTC timestamp.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Decision event trace
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DecisionEvent'
+        '404':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Reserved for a future authenticated deployment. v1 defaults to anonymous access.
+  parameters:
+    DecisionId:
+      name: decisionId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^dec-[A-Za-z0-9-]+$'
+      description: Decision packet identifier.
+  responses:
+    ApiError:
+      description: Standard API error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    AgentId:
+      type: string
+      enum: [MELCHIOR-1, BALTHASAR-2, CASPER-3]
+    Vote:
+      type: string
+      enum: [approve, reject, abstain, pending]
+    AgentHealth:
+      type: string
+      enum: [nominal, degraded, offline]
+    DecisionStatus:
+      type: string
+      enum: [draft, running, completed, failed]
+    Verdict:
+      type: string
+      enum: [approved, rejected, review, pending]
+    EventKind:
+      type: string
+      enum: [created, scan, vote, verdict, failure]
+    ConnectionMode:
+      type: string
+      enum: [mock, remote]
+    SystemStatus:
+      type: object
+      required: [systemName, connection, source, protocol, uptimeSeconds, updatedAt]
+      properties:
+        systemName:
+          type: string
+          example: MAGI DECISION SYSTEM
+        connection:
+          type: string
+          enum: [online, degraded, offline]
+        source:
+          $ref: '#/components/schemas/ConnectionMode'
+        protocol:
+          type: string
+          example: MAGI/3.0 REST
+        uptimeSeconds:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: string
+          format: date-time
+        notice:
+          type: string
+    Agent:
+      type: object
+      required: [id, role, health, latencyMs, vote]
+      properties:
+        id:
+          $ref: '#/components/schemas/AgentId'
+        role:
+          type: string
+          example: SCIENTIFIC LOGIC
+        health:
+          $ref: '#/components/schemas/AgentHealth'
+        latencyMs:
+          type: integer
+          minimum: 0
+        vote:
+          $ref: '#/components/schemas/Vote'
+    DecisionRequest:
+      type: object
+      required: [subject]
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 90
+          example: 批准第 07 区域防御协议升级
+        priority:
+          type: string
+          enum: [low, normal, critical]
+          default: normal
+        simulationHint:
+          type: string
+          description: Local mock-only hint. Real implementations should ignore this field.
+          enum: [standard, reject, review]
+    Votes:
+      type: object
+      required: [MELCHIOR-1, BALTHASAR-2, CASPER-3]
+      properties:
+        MELCHIOR-1:
+          $ref: '#/components/schemas/Vote'
+        BALTHASAR-2:
+          $ref: '#/components/schemas/Vote'
+        CASPER-3:
+          $ref: '#/components/schemas/Vote'
+    Decision:
+      type: object
+      required: [id, subject, priority, status, verdict, votes, createdAt]
+      properties:
+        id:
+          type: string
+          example: dec-0123abcd
+        subject:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, critical]
+        status:
+          $ref: '#/components/schemas/DecisionStatus'
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        votes:
+          $ref: '#/components/schemas/Votes'
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+    DecisionEvent:
+      type: object
+      required: [id, decisionId, kind, timestamp, message]
+      properties:
+        id:
+          type: string
+          example: evt-e27d10aa
+        decisionId:
+          type: string
+          example: dec-0123abcd
+        kind:
+          $ref: '#/components/schemas/EventKind'
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+        agentId:
+          $ref: '#/components/schemas/AgentId'
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: DECISION_NOT_FOUND
+        message:
+          type: string
+          example: 未找到指定的决策议题。
+        requestId:
+          type: string
+          example: req_8d7b31
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
