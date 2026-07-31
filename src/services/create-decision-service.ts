@@ -1,4 +1,4 @@
-import type { ConnectionMode } from '../domain';
+import type { ConnectionMode } from '../domain/decision';
 import type { DecisionService } from './decision-service';
 import { HttpDecisionService } from './http-decision-service';
 import { MockDecisionService } from './mock-decision-service';

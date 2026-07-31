@@ -7,7 +7,7 @@ import {
   type DecisionRequest,
   type SystemStatus,
   type Vote
-} from '../domain';
+} from '../domain/decision';
 import type { DecisionService } from './decision-service';
 
 const wait = (milliseconds: number) => new Promise((resolve) => globalThis.setTimeout(resolve, milliseconds));

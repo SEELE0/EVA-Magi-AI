@@ -41,13 +41,13 @@ VITE_API_BASE_URL=http://localhost:8000
 ## 项目结构
 
 ```text
-src/domain.ts                  领域模型与 API 数据类型
+src/app/                       主应用入口、根组件与全局样式
+src/domain/                    领域模型与 API 数据类型
+src/features/boot-intro/       NERV 开机动画
+src/features/decision-console/ MAGI 决策控制台及其 UI 组件
+src/features/magi-boot/        独立 MAGI 几何动画测试页
 src/services/                  Mock、HTTP 与故障降级适配层
-src/App.tsx                    MAGI 控制台页面
-src/styles.css                 CRT 屏幕与响应式视觉
-docs/openapi.yaml              REST API 机器可读规范
-docs/API.md                    中文接口文档与调用说明
-docs/backend-guides.md         FastAPI / Spring Boot 学习接入路线
+docs/                          API 规范、接口说明与后端接入文档
 ```
 
 ## 验证

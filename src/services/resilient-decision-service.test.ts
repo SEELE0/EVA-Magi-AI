@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain';
+import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain/decision';
 import type { DecisionService } from './decision-service';
 import { ResilientDecisionService } from './resilient-decision-service';
 

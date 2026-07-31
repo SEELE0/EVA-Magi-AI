@@ -4,7 +4,7 @@ import type {
   DecisionEvent,
   DecisionRequest,
   SystemStatus
-} from '../domain';
+} from '../domain/decision';
 
 export interface DecisionService {
   getSystemStatus(): Promise<SystemStatus>;

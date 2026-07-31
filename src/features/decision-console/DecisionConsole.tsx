@@ -1,76 +1,27 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import type { Agent, AgentId, Decision, DecisionEvent, DecisionRequest, SystemStatus, Verdict, Vote } from './domain';
-import { createDecisionService } from './services';
-import type { DecisionService } from './services/decision-service';
+import { useEffect, useState } from 'react';
+import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../../domain/decision';
+import { createDecisionService } from '../../services/create-decision-service';
+import type { DecisionService } from '../../services/decision-service';
+import { AgentNode, PanelTitle, Readout, Telemetry } from './ConsolePrimitives';
+import {
+  connectionCopy,
+  defaultAgents,
+  defaultPriority,
+  scenarioSubject,
+  sourceCopy,
+  verdictCopy,
+  type Scenario
+} from './console-config';
 
 const service: DecisionService = createDecisionService();
-const bootImageUrl = new URL('../asset/images.jpeg', import.meta.url).href;
 
-type BootPhase = 'idle' | 'text-reveal' | 'logo-hold' | 'logo-fade' | 'power-on' | 'post' | 'exit';
-
-const bootPostLines = [
-  'CODE:258',
-  'FILE:MAGI_SYS',
-  'EXTENSION:60M',
-  'MEMORY CHECK:640K OK',
-  'MELCHIOR-1:CONNECTED',
-  'BALTHASAR-2:CONNECTED',
-  'CASPER-3:CONNECTED',
-  'NEURAL LINK:SYNCHRONIZED'
-];
-
-const defaultAgents: Agent[] = [
-  { id: 'MELCHIOR-1', role: '科学者論理', health: 'nominal', latencyMs: 18, vote: 'pending' },
-  { id: 'BALTHASAR-2', role: '母性論理', health: 'nominal', latencyMs: 24, vote: 'pending' },
-  { id: 'CASPER-3', role: '女性論理', health: 'nominal', latencyMs: 21, vote: 'pending' }
-];
-
-const verdictCopy: Record<Verdict, { label: string; detail: string }> = {
-  pending: { label: '入力待機', detail: '議題パケットを待機中' },
-  approved: { label: '承認', detail: '多数決により実行を承認' },
-  rejected: { label: '否決', detail: '多数決により実行を否決' },
-  review: { label: '要再審', detail: '有効な多数決が成立せず' }
-};
-
-const voteCopy: Record<Vote, string> = {
-  pending: '待機',
-  approve: '承認',
-  reject: '否決',
-  abstain: '棄権'
-};
-
-const connectionCopy: Record<SystemStatus['connection'], string> = {
-  online: '正常',
-  degraded: '警戒',
-  offline: '遮断'
-};
-
-const sourceCopy: Record<SystemStatus['source'], string> = {
-  mock: '模擬系',
-  remote: '外部系'
-};
-
-const healthCopy: Record<Agent['health'], string> = {
-  nominal: '正常',
-  degraded: '警戒',
-  offline: '遮断'
-};
-
-type Scenario = 'standard' | 'reject' | 'review';
-
-const scenarioSubject: Record<Scenario, string> = {
-  standard: '第07区防衛プロトコルの更新を承認',
-  reject: '【否決】未承認の外部接続申請',
-  review: '【保留】観測プロトコルの起動可否'
-};
-
-function App() {
+export function DecisionConsole() {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
   const [decision, setDecision] = useState<Decision | null>(null);
   const [events, setEvents] = useState<DecisionEvent[]>([]);
   const [subject, setSubject] = useState(scenarioSubject.standard);
-  const [priority, setPriority] = useState<DecisionRequest['priority']>('critical');
+  const [priority, setPriority] = useState<DecisionRequest['priority']>(defaultPriority);
   const [scenario, setScenario] = useState<Scenario>('standard');
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +35,7 @@ function App() {
       .catch(() => setError('起動シーケンスが中断されました'));
   }, []);
 
-  const activeVotes = useMemo(() => decision?.votes ?? null, [decision]);
+  const activeVotes = decision?.votes ?? null;
   const selectedVerdict = decision?.verdict ?? 'pending';
 
   function selectScenario(nextScenario: Scenario) {
@@ -97,9 +48,11 @@ function App() {
       setError('MAGIに送信する議題を入力してください。');
       return;
     }
+
     setError(null);
     setIsExecuting(true);
     setEvents([]);
+
     try {
       const created = await service.createDecision({ subject, priority, simulationHint: scenario });
       setDecision(created);
@@ -129,11 +82,9 @@ function App() {
   }
 
   return (
-    <>
-      <BootIntro />
-      <main className="crt-shell">
-        <div className="screen-noise" aria-hidden="true" />
-        <header className="topbar">
+    <main className="crt-shell">
+      <div className="screen-noise" aria-hidden="true" />
+      <header className="topbar">
         <div className="brand-block">
           <span className="brand-mark">M</span>
           <div>
@@ -146,15 +97,15 @@ function App() {
           <Readout label="系統" value={status ? sourceCopy[status.source] : 'ローカル'} tone="online" />
           <Readout label="時刻" value={new Date().toLocaleTimeString('ja-JP', { hour12: false })} tone="online" />
         </div>
-        </header>
+      </header>
 
-        <section className="command-strip" aria-label="システム通知">
-          <span className="signal-dot" />
-          <span>{status?.notice ?? '神経接続を確立中...'}</span>
-          <span className="protocol">{status?.protocol ?? 'MAGI/3.0'}</span>
-        </section>
+      <section className="command-strip" aria-label="システム通知">
+        <span className="signal-dot" />
+        <span>{status?.notice ?? '神経接続を確立中...'}</span>
+        <span className="protocol">{status?.protocol ?? 'MAGI/3.0'}</span>
+      </section>
 
-        <section className="console-grid">
+      <section className="console-grid">
         <aside className="telemetry-panel panel-frame">
           <PanelTitle index="01" label="システム監視" />
           <div className="telemetry-stack">
@@ -214,9 +165,9 @@ function App() {
           </ol>
           <div className="trace-footer">REST 監視 / 220ms</div>
         </aside>
-        </section>
+      </section>
 
-        <section className="input-deck panel-frame">
+      <section className="input-deck panel-frame">
         <div className="deck-heading">
           <PanelTitle index="04" label="判定パケット入力" />
           <div className="scenario-controls" aria-label="模擬シナリオ">
@@ -246,7 +197,11 @@ function App() {
           </label>
           <label className="priority-field">
             <span>優先度</span>
-            <select value={priority} onChange={(event) => setPriority(event.target.value as DecisionRequest['priority'])} disabled={isExecuting}>
+            <select
+              value={priority}
+              onChange={(event) => setPriority(event.target.value as DecisionRequest['priority'])}
+              disabled={isExecuting}
+            >
               <option value="low">低</option>
               <option value="normal">通常</option>
               <option value="critical">最優先</option>
@@ -256,107 +211,14 @@ function App() {
             {isExecuting ? '判定中...' : '判定開始'}
           </button>
         </div>
-        {error && <p className="error-line">// {error}</p>}
-        </section>
+        {error ? <p className="error-line">// {error}</p> : null}
+      </section>
 
-        <footer className="footer-line">
-          <span>MAGI-OS / VER 0.1.0</span>
-          <span>三つの心、一つの判定。</span>
-          <span>権限：操縦者</span>
-        </footer>
-      </main>
-    </>
+      <footer className="footer-line">
+        <span>MAGI-OS / VER 0.1.0</span>
+        <span>三つの心、一つの判定。</span>
+        <span>権限：操縦者</span>
+      </footer>
+    </main>
   );
 }
-
-function BootIntro() {
-  const [phase, setPhase] = useState<BootPhase>('idle');
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setVisible(false);
-      return;
-    }
-
-    const timers = [
-      window.setTimeout(() => setPhase('text-reveal'), 700),
-      window.setTimeout(() => setPhase('logo-hold'), 2000),
-      window.setTimeout(() => setPhase('logo-fade'), 2450),
-      window.setTimeout(() => setPhase('power-on'), 3000),
-      window.setTimeout(() => setPhase('post'), 3750),
-      window.setTimeout(() => setPhase('exit'), 6350),
-      window.setTimeout(() => setVisible(false), 6900)
-    ];
-
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, []);
-
-  if (!visible) return null;
-
-  return (
-    <div className={`boot-intro boot-${phase}`} aria-hidden="true">
-      <div className="boot-logo-sequence">
-        <div className="boot-art">
-          <img className="boot-art-leaf boot-art-leaf-base" src={bootImageUrl} alt="" />
-          <img className="boot-art-text boot-art-text-base" src={bootImageUrl} alt="" />
-        </div>
-      </div>
-      <div className="boot-power-stage">
-        <div className="boot-power-screen" />
-        <div className="boot-post-console">
-          <div className="boot-post-access">
-            <span>DIRECT LINK CONNECTION: MAGI_01</span>
-            <strong>ACCESS MODE: SUPERUSER</strong>
-          </div>
-          <div className="boot-post-motion">
-            <span>RESULT OF THE DELIBERATION</span>
-            <strong>MOTION: SYSTEM INITIALIZATION</strong>
-          </div>
-          <div className="boot-post-stream">
-            {bootPostLines.map((line, index) => (
-              <span
-                key={line}
-                style={{ '--boot-line-index': index } as CSSProperties}
-              >
-                {line}
-              </span>
-            ))}
-            <span className="boot-post-ready">MAGI SYSTEM: READY<span className="boot-post-cursor">_</span></span>
-          </div>
-        </div>
-      </div>
-      <div className="boot-scanlines" />
-    </div>
-  );
-}
-
-function Readout({ label, value, tone }: { label: string; value: string; tone: string }) {
-  return <div className={`readout ${tone}`}><span>{label}</span><strong>{value}</strong></div>;
-}
-
-function PanelTitle({ index, label }: { index: string; label: string }) {
-  return <h2 className="panel-title"><span>{index}</span>{label}</h2>;
-}
-
-function Telemetry({ label, value, level }: { label: string; value: string; level: number }) {
-  return (
-    <div className="telemetry-row">
-      <div><span>{label}</span><strong>{value}</strong></div>
-      <span className="meter"><i style={{ width: `${level}%` }} /></span>
-    </div>
-  );
-}
-
-function AgentNode({ agent, vote, position }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right' }) {
-  return (
-    <article className={`agent-node ${position} vote-${vote}`}>
-      <div className="agent-tag">{agent.role}</div>
-      <strong>{agent.id}</strong>
-      <span className="vote-state">{voteCopy[vote]}</span>
-      <small>{healthCopy[agent.health]} / {agent.latencyMs}ms</small>
-    </article>
-  );
-}
-
-export default App;

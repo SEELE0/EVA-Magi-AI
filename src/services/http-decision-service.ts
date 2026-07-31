@@ -1,4 +1,4 @@
-import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain';
+import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain/decision';
 import { DecisionServiceError, type DecisionService } from './decision-service';
 
 export class HttpDecisionService implements DecisionService {

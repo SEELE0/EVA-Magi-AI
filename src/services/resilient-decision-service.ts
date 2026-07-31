@@ -1,4 +1,4 @@
-import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain';
+import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain/decision';
 import type { DecisionService } from './decision-service';
 
 /** Falls back once when the optional remote endpoint is unavailable. */
