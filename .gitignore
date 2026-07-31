@@ -35,3 +35,10 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Python virtualenvs
+.venv/
+venv/
+
+# Lockfiles (optional to keep out if you don't want to track)
+package-lock.json
