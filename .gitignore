@@ -40,5 +40,8 @@ Thumbs.db
 .venv/
 venv/
 
+# Python project metadata (this repository has no Python backend)
+pyproject.toml
+
 # Lockfiles (optional to keep out if you don't want to track)
 package-lock.json
