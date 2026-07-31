@@ -2,7 +2,7 @@
 
 - Reference: `/var/folders/nj/1r9ns1312jv6p28y151bxydm0000gn/T/codex-clipboard-15851033-0ce0-4871-ab43-36ebad42dd44.png`
 - Implementation: `/private/tmp/magi-angular-main-desktop.png`
-- Logo source: `/Users/ask/Documents/Magi-Nerv多agent协同AI/asset/images.jpeg`
+- Logo source: `/Users/ask/Documents/Magi-Nerv多agent协同AI/frontend/asset/images.jpeg`
 - Circumcenter overlay: `/private/tmp/magi-arc-circumcenter.png`
 - Clean baseline frames: `/private/tmp/magi-clean-leaf.png`, `/private/tmp/magi-clean-mid.png`
 - Responsive frames: `/private/tmp/magi-emi-mobile-leaf.png`, `/private/tmp/magi-angular-main-mobile.png`

@@ -1,26 +1,19 @@
 {
-  "name": "magi-crt-console",
+  "name": "magi-nerv-agent-ai",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm --workspace frontend run dev --",
+    "build": "npm --workspace frontend run build",
     "lint:api": "redocly lint docs/openapi.yaml",
-    "preview": "vite preview",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "preview": "npm --workspace frontend run preview --",
+    "test": "npm --workspace frontend run test"
   },
   "devDependencies": {
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "@redocly/cli": "latest",
-    "typescript": "latest",
-    "vite": "latest",
-    "vitest": "latest"
+    "@redocly/cli": "latest"
   }
 }

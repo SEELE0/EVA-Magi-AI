@@ -1,6 +1,6 @@
 # 后端学习接入指南
 
-前端的接入点在 `src/services/http-decision-service.ts`。它只需要 REST JSON 响应符合 `docs/openapi.yaml`；不关心内部由规则、LangChain 还是人工审批产生结果。
+前端的接入点在 `frontend/src/services/http-decision-service.ts`。它只需要 REST JSON 响应符合 `docs/openapi.yaml`；不关心内部由规则、LangChain 还是人工审批产生结果。
 
 ## 方案 A：Python FastAPI
 
@@ -23,6 +23,7 @@ pip install fastapi uvicorn
 启动示例：
 
 ```bash
+cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 

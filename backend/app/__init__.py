@@ -1,0 +1,1 @@
+"""MAGI backend application package."""
