@@ -1,12 +1,13 @@
 import { useState, type CSSProperties, type KeyboardEvent } from 'react';
 
 const rings = [
-  { radius: 118, label: 'CIRCLE SELF' },
-  { radius: 150, label: 'CIRCLE REASON' },
-  { radius: 182, label: 'CIRCLE MEMORY' },
-  { radius: 214, label: 'CIRCLE FEAR' },
-  { radius: 246, label: 'CIRCLE ANGER' },
-  { radius: 278, label: 'CIRCLE GREED' }
+  { radius: 118},
+  { radius: 150},
+  { radius: 182},
+  { radius: 214},
+  { radius: 246},
+  { radius: 278},
+  { radius: 310 }
 ];
 
 const branches = [
@@ -85,19 +86,11 @@ export default function MagiBootTest() {
 
           <g className="ring-layer">
             {rings.map((ring, index) => {
-              const labelDelay = 1450 + index * 150;
-              const ringDelay = 2700 + index * 560;
+              // const labelDelay = 1450 + index * 150;
+              const ringDelay = 1000 + index * 560;
 
               return (
                 <g key={ring.radius}>
-                  <text
-                    className="ring-label"
-                    x={ringCenter.x + 22}
-                    y={ringCenter.y - ring.radius + 5}
-                    style={{ '--delay': `${labelDelay}ms` } as CSSProperties}
-                  >
-                    {ring.label}
-                  </text>
                   <circle
                     className="ring-trace"
                     cx={ringCenter.x}
@@ -111,19 +104,19 @@ export default function MagiBootTest() {
             })}
           </g>
 
-          <g className="hierarchy-layer" aria-label="层级 2 到 6">
-            {[6, 5, 4, 3, 2].map((level, index) => (
-              <text
-                key={level}
-                className="hierarchy-number"
-                x={98 + index * 32}
-                y="367"
-                style={{ '--delay': `${6420 + index * 115}ms` } as CSSProperties}
-              >
-                {level}
-              </text>
-            ))}
-          </g>
+          {/*<g className="hierarchy-layer" aria-label="层级 2 到 6">*/}
+          {/*  {[6, 5, 4, 3, 2].map((level, index) => (*/}
+          {/*    <text*/}
+          {/*      key={level}*/}
+          {/*      className="hierarchy-number"*/}
+          {/*      x={98 + index * 32}*/}
+          {/*      y="367"*/}
+          {/*      style={{ '--delay': `${6420 + index * 115}ms` } as CSSProperties}*/}
+          {/*    >*/}
+          {/*      {level}*/}
+          {/*    </text>*/}
+          {/*  ))}*/}
+          {/*</g>*/}
 
           <g transform="matrix(1.24 0 0 1.24 -124.4 -84.88)">
             <g className="persona-layer">

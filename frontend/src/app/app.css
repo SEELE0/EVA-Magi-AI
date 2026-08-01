@@ -1,7 +1,8 @@
 :root {
   color: #ffc06a;
   background: #090401;
-  font-family: "SFMono-Regular", "Cascadia Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+  --font-eva: "Matisse EB", "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Noto Sans JP", "Hiragino Mincho ProN", serif;
+  font-family: var(--font-eva);
   font-synthesis: none;
 }
 
@@ -12,7 +13,11 @@ body {
   min-height: 100vh;
   margin: 0;
   background: #090401;
+  font-family: var(--font-eva);
 }
+
+svg,
+svg text { font-family: var(--font-eva); }
 
 button,
 input,
