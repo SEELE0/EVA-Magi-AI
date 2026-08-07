@@ -11,9 +11,9 @@ const rings = [
 ];
 
 const branches = [
-  { id: 'balthasar', name: 'BALTHASAR-2', rotation: 0, delay: 7200 },
-  { id: 'melchior', name: 'MELCHIOR-1', rotation: -120, delay: 7200 },
-  { id: 'casper', name: 'CASPER-3', rotation: 120, delay: 7200 }
+  { id: 'balthasar', name: 'BALTHASAR-2', rotation: 0, delay: 5500 },
+  { id: 'melchior', name: 'MELCHIOR-1', rotation: -120, delay: 5500 },
+  { id: 'casper', name: 'CASPER-3', rotation: 120, delay: 5500 }
 ];
 
 const branchSections = [
