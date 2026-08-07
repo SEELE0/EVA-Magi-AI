@@ -24,7 +24,7 @@ pnpm-debug.log*
 # Editor and IDE settings
 .idea/
 .vscode/*
-.vascode/
+.vscode/
 
 # Operating system files
 .DS_Store
