@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * License: https://www.gnu.org/licenses/agpl-3.0.html
+ * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
+ */
 export const AGENT_IDS = ['MELCHIOR-1', 'BALTHASAR-2', 'CASPER-3'] as const;
 
 export type AgentId = (typeof AGENT_IDS)[number];
