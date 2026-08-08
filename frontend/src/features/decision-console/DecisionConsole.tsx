@@ -14,6 +14,7 @@ import {
 } from './console-config';
 
 const service: DecisionService = createDecisionService();
+const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
 
 export function DecisionConsole() {
   const [status, setStatus] = useState<SystemStatus | null>(null);
@@ -86,10 +87,12 @@ export function DecisionConsole() {
       <div className="screen-noise" aria-hidden="true" />
       <header className="topbar">
         <div className="brand-block">
-          <span className="brand-mark">M</span>
+          <span className="brand-mark" aria-hidden="true">
+            <img src={nervLogoUrl} alt="" />
+          </span>
           <div>
-            <p className="eyebrow">NERV 中央教義 / 判定階層</p>
-            <h1>MAGI <span>判定システム</span></h1>
+            <p className="eyebrow">特務機関NERV</p>
+            <h1>MAGI <span>System</span></h1>
           </div>
         </div>
         <div className="header-readout">
