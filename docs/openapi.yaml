@@ -3,8 +3,8 @@ info:
   title: MAGI Decision System API
   version: 1.0.0
   license:
-    name: Proprietary
-    url: https://magi.local/license
+    name: AGPL-3.0-or-later OR Commercial
+    identifier: AGPL-3.0-or-later
   description: |
     MAGI CRT Decision Console 的后端 REST 契约。
     首版使用 REST 轮询事件；未来可新增 SSE 而不改变本规范中的现有路由。
