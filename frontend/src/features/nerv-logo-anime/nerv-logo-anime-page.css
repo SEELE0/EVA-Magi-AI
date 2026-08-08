@@ -1,0 +1,44 @@
+:root {
+  color: #d88949;
+  background: #050403;
+  font-family: "Noto Sans JP", sans-serif;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body,
+#nerv-logo-anime-test-root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #050403;
+}
+
+.nerv-logo-anime-test-page {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  justify-items: center;
+  gap: 32px;
+}
+
+.nerv-logo-anime-replay {
+  padding: 8px 18px;
+  border: 1px solid rgba(216, 137, 73, 0.72);
+  color: #d88949;
+  background: rgba(9, 4, 1, 0.86);
+  font: inherit;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.nerv-logo-anime-replay:hover,
+.nerv-logo-anime-replay:focus-visible {
+  border-color: #ffc06a;
+  color: #ffc06a;
+  outline: none;
+  box-shadow: 0 0 12px rgba(255, 126, 28, 0.28);
+}

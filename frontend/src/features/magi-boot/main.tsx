@@ -1,10 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import MagiBootTest from './MagiBootTest';
-import './magi-boot.css';
+import { MagiBoot } from './index';
+import './magi-boot-page.css';
 
 createRoot(document.getElementById('magi-boot-test-root')!).render(
   <StrictMode>
-    <MagiBootTest />
+    <main className="magi-boot-test-page">
+      <MagiBoot size="min(100vw, 100vh)" />
+    </main>
   </StrictMode>
 );

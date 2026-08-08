@@ -1,0 +1,27 @@
+:root {
+  color: #d88949;
+  background: #020202;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body,
+#magi-boot-test-root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #020202;
+}
+
+body { overflow: hidden; }
+
+.magi-boot-test-page {
+  display: grid;
+  width: 100%;
+  min-height: 100vh;
+  place-items: center;
+  margin: 0;
+}

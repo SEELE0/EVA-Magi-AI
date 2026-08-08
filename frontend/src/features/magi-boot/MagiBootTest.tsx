@@ -1,4 +1,21 @@
-import { useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { useId, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import './magi-boot.css';
+
+export interface MagiBootTestProps {
+  /** CSS width value or a pixel number. The component always remains square. */
+  size?: number | string;
+  className?: string;
+  style?: CSSProperties;
+  onReplay?: () => void;
+}
+
+type MagiBootStyle = CSSProperties & {
+  '--magi-boot-size': string;
+};
+
+function resolveSize(size: number | string) {
+  return typeof size === 'number' ? `${size}px` : size;
+}
 
 const rings = [
   { radius: 118},
@@ -25,11 +42,27 @@ const branchSections = [
 
 const ringCenter = { x: 322, y: 323 };
 
-export default function MagiBootTest() {
+export function MagiBootTest({
+  size = '100%',
+  className,
+  style,
+  onReplay
+}: MagiBootTestProps) {
+  const reactId = useId().split(':').join('');
   const [seed, setSeed] = useState(0);
+  const ringGradientId = `magi-ring-gradient-${reactId}`;
+  const branchNameClipId = `magi-branch-name-clip-${reactId}`;
+  const branchSectionsClipId = `magi-branch-sections-clip-${reactId}`;
+  const coreCopyClipId = `magi-core-copy-clip-${reactId}`;
+  const classes = ['magi-boot', className ?? ''].filter(Boolean).join(' ');
+  const componentStyle = {
+    ...style,
+    '--magi-boot-size': resolveSize(size)
+  } as MagiBootStyle;
 
   function restart() {
     setSeed((value) => value + 1);
+    onReplay?.();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -40,7 +73,7 @@ export default function MagiBootTest() {
   }
 
   return (
-    <main className="boot-test-app">
+    <div className={classes} style={componentStyle}>
       <div
         className="magi-stage"
         key={seed}
@@ -60,7 +93,7 @@ export default function MagiBootTest() {
         >
           <defs>
             <linearGradient
-              id="ring-gradient"
+              id={ringGradientId}
               gradientUnits="userSpaceOnUse"
               x1="0"
               y1="650"
@@ -73,13 +106,13 @@ export default function MagiBootTest() {
               <stop offset="72%" stopColor="#9fbd4a" />
               <stop offset="100%" stopColor="#2c9561" />
             </linearGradient>
-            <clipPath id="branch-name-clip" clipPathUnits="userSpaceOnUse">
+            <clipPath id={branchNameClipId} clipPathUnits="userSpaceOnUse">
               <polygon points="435,288 464,288 390,412 363,412" />
             </clipPath>
-            <clipPath id="branch-sections-clip" clipPathUnits="userSpaceOnUse">
+            <clipPath id={branchSectionsClipId} clipPathUnits="userSpaceOnUse">
               <polygon points="468,288 643,288 570,412 395,412" />
             </clipPath>
-            <clipPath id="core-copy-clip" clipPathUnits="userSpaceOnUse">
+            <clipPath id={coreCopyClipId} clipPathUnits="userSpaceOnUse">
               <polygon points="290,290 430,290 360,409" />
             </clipPath>
           </defs>
@@ -97,7 +130,10 @@ export default function MagiBootTest() {
                     cy={ringCenter.y}
                     r={ring.radius}
                     pathLength="1"
-                    style={{ '--delay': `${ringDelay}ms` } as CSSProperties}
+                    style={{
+                      '--delay': `${ringDelay}ms`,
+                      stroke: `url(#${ringGradientId})`
+                    } as CSSProperties}
                   />
                 </g>
               );
@@ -135,7 +171,7 @@ export default function MagiBootTest() {
                   <line className="branch-structure" x1="447.5" y1="318" x2="627.5" y2="318" />
                   <line className="branch-structure" x1="429" y1="350" x2="609" y2="350" />
                   <line className="branch-structure" x1="410.5" y1="382" x2="590.5" y2="382" />
-                  <g clipPath="url(#branch-name-clip)">
+                  <g clipPath={`url(#${branchNameClipId})`}>
                     <text
                       className="branch-name"
                       x="413"
@@ -148,7 +184,7 @@ export default function MagiBootTest() {
                       {branch.name}
                     </text>
                   </g>
-                  <g clipPath="url(#branch-sections-clip)">
+                  <g clipPath={`url(#${branchSectionsClipId})`}>
                     {branchSections.map((section, index) => (
                       <text
                         className="branch-section"
@@ -172,7 +208,7 @@ export default function MagiBootTest() {
 
             <g className="core-layer">
               <polygon className="core-triangle" points="286,286 434,286 360,414" />
-              <g clipPath="url(#core-copy-clip)">
+              <g clipPath={`url(#${coreCopyClipId})`}>
                 <text className="core-name" x="360" y="320" dominantBaseline="middle" textLength="66" lengthAdjust="spacingAndGlyphs">MAGI</text>
                 <text className="core-number" x="360" y="353" dominantBaseline="middle" textLength="30" lengthAdjust="spacingAndGlyphs">01</text>
                 <text className="core-original" x="360" y="376" dominantBaseline="middle" textLength="30" lengthAdjust="spacingAndGlyphs">ORIGINAL</text>
@@ -183,6 +219,8 @@ export default function MagiBootTest() {
         <div className="crt-scanlines" aria-hidden="true" />
         <div className="crt-vignette" aria-hidden="true" />
       </div>
-    </main>
+    </div>
   );
 }
+
+export default MagiBootTest;

@@ -7,7 +7,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        magiBootTest: 'magi-boot-test.html'
+        magiBootTest: 'magi-boot-test.html',
+        nervLogoAnimeTest: 'nerv-logo-anime-test.html'
       }
     }
   },

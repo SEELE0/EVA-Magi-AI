@@ -1,8 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 
-type BootPhase = 'idle' | 'text-reveal' | 'logo-hold' | 'logo-fade' | 'power-on' | 'post' | 'exit';
-
-const bootImageUrl = new URL('../../../asset/images.jpeg', import.meta.url).href;
+type BootPhase = 'power-on' | 'post' | 'exit';
 
 const bootPostLines = [
   'CODE:258',
@@ -16,7 +14,7 @@ const bootPostLines = [
 ];
 
 export function BootIntro() {
-  const [phase, setPhase] = useState<BootPhase>('idle');
+  const [phase, setPhase] = useState<BootPhase>('power-on');
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -26,13 +24,9 @@ export function BootIntro() {
     }
 
     const timers = [
-      window.setTimeout(() => setPhase('text-reveal'), 700),
-      window.setTimeout(() => setPhase('logo-hold'), 2000),
-      window.setTimeout(() => setPhase('logo-fade'), 2450),
-      window.setTimeout(() => setPhase('power-on'), 3000),
-      window.setTimeout(() => setPhase('post'), 3750),
-      window.setTimeout(() => setPhase('exit'), 6350),
-      window.setTimeout(() => setVisible(false), 6900)
+      window.setTimeout(() => setPhase('post'), 750),
+      window.setTimeout(() => setPhase('exit'), 3350),
+      window.setTimeout(() => setVisible(false), 3900)
     ];
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
@@ -42,12 +36,6 @@ export function BootIntro() {
 
   return (
     <div className={`boot-intro boot-${phase}`} aria-hidden="true">
-      <div className="boot-logo-sequence">
-        <div className="boot-art">
-          <img className="boot-art-leaf boot-art-leaf-base" src={bootImageUrl} alt="" />
-          <img className="boot-art-text boot-art-text-base" src={bootImageUrl} alt="" />
-        </div>
-      </div>
       <div className="boot-power-stage">
         <div className="boot-power-screen" />
         <div className="boot-post-console">
