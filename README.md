@@ -75,7 +75,7 @@ npm run build
 
 本项目采用双重许可：
 
-1. **GNU AGPL-3.0-or-later**：可以免费使用、修改及商业部署，但必须遵守 AGPL 的源码提供及其他义务。
+1. **GNU AGPL-3.0-or-later**：可以免费使用、修改及部署，但必须遵守 AGPL 的源码提供及其他义务。
 2. **商业许可证**：如果需要闭源使用、集成到闭源产品或无法遵守 AGPL，请联系版权方取得商业授权。
 
 完整条款见 [GNU AGPL-3.0 官方原文](https://www.gnu.org/licenses/agpl-3.0.html)和 [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md)。
