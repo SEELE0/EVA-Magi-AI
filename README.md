@@ -1,6 +1,6 @@
 # MAGI CRT Decision Console
 
-一个以 MAGI 决策系统为主题的前后端项目。当前已实现 React/Vite 前端，默认运行本地模拟器；后端工作区预留给 FastAPI 或 Spring Boot / LangChain4j，并通过 `docs/openapi.yaml` 约束 REST 契约。
+一个以 MAGI 决策系统为主题的前后端项目。当前已实现 React/Vite 前端模拟应用；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
 
 ## 启动
 
@@ -30,16 +30,31 @@ VITE_API_BASE_URL=http://localhost:8000
 
 若远程服务不可访问，界面会自动切回本地模拟器，并在顶栏显示降级连接状态。
 
+当前 `remote` 适配只覆盖已有 `DecisionService` 的系统状态、Agent、创建、执行和轮询路由。节点配置、三 Agent 完整输出与历史页面仍由前端模拟，不代表 OpenAI 兼容服务、本地模型或任何真实供应商已经接通。
+
 ## 开机动画
 
 ~~访问 `http://localhost:5173/` 会播放 NERV 标志的扇形展开、CRT 开机和系统自检动画，然后进入 MAGI 决策控制台。~~
 
-访问 `http://localhost:5173/` 会先播放 CRT 电源开机与 POST 系统自检动画，然后进入 MAGI 决策控制台。当系统启用“减少动态效果”时，会跳过启动动画。
+~~访问 `http://localhost:5173/` 会先播放 CRT 电源开机与 POST 系统自检动画，然后进入 MAGI 决策控制台。~~
+
+访问 `http://localhost:5173/` 会先播放 CRT 电源开机与 POST 系统自检动画，然后进入 `DecisionHome`。主页业务区只包含旧版 MAGI 三节点判定动画和问题输入；title/topbar、状态与导航位于其上方。当系统启用“减少动态效果”时，会跳过启动动画。
 
 NERV 标志动画与 MAGI 几何启动动画已拆分为可复用组件，可通过以下独立页面预览：
 
 - `http://localhost:5173/nerv-logo-anime-test.html`
 - `http://localhost:5173/magi-boot-test.html`（支持点击、Enter 或空格键重播）
+
+旧版 `DecisionConsole` 不再作为主页，保留在 `http://localhost:5173/decision-console-lab.html`，用于组件与视觉实验。
+
+## 当前网页产品流
+
+- `#/`：输入一个问题，选择优先级和模拟场景，观察三个原版 MAGI 节点逐票形成裁定。
+- 点击任一节点：打开该 Agent 的配置弹窗。连接方式、BASE URL、MODEL、角色 Prompt 与 API Key 当前只影响前端模拟状态。
+- `#/history`：读取当前浏览器 `localStorage` 中最多 30 条模拟判定历史。
+- `#/history/:id`：显示最终裁定、三票及三个 Agent 的完整用户可见模拟答复。
+
+安全边界：API Key 只保存在当前 React 页面运行时内存，不写入 `localStorage`、历史、日志或公开配置。所谓“完整输出”是结论、理由、风险和建议，不是隐藏 chain-of-thought。
 
 ## 模拟场景
 
@@ -50,14 +65,17 @@ NERV 标志动画与 MAGI 几何启动动画已拆分为可复用组件，可通
 ## 项目结构
 
 ```text
-backend/                       后端工作区，预留 FastAPI / Agent 编排实现
+backend/                       后端预留工作区与框架无关端口骨架
 docs/                          API 规范、接口说明与设计验证记录
 frontend/                      React/Vite 前端应用
 frontend/src/app/              前端入口、根组件与全局样式
 frontend/src/domain/           前端领域模型与 API 数据类型
 frontend/src/features/         开机动画、决策控制台和 MAGI 几何测试页
+frontend/src/features/decision-home/   当前主页、节点配置、hash 路由和前端模拟历史
+frontend/src/features/decision-console/  旧三节点原语与独立实验页组件
 frontend/src/features/nerv-logo-anime/  可复用的 NERV 标志进场动画与独立测试入口
 frontend/src/features/magi-boot/        可复用的 MAGI 几何启动动画与独立测试入口
+frontend/src/labs/             独立组件实验页入口
 frontend/src/services/         Mock、HTTP 与故障降级适配层
 package.json                   根工作区脚本与项目级工具
 ```
@@ -67,11 +85,14 @@ package.json                   根工作区脚本与项目级工具
 ```bash
 npm run test
 npm run build
+npm run lint:api
 ```
 
 ~~完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)。~~
 
-完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)，前端分层与扩展说明见 [docs/frontend-structure.md](docs/frontend-structure.md)。
+完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)，后端从零开发、安全与联调步骤见 [docs/backend-guides.md](docs/backend-guides.md)，前端分层说明见 [docs/frontend-structure.md](docs/frontend-structure.md)。
+
+预留后端契约覆盖节点配置、判定历史分页、事件和三个 Agent 的完整用户可见输出。`apiKey` 在契约中为 write-only，配置响应只返回 `credentialConfigured`；当前仓库并未实现这些远程路由。
 
 ## 许可证
 

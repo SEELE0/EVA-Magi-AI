@@ -16,9 +16,11 @@ frontend/
 │   ├── features/
 │   │   ├── bios-start/                  BIOS 自检动画组件与实验入口
 │   │   ├── boot-intro/                  主页 CRT/POST 开机层
-│   │   ├── decision-console/            MAGI 决策控制台
+│   │   ├── decision-console/            保留的旧控制台组件与试验田
+│   │   ├── decision-home/               当前主页、节点配置、历史与明细
 │   │   ├── magi-boot/                   MAGI 几何启动组件与预览页
 │   │   └── nerv-logo-anime/             NERV 标志组件与预览页
+│   ├── labs/                             旧控制台独立实验页入口
 │   ├── services/                         决策服务接口、Mock、HTTP 与降级适配
 │   └── vite-env.d.ts                    Vite 生成的类型声明
 ├── package.json                        前端依赖与命令
@@ -35,17 +37,18 @@ frontend/
 `index.html` 加载 `src/app/main.tsx`，由 React 渲染 `App.tsx`。`App` 按以下顺序组装页面：
 
 1. `BootIntro`：显示 CRT 电源与 POST 系统自检动画。
-2. `DecisionConsole`：显示主决策控制台并处理业务交互。
+2. `DecisionHome`：显示 title 顶栏、原 MAGI 三节点判定动画和问题输入，并承载历史子路由。
 
 `BootIntro` 检测到 `prefers-reduced-motion: reduce` 时会直接跳过动画。
 
 ### 独立预览页
 
-Vite 配置了四个构建入口：
+Vite 配置了五个构建入口：
 
 | 页面 | React 入口 | 用途 |
 | --- | --- | --- |
 | `index.html` | `src/app/main.tsx` | 完整应用 |
+| `decision-console-lab.html` | `src/labs/decision-console/main.tsx` | 保留旧 `DecisionConsole` 的组件实验页 |
 | `magi-boot-test.html` | `src/features/magi-boot/main.tsx` | 单独调试 MAGI 几何动画 |
 | `nerv-logo-anime-test.html` | `src/features/nerv-logo-anime/main.tsx` | 单独调试 NERV 标志动画 |
 | `bios-start-test.html` | `src/features/bios-start/BiosStart.tsx` | BIOS 自检动画的实验入口 |
@@ -111,16 +114,19 @@ VITE_API_MODE=remote
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## 决策控制台
+## 当前模拟应用
 
-`DecisionConsole.tsx` 是主要业务容器，负责：
+`DecisionHome.tsx` 是当前主容器：
 
-- 初始化系统状态与三个 MAGI Agent。
-- 管理场景、议题、优先级、执行状态和错误信息。
-- 创建并执行决策，每 220ms 轮询决策与事件，完成后刷新系统状态。
-- 将投票、裁定和事件数据映射到界面。
+- `#/` 只显示原 title 顶栏、复用的三节点判定舞台、问题/优先级/场景输入和紧凑裁定。
+- 鼠标悬停、键盘聚焦或点击节点会显示可配置提示并打开 `AgentConfigDialog`。
+- `#/history` 是历史列表；`#/history/:id` 展示一次判定中三个 Agent 的完整用户可见输出。
+- 节点配置目前只在 React 页面内存中；API Key 不进入 localStorage，也不会发送网络请求。
+- 历史目前按版本写入 localStorage，最多 30 条，包含公开配置元数据和模拟输出。
 
-`ConsolePrimitives.tsx` 提供 `AgentNode`、`PanelTitle`、`Readout` 和 `Telemetry` 等展示组件。`console-config.ts` 集中管理默认 Agent、场景议题与状态文案，避免把静态配置散落在主组件中。
+`DecisionSimulator.tsx` 直接复用 `decision-console/ConsolePrimitives.tsx` 的 `AgentNode`、旧 `magi-network` 几何、连线坐标和 `is-scanning` 动画。不要在主页复制或重写绿色三模块。
+
+`decision-console/` 保持原实现，作为组件库试验田由 `/decision-console-lab.html` 单独打开。`ConsolePrimitives.tsx` 和 `console-config.ts` 同时是主页的复用来源。
 
 ## 动画组件
 
@@ -138,12 +144,14 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## 典型数据流
 
-1. 用户选择模拟场景，输入议题与优先级。
-2. `DecisionConsole` 调用 `DecisionService.createDecision`。
+1. 用户可先点击节点，在页面内存中配置连接方式、Base URL、Model、API Key 和角色卡。
+2. 用户选择模拟场景，输入议题与优先级，`DecisionSimulator` 调用 `DecisionService.createDecision`。
 3. 界面获得 `decisionId` 后调用 `executeDecision`。
-4. 执行期间定时调用 `getDecision` 和 `getEvents`。
-5. 领域对象驱动 Agent 投票、最终裁定和事件日志渲染。
-6. Remote 模式下若后端失败，`ResilientDecisionService` 切换至 Mock，顶栏显示降级状态。
+4. 执行期间每 220ms 调用 `getDecision`，旧 `is-scanning` 动画和逐票状态由领域对象驱动。
+5. 完成后生成三个 Agent 的用户可见模拟输出并写入本地历史。
+6. 历史路由读取列表或单条明细。Remote 模式下若基础决策后端失败，`ResilientDecisionService` 切换至 Mock。
+
+未来把配置和历史迁移到后端时，应先扩展 `DecisionService`，对应 `docs/openapi.yaml` 的 configuration、历史分页和 results 路由；React 组件不要直接调用 `fetch`。
 
 ## 测试与构建
 
@@ -156,6 +164,7 @@ npm run build
 
 - Mock 服务的三种裁定路径。
 - Remote 不可用时的自动降级。
+- 新主页边界、节点配置、历史存储、完整模拟输出与窄屏 CSS 约束。
 - NERV 标志和 MAGI 几何动画的静态结构渲染。
 - BIOS 自检动画的关键文案与终端结构渲染。
 

@@ -6,13 +6,13 @@
  */
 // import { BiosStart } from '../features/bios-start';
 import { BootIntro } from '../features/boot-intro/BootIntro';
-import { DecisionConsole } from '../features/decision-console/DecisionConsole';
+import { DecisionHome } from '../features/decision-home';
 
 export default function App() {
   return (
     <>
       <BootIntro />
-      <DecisionConsole />
+      <DecisionHome />
     </>
   );
 }

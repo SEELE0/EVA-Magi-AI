@@ -1,16 +1,17 @@
 openapi: 3.1.0
 info:
   title: MAGI Decision System API
-  version: 1.0.0
+  version: 1.1.0
   license:
     name: AGPL-3.0-or-later OR Commercial
     identifier: AGPL-3.0-or-later
   description: |
-    MAGI CRT Decision Console 的后端 REST 契约。
-    首版使用 REST 轮询事件；未来可新增 SSE 而不改变本规范中的现有路由。
+    MAGI 设定模拟应用的预留后端 REST 契约。当前仓库尚未提供可运行后端；
+    前端默认使用本地 Mock。完整输出指可展示给用户的最终答复、理由、风险与建议，
+    不包含模型隐藏推理或 chain-of-thought。
 servers:
   - url: https://api.magi.local
-    description: Replace with the local FastAPI or Spring Boot development server.
+    description: Replace with the local FastAPI or Spring Boot development server
 security:
   - {}
   - BearerToken: []
@@ -26,16 +27,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SystemStatus'
-        '503':
-          $ref: '#/components/responses/ApiError'
         '429':
+          $ref: '#/components/responses/ApiError'
+        '503':
           $ref: '#/components/responses/ApiError'
         default:
           $ref: '#/components/responses/ApiError'
   /v1/agents:
     get:
       operationId: getAgents
-      summary: List MAGI agent nodes
+      summary: List the three MAGI nodes
       responses:
         '200':
           description: Fixed MAGI agent list
@@ -47,13 +48,85 @@ paths:
                 maxItems: 3
                 items:
                   $ref: '#/components/schemas/Agent'
-        '503':
-          $ref: '#/components/responses/ApiError'
         '429':
           $ref: '#/components/responses/ApiError'
         default:
           $ref: '#/components/responses/ApiError'
+  /v1/agents/{agentId}/configuration:
+    parameters:
+      - $ref: '#/components/parameters/AgentId'
+    get:
+      operationId: getAgentConfiguration
+      summary: Read one node's public provider and role-card configuration
+      responses:
+        '200':
+          description: Public configuration; credentials are never returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentConfigurationPublic'
+        '404':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
+    put:
+      operationId: updateAgentConfiguration
+      summary: Replace one node's provider and role-card configuration
+      description: |
+        `apiKey` is write-only. Store it encrypted or in a secret manager and return only
+        `credentialConfigured`. Omit `apiKey` to keep the existing credential; set
+        `clearCredential` to true to remove it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentConfigurationUpdate'
+      responses:
+        '200':
+          description: Updated public configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentConfigurationPublic'
+        '400':
+          $ref: '#/components/responses/ApiError'
+        '404':
+          $ref: '#/components/responses/ApiError'
+        '422':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
   /v1/decisions:
+    get:
+      operationId: listDecisions
+      summary: List decision history in reverse chronological order
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 30
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque cursor returned by the previous page.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated decision history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionHistoryPage'
+        '400':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
     post:
       operationId: createDecision
       summary: Create a decision packet
@@ -98,10 +171,10 @@ paths:
       - $ref: '#/components/parameters/DecisionId'
     post:
       operationId: executeDecision
-      summary: Start an idempotent multi-agent vote
+      summary: Start or resume an idempotent three-Agent decision
       responses:
         '200':
-          description: Current decision state after execution has been started or resumed
+          description: Current state after execution starts or resumes
           content:
             application/json:
               schema:
@@ -139,22 +212,51 @@ paths:
           $ref: '#/components/responses/ApiError'
         default:
           $ref: '#/components/responses/ApiError'
+  /v1/decisions/{decisionId}/results:
+    parameters:
+      - $ref: '#/components/parameters/DecisionId'
+    get:
+      operationId: getDecisionResults
+      summary: Read the three complete user-visible Agent outputs
+      description: |
+        Returns final user-facing content and public provider metadata. It must not expose
+        API keys, provider secrets, hidden reasoning, or chain-of-thought.
+      responses:
+        '200':
+          description: Completed result set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionResultSet'
+        '404':
+          $ref: '#/components/responses/ApiError'
+        '409':
+          $ref: '#/components/responses/ApiError'
+        default:
+          $ref: '#/components/responses/ApiError'
 components:
   securitySchemes:
     BearerToken:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Reserved for a future authenticated deployment. v1 defaults to anonymous access.
+      description: Reserved for authenticated deployments; local v1 may allow anonymous access.
   parameters:
     DecisionId:
       name: decisionId
       in: path
       required: true
+      description: Decision packet identifier.
       schema:
         type: string
         pattern: '^dec-[A-Za-z0-9-]+$'
-      description: Decision packet identifier.
+    AgentId:
+      name: agentId
+      in: path
+      required: true
+      description: Fixed MAGI personality node identifier.
+      schema:
+        $ref: '#/components/schemas/AgentId'
   responses:
     ApiError:
       description: Standard API error
@@ -184,8 +286,12 @@ components:
     ConnectionMode:
       type: string
       enum: [mock, remote]
+    ProviderConnection:
+      type: string
+      enum: [mock, openai-compatible, local-compatible]
     SystemStatus:
       type: object
+      additionalProperties: false
       required: [systemName, connection, source, protocol, uptimeSeconds, updatedAt]
       properties:
         systemName:
@@ -209,13 +315,14 @@ components:
           type: string
     Agent:
       type: object
+      additionalProperties: false
       required: [id, role, health, latencyMs, vote]
       properties:
         id:
           $ref: '#/components/schemas/AgentId'
         role:
           type: string
-          example: SCIENTIFIC LOGIC
+          example: 科学者論理
         health:
           $ref: '#/components/schemas/AgentHealth'
         latencyMs:
@@ -223,14 +330,65 @@ components:
           minimum: 0
         vote:
           $ref: '#/components/schemas/Vote'
+    AgentConfigurationPublic:
+      type: object
+      additionalProperties: false
+      required: [agentId, role, connection, baseUrl, model, rolePrompt, credentialConfigured]
+      properties:
+        agentId:
+          $ref: '#/components/schemas/AgentId'
+        role:
+          type: string
+        connection:
+          $ref: '#/components/schemas/ProviderConnection'
+        baseUrl:
+          type: string
+          maxLength: 2048
+        model:
+          type: string
+          maxLength: 200
+        rolePrompt:
+          type: string
+          maxLength: 12000
+        credentialConfigured:
+          type: boolean
+    AgentConfigurationUpdate:
+      type: object
+      additionalProperties: false
+      required: [connection, baseUrl, model, rolePrompt]
+      properties:
+        connection:
+          $ref: '#/components/schemas/ProviderConnection'
+        baseUrl:
+          type: string
+          maxLength: 2048
+          description: Validate and allowlist this URL server-side according to connection mode.
+        model:
+          type: string
+          minLength: 1
+          maxLength: 200
+        rolePrompt:
+          type: string
+          minLength: 1
+          maxLength: 12000
+        apiKey:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          format: password
+          writeOnly: true
+        clearCredential:
+          type: boolean
+          default: false
     DecisionRequest:
       type: object
+      additionalProperties: false
       required: [subject]
       properties:
         subject:
           type: string
           minLength: 1
-          maxLength: 90
+          maxLength: 240
           example: 批准第 07 区域防御协议升级
         priority:
           type: string
@@ -242,6 +400,7 @@ components:
           enum: [standard, reject, review]
     Votes:
       type: object
+      additionalProperties: false
       required: [MELCHIOR-1, BALTHASAR-2, CASPER-3]
       properties:
         MELCHIOR-1:
@@ -252,6 +411,7 @@ components:
           $ref: '#/components/schemas/Vote'
     Decision:
       type: object
+      additionalProperties: false
       required: [id, subject, priority, status, verdict, votes, createdAt]
       properties:
         id:
@@ -274,8 +434,62 @@ components:
         completedAt:
           type: string
           format: date-time
+    DecisionHistoryPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
+        nextCursor:
+          type: string
+          description: Opaque cursor; omit when there is no next page.
+    AgentOutput:
+      type: object
+      additionalProperties: false
+      required: [agentId, role, vote, output, connection, baseUrl, model, latencyMs, generatedAt]
+      properties:
+        agentId:
+          $ref: '#/components/schemas/AgentId'
+        role:
+          type: string
+        vote:
+          $ref: '#/components/schemas/Vote'
+        output:
+          type: string
+          description: Complete user-visible final answer, not hidden reasoning or chain-of-thought.
+        connection:
+          $ref: '#/components/schemas/ProviderConnection'
+        baseUrl:
+          type: string
+        model:
+          type: string
+        latencyMs:
+          type: integer
+          minimum: 0
+        generatedAt:
+          type: string
+          format: date-time
+    DecisionResultSet:
+      type: object
+      additionalProperties: false
+      required: [decisionId, verdict, outputs]
+      properties:
+        decisionId:
+          type: string
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        outputs:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/AgentOutput'
     DecisionEvent:
       type: object
+      additionalProperties: false
       required: [id, decisionId, kind, timestamp, message]
       properties:
         id:
@@ -295,6 +509,7 @@ components:
           $ref: '#/components/schemas/AgentId'
     ErrorDetail:
       type: object
+      additionalProperties: false
       required: [code, message]
       properties:
         code:
@@ -308,6 +523,7 @@ components:
           example: req_8d7b31
     ApiError:
       type: object
+      additionalProperties: false
       required: [error]
       properties:
         error:

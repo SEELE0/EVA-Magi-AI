@@ -11,7 +11,7 @@ type BootPhase = 'power-on' | 'post-header' | 'magi' | 'post-stream' | 'exit';
 
 const POST_HEADER_START_MS = 750;
 const MAGI_BOOT_START_MS = 1600;
-const MAGI_BOOT_COMPLETE_MS = MAGI_BOOT_START_MS + MAGI_BOOT_ANIMATION_DURATION_MS + 1500;
+const MAGI_BOOT_COMPLETE_MS = MAGI_BOOT_START_MS + MAGI_BOOT_ANIMATION_DURATION_MS + 300;
 const EXIT_START_MS = MAGI_BOOT_COMPLETE_MS + 3000;
 const INTRO_HIDDEN_MS = EXIT_START_MS + 1100;
 const BOOT_INTRO_SESSION_KEY = 'magi-nerv:boot-intro-played';

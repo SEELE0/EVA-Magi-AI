@@ -1,62 +1,75 @@
-# MAGI REST API v1
+# MAGI REST API v1.1
 
-本规范是前端与未来后端之间的唯一契约。React 页面只依赖 `DecisionService` 的领域模型，因此后端从 FastAPI 换到 Spring Boot 不需要改动页面组件。
+本文件解释前端与未来后端的调用方式；机器可读的唯一契约是 [openapi.yaml](openapi.yaml)。当前 `backend/` 仍是预留工作区，主应用默认由 `MockDecisionService` 驱动，节点配置和历史记录也只在浏览器端模拟。
 
-基础地址：`{VITE_API_BASE_URL}`，示例为 `http://localhost:8000`。所有接口使用 JSON；生产环境可增加 `Authorization: Bearer <token>`，首版不强制认证。
+基础地址由 `VITE_API_BASE_URL` 指定，开发环境示例为 `http://localhost:8000`。所有接口使用 JSON。生产部署应启用 HTTPS 和身份认证。
 
-## 调用流程
+## 页面与接口映射
 
-1. `GET /v1/system/status` 确认服务可用。
-2. `GET /v1/agents` 读取三个 MAGI 人格节点。
-3. `POST /v1/decisions` 创建议题，取得 `decisionId`。
-4. `POST /v1/decisions/{decisionId}/execute` 触发投票。
-5. 以 200 至 500ms 间隔轮询 `GET /v1/decisions/{decisionId}` 和 `GET /v1/decisions/{decisionId}/events`，直到 `status` 为 `completed` 或 `failed`。
+| 页面能力 | 预留接口 |
+| --- | --- |
+| 顶栏连接状态 | `GET /v1/system/status` |
+| 三个固定 MAGI 节点 | `GET /v1/agents` |
+| 打开/保存节点配置 | `GET` / `PUT /v1/agents/{agentId}/configuration` |
+| 创建并执行判定 | `POST /v1/decisions`、`POST /v1/decisions/{decisionId}/execute` |
+| 判定动画与逐票状态 | 轮询 `GET /v1/decisions/{decisionId}` 与 `/events` |
+| 历史列表 | `GET /v1/decisions?limit=30&cursor=...` |
+| 历史明细和三 Agent 完整输出 | `GET /v1/decisions/{decisionId}/results` |
 
-## 通用规则
+## 推荐调用流程
 
-- 时间字段使用 ISO 8601 UTC 字符串，例如 `2026-07-26T10:32:11.027Z`。
-- `AgentId` 固定为 `MELCHIOR-1`、`BALTHASAR-2`、`CASPER-3`。
-- 投票值为 `approve`、`reject`、`abstain`、`pending`。
-- 执行状态为 `draft`、`running`、`completed`、`failed`。
-- 最终裁定为 `approved`、`rejected`、`review`、`pending`。
-- 生产服务应当把 `POST /execute` 设计为幂等：同一已执行的 `decisionId` 重复调用时，直接返回当前决策数据。
+1. 读取系统状态和三个节点。
+2. 用户点击节点时读取公开配置；保存时只向 `PUT` 请求发送新 API Key。
+3. 创建议题并取得 `decisionId`。
+4. 调用幂等的 `/execute`；服务立即返回 `running`，在后台并行执行三个 Agent。
+5. 每 200–500ms 轮询决策和事件，直到 `completed` 或 `failed`。
+6. 完成后读取 `/results`。历史子页面通过 `GET /v1/decisions` 分页，点击记录后再读取结果。
 
-## 接口
+## 节点配置
 
-### `GET /v1/system/status`
+```http
+GET /v1/agents/MELCHIOR-1/configuration
+```
 
-返回服务连接与协议状态。
+响应只包含公开字段：
 
 ```json
 {
-  "systemName": "MAGI DECISION SYSTEM",
-  "connection": "online",
-  "source": "remote",
-  "protocol": "MAGI/3.0 REST",
-  "uptimeSeconds": 4820,
-  "updatedAt": "2026-07-26T10:32:11.027Z"
+  "agentId": "MELCHIOR-1",
+  "role": "科学者論理",
+  "connection": "openai-compatible",
+  "baseUrl": "https://provider.example/v1",
+  "model": "example-model",
+  "rolePrompt": "以可验证证据和风险边界给出最终答复。",
+  "credentialConfigured": true
 }
 ```
 
-### `GET /v1/agents`
+更新配置：
 
-返回三个节点的固定角色、健康度和最近延迟。
-
-```json
-[
-  {
-    "id": "MELCHIOR-1",
-    "role": "SCIENTIFIC LOGIC",
-    "health": "nominal",
-    "latencyMs": 18,
-    "vote": "pending"
-  }
-]
+```http
+PUT /v1/agents/MELCHIOR-1/configuration
+Content-Type: application/json
 ```
 
-### `POST /v1/decisions`
+```json
+{
+  "connection": "openai-compatible",
+  "baseUrl": "https://provider.example/v1",
+  "model": "example-model",
+  "rolePrompt": "以可验证证据和风险边界给出最终答复。",
+  "apiKey": "仅在写入时提交"
+}
+```
 
-创建一个尚未执行的议题。
+`apiKey` 是 write-only：响应、日志、事件和历史记录都不得返回它。省略该字段表示保留旧凭据；`clearCredential: true` 表示删除。服务端应加密保存或只保存 Secret Manager 引用。
+
+## 创建、执行与轮询
+
+```http
+POST /v1/decisions
+Content-Type: application/json
+```
 
 ```json
 {
@@ -65,41 +78,58 @@
 }
 ```
 
-`subject` 必填，去除首尾空白后长度应为 1 到 90 个字符；`priority` 可选，取值 `low`、`normal`、`critical`，默认 `normal`。`simulationHint` 仅供本地演示器测试，不建议真实后端实现。
-
-### `GET /v1/decisions/{decisionId}`
-
-读取议题与最新投票状态。`votes` 必须始终包含三个 AgentId，即使尚未投票也返回 `pending`。
-
-### `POST /v1/decisions/{decisionId}/execute`
-
-开始或重取一次投票执行。成功时返回 `200` 与当前 `Decision`；服务可异步计算，初始响应的 `status` 可为 `running`。
+`subject` 去除首尾空白后长度为 1–240。`simulationHint` 只用于本地 Mock，真实后端应忽略。
 
 ```bash
-curl -X POST http://localhost:8000/v1/decisions/dec-0123abcd/execute \
-  -H 'Content-Type: application/json'
+curl -X POST http://localhost:8000/v1/decisions/dec-0123abcd/execute
+curl http://localhost:8000/v1/decisions/dec-0123abcd
+curl http://localhost:8000/v1/decisions/dec-0123abcd/events
 ```
 
-### `GET /v1/decisions/{decisionId}/events`
+`votes` 始终包含 `MELCHIOR-1`、`BALTHASAR-2`、`CASPER-3`；未完成节点返回 `pending`。重复调用 `/execute` 不应启动第二次任务，而应返回当前状态。
 
-按时间升序返回日志。可选查询参数 `after` 是上一条事件的 ISO 时间；服务返回时间严格晚于该值的条目。前端首版不依赖该参数，但后端实现时应支持它以降低轮询负担。
+## 历史与完整输出
+
+```http
+GET /v1/decisions?limit=30
+GET /v1/decisions/dec-0123abcd/results
+```
+
+结果示例：
 
 ```json
-[
-  {
-    "id": "evt-e27d10aa",
-    "decisionId": "dec-0123abcd",
-    "kind": "vote",
-    "timestamp": "2026-07-26T10:32:14.120Z",
-    "agentId": "MELCHIOR-1",
-    "message": "MELCHIOR-1 => APPROVE"
-  }
-]
+{
+  "decisionId": "dec-0123abcd",
+  "verdict": "approved",
+  "outputs": [
+    {
+      "agentId": "MELCHIOR-1",
+      "role": "科学者論理",
+      "vote": "approve",
+      "output": "【结论】承认。\n\n【理由】……\n\n【主要风险】……\n\n【建议】……",
+      "connection": "openai-compatible",
+      "baseUrl": "https://provider.example/v1",
+      "model": "example-model",
+      "latencyMs": 842,
+      "generatedAt": "2026-08-14T03:30:00Z"
+    }
+  ]
+}
 ```
 
-## 错误格式
+实际响应必须恰好包含三个节点。这里的“完整输出”是面向用户的最终答复、理由、风险和建议，不是模型隐藏推理或 chain-of-thought；后端不应请求、保存或返回隐藏推理。
 
-所有非 2xx 响应都使用同一结构：
+## 枚举与裁定
+
+- 投票：`approve`、`reject`、`abstain`、`pending`。
+- 状态：`draft`、`running`、`completed`、`failed`。
+- 裁定：`approved`、`rejected`、`review`、`pending`。
+- Provider：`mock`、`openai-compatible`、`local-compatible`。
+- 建议裁定规则：承认票多于否决票为 `approved`，否决票更多为 `rejected`，否则为 `review`。
+
+## 错误与安全
+
+所有非 2xx 响应使用：
 
 ```json
 {
@@ -111,16 +141,10 @@ curl -X POST http://localhost:8000/v1/decisions/dec-0123abcd/execute \
 }
 ```
 
-建议状态码：`400` 参数错误、`401` 未认证、`403` 无权限、`404` 资源不存在、`409` 当前状态不允许操作、`422` 语义校验失败、`429` 限流、`500` 服务错误。
+后端至少要做到：
 
-## 前端字段映射
-
-| API 字段 | 前端用途 |
-| --- | --- |
-| `SystemStatus.connection` | 顶栏 UPLINK 颜色与降级提示 |
-| `SystemStatus.source` | 顶栏 SOURCE，显示 `mock` 或 `remote` |
-| `Agent.vote` / `Decision.votes` | 三角节点的承认、否决、弃权状态 |
-| `Decision.verdict` | FINAL VERDICT 面板 |
-| `DecisionEvent[]` | EVENT TRACE 操作日志 |
-
-完整机器可读定义见 [openapi.yaml](openapi.yaml)。
+- API Key 不回传、不写日志、不进入决策输出或事件。
+- 对 `baseUrl` 做协议、域名/IP 和端口校验，阻止云元数据地址和未授权内网访问；本地兼容模式使用单独 allowlist。
+- 对供应商调用设置连接、读取和总超时；失败时写公开错误摘要，不写原始凭据。
+- 对角色卡长度、议题长度和模型返回结构做服务端校验。
+- CORS 只允许实际前端域名；生产环境启用认证、限流和审计。
