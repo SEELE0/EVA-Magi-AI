@@ -86,11 +86,9 @@ select:focus-visible {
   inset: 0;
   overflow: hidden;
   background: #000;
-  opacity: 1;
-  transition: opacity 550ms ease;
 }
 
-.boot-intro.boot-exit { opacity: 0; pointer-events: none; }
+.boot-intro.boot-phase-exit { pointer-events: none; }
 
 .boot-power-stage,
 .boot-scanlines {
@@ -106,9 +104,9 @@ select:focus-visible {
   visibility: hidden;
 }
 
-.boot-power-on .boot-power-stage,
+.boot-phase-power-on .boot-power-stage,
 .boot-post .boot-power-stage,
-.boot-exit .boot-power-stage {
+.boot-phase-exit .boot-power-stage {
   opacity: 1;
   visibility: visible;
 }
@@ -135,30 +133,61 @@ select:focus-visible {
   transform: translateY(-50%);
 }
 
-.boot-power-on .boot-power-screen {
+.boot-phase-power-on .boot-power-screen {
   animation: boot-power-on 750ms cubic-bezier(0.22, 0.68, 0.28, 1) forwards;
 }
 
 .boot-post .boot-power-screen,
-.boot-exit .boot-power-screen {
+.boot-phase-exit .boot-power-screen {
   opacity: 1;
   transform: scale(1);
 }
 
 .boot-post .boot-power-screen::before,
-.boot-exit .boot-power-screen::before { opacity: 0; }
+.boot-phase-exit .boot-power-screen::before { opacity: 0; }
 
 .boot-post-console {
   position: absolute;
   z-index: 2;
   top: clamp(28px, 7vh, 76px);
+  bottom: clamp(22px, 4vh, 44px);
   left: clamp(22px, 7vw, 96px);
-  width: min(760px, calc(100% - 44px));
+  width: min(1080px, calc(100% - 44px));
   color: #f28724;
   font-size: clamp(10px, 1.15vw, 16px);
   line-height: 1.2;
   text-shadow: 0 0 7px rgba(255, 109, 12, 0.64);
   opacity: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.boot-post-header {
+  flex: 0 0 auto;
+}
+
+.boot-post-body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.55fr);
+  gap: clamp(20px, 4vw, 64px);
+  align-items: center;
+  min-height: 0;
+}
+
+.boot-magi-slot,
+.boot-post-stream-slot {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+}
+
+.boot-magi-slot { justify-items: center; }
+
+.boot-magi-module {
+  position: relative;
+  pointer-events: none;
 }
 
 .boot-post .boot-post-console {
@@ -199,7 +228,8 @@ select:focus-visible {
 }
 
 .boot-post-motion strong {
-  font-size: clamp(17px, 2.55vw, 36px);
+  font-size: clamp(17px, 2.2vw, 32px);
+  white-space: nowrap;
 }
 
 .boot-post-stream {
@@ -248,7 +278,21 @@ select:focus-visible {
   mix-blend-mode: screen;
 }
 
-.boot-power-on .boot-scanlines,
+.boot-exit-curtain {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+}
+
+.boot-phase-exit .boot-exit-curtain {
+  opacity: 1;
+  transition: opacity 500ms ease;
+}
+
+.boot-phase-power-on .boot-scanlines,
 .boot-post .boot-scanlines {
   opacity: 0.34;
   animation: static-shift 160ms steps(2) infinite;
@@ -693,6 +737,14 @@ select:focus-visible {
 }
 
 @media (max-width: 700px) {
+  .boot-post-console { top: 24px; bottom: 16px; left: 16px; width: calc(100% - 32px); }
+  .boot-post-motion strong { white-space: normal; }
+  .boot-post-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .boot-post-stream-slot { justify-items: start; }
   .crt-shell { width: calc(100% - 16px); min-height: calc(100vh - 16px); margin: 8px auto; padding: 13px; }
   .topbar { align-items: flex-start; flex-direction: column; gap: 14px; }
   .header-readout { width: 100%; justify-content: flex-start; }

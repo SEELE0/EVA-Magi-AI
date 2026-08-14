@@ -69,7 +69,9 @@ npm run test
 npm run build
 ```
 
-完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)。
+~~完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)。~~
+
+完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)，前端分层与扩展说明见 [docs/frontend-structure.md](docs/frontend-structure.md)。
 
 ## 许可证
 

@@ -1,6 +1,6 @@
 .magi-boot {
   color: #d88949;
-  background: #020202;
+  background: var(--magi-boot-background);
   --font-eva: "Matisse EB", "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Noto Sans JP", "Hiragino Mincho ProN", serif;
   --magi-orange: #ff6a02;
   --magi-orange-hot: #ff8302;
@@ -26,9 +26,10 @@
   overflow: hidden;
   border: 0;
   outline: none;
-  background: #020202;
-  cursor: pointer;
+  background: var(--magi-boot-background);
 }
+
+.magi-boot--interactive .magi-stage { cursor: pointer; }
 
 .magi-boot .magi-stage:focus-visible {
   outline: 1px solid rgba(216, 110, 59, 0.66);

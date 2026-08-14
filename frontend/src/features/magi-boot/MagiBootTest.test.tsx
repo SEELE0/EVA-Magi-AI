@@ -26,4 +26,17 @@ describe('MagiBoot module', () => {
     expect(gradientIds).toHaveLength(2);
     expect(new Set(gradientIds).size).toBe(2);
   });
+
+  it('supports a transparent, non-interactive embedded mode', () => {
+    const markup = renderToStaticMarkup(
+      <MagiBoot background="transparent" interactive={false} showCrtEffects={false} />
+    );
+
+    expect(markup).toContain('--magi-boot-background:transparent');
+    expect(markup).not.toContain('role="button"');
+    expect(markup).not.toContain('tabindex="0"');
+    expect(markup).not.toContain('magi-boot--interactive');
+    expect(markup).not.toContain('crt-vignette');
+    expect(markup).not.toContain('crt-scanlines');
+  });
 });

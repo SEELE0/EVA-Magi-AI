@@ -8,7 +8,8 @@ export default defineConfig({
       input: {
         main: 'index.html',
         magiBootTest: 'magi-boot-test.html',
-        nervLogoAnimeTest: 'nerv-logo-anime-test.html'
+        nervLogoAnimeTest: 'nerv-logo-anime-test.html',
+        biosStartTest: 'bios-start-test.html'
       }
     }
   },

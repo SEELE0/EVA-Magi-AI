@@ -10,6 +10,12 @@ import './magi-boot.css';
 export interface MagiBootTestProps {
   /** CSS width value or a pixel number. The component always remains square. */
   size?: number | string;
+  /** Component and stage background. Use "transparent" when embedding over another surface. */
+  background?: string;
+  /** Enables click and keyboard replay controls. */
+  interactive?: boolean;
+  /** Shows the component-local scanline and vignette overlays. */
+  showCrtEffects?: boolean;
   className?: string;
   style?: CSSProperties;
   onReplay?: () => void;
@@ -17,6 +23,7 @@ export interface MagiBootTestProps {
 
 type MagiBootStyle = CSSProperties & {
   '--magi-boot-size': string;
+  '--magi-boot-background': string;
 };
 
 function resolveSize(size: number | string) {
@@ -48,8 +55,13 @@ const branchSections = [
 
 const ringCenter = { x: 322, y: 323 };
 
+export const MAGI_BOOT_ANIMATION_DURATION_MS = 8230;
+
 export function MagiBootTest({
   size = '100%',
+  background = '#020202',
+  interactive = true,
+  showCrtEffects = true,
   className,
   style,
   onReplay
@@ -60,10 +72,15 @@ export function MagiBootTest({
   const branchNameClipId = `magi-branch-name-clip-${reactId}`;
   const branchSectionsClipId = `magi-branch-sections-clip-${reactId}`;
   const coreCopyClipId = `magi-core-copy-clip-${reactId}`;
-  const classes = ['magi-boot', className ?? ''].filter(Boolean).join(' ');
+  const classes = [
+    'magi-boot',
+    interactive ? 'magi-boot--interactive' : '',
+    className ?? ''
+  ].filter(Boolean).join(' ');
   const componentStyle = {
     ...style,
-    '--magi-boot-size': resolveSize(size)
+    '--magi-boot-size': resolveSize(size),
+    '--magi-boot-background': background
   } as MagiBootStyle;
 
   function restart() {
@@ -84,12 +101,12 @@ export function MagiBootTest({
         className="magi-stage"
         key={seed}
         data-testid="magi-stage"
-        role="button"
-        tabIndex={0}
-        aria-label="MAGI 启动几何动画，点击重新播放"
-        title="点击重新播放"
-        onClick={restart}
-        onKeyDown={handleKeyDown}
+        role={interactive ? 'button' : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        aria-label={interactive ? 'MAGI 启动几何动画，点击重新播放' : undefined}
+        title={interactive ? '点击重新播放' : undefined}
+        onClick={interactive ? restart : undefined}
+        onKeyDown={interactive ? handleKeyDown : undefined}
       >
         <svg
           className="magi-geometry"
@@ -222,8 +239,12 @@ export function MagiBootTest({
             </g>
           </g>
         </svg>
-        <div className="crt-scanlines" aria-hidden="true" />
-        <div className="crt-vignette" aria-hidden="true" />
+        {showCrtEffects ? (
+          <>
+            <div className="crt-scanlines" aria-hidden="true" />
+            <div className="crt-vignette" aria-hidden="true" />
+          </>
+        ) : null}
       </div>
     </div>
   );

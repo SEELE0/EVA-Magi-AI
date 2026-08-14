@@ -4,10 +4,4 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
  */
-export {
-  default,
-  MAGI_BOOT_ANIMATION_DURATION_MS,
-  MagiBootTest,
-  MagiBootTest as MagiBoot
-} from './MagiBootTest';
-export type { MagiBootTestProps, MagiBootTestProps as MagiBootProps } from './MagiBootTest';
+export { BiosStart } from './BiosStart';
