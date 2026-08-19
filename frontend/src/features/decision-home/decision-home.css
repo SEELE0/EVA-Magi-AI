@@ -50,6 +50,22 @@
   inset: 0 1px 0 0;
 }
 
+.magi-home__scanlines {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(154, 255, 199, 0.032) 0,
+    rgba(154, 255, 199, 0.032) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: screen;
+}
+
 .magi-home__navigation,
 .magi-home__simulator,
 .magi-home__history {
@@ -166,6 +182,79 @@
   min-width: 0;
 }
 
+.magi-home__decision-stage .network-connectors line {
+  stroke: #69dca0;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 3px rgba(105, 220, 160, 0.55));
+}
+
+.magi-home__decision-stage .agent-node {
+  --node-outline: #6fd99d;
+  color: #b7f4d0;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 0 5px rgba(90, 225, 151, 0.2));
+}
+
+.magi-home__decision-stage .agent-node::before {
+  inset: 0;
+  padding: 0;
+  clip-path: none;
+  background: var(--node-outline);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+}
+
+.magi-home__decision-stage .agent-node.top::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H100V72L67 100H33L0 72ZM1.5 1.5V71.2L33.6 98.5H66.4L98.5 71.2V1.5Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H100V72L67 100H33L0 72ZM1.5 1.5V71.2L33.6 98.5H66.4L98.5 71.2V1.5Z'/%3E%3C/svg%3E");
+}
+
+.magi-home__decision-stage .agent-node.left::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H70L100 48V100H0ZM1.5 1.5V98.5H98.5V48.5L69.2 1.5Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H70L100 48V100H0ZM1.5 1.5V98.5H98.5V48.5L69.2 1.5Z'/%3E%3C/svg%3E");
+}
+
+.magi-home__decision-stage .agent-node.right::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M30 0H100V100H0V48ZM30.8 1.5L1.5 48.5V98.5H98.5V1.5Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M30 0H100V100H0V48ZM30.8 1.5L1.5 48.5V98.5H98.5V1.5Z'/%3E%3C/svg%3E");
+}
+
+.magi-home__decision-stage .agent-tag,
+.magi-home__decision-stage .agent-node small {
+  color: #69b98b;
+}
+
+.magi-home__decision-stage .agent-node strong {
+  color: #b8f8d2;
+  text-shadow: 0 0 7px rgba(115, 239, 168, 0.38);
+}
+
+.magi-home__decision-stage .vote-state {
+  min-height: 34px;
+  padding: 4px 11px;
+  border: 2px solid var(--node-outline);
+  color: var(--node-outline);
+  background: transparent;
+  font-size: clamp(16px, 1.4vw, 20px);
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 7px currentcolor;
+  box-shadow: 0 0 9px color-mix(in srgb, var(--node-outline) 28%, transparent);
+}
+
+.magi-home__decision-stage .agent-node.vote-approve { --node-outline: #8cff72; }
+.magi-home__decision-stage .agent-node.vote-reject { --node-outline: #ff6258; color: #ffaca7; }
+.magi-home__decision-stage .agent-node.vote-abstain { --node-outline: #f1d35c; color: #fff0a5; }
+.magi-home__decision-stage .vote-approve .vote-state,
+.magi-home__decision-stage .vote-reject .vote-state,
+.magi-home__decision-stage .vote-abstain .vote-state { color: var(--node-outline); background: transparent; }
+
 .magi-home__node-hotspots {
   position: absolute;
   z-index: 4;
@@ -225,7 +314,7 @@
 
 .magi-home__node-hotspot button:hover,
 .magi-home__node-hotspot button:focus-visible {
-  background: rgba(72, 245, 154, 0.035);
+  background: transparent;
   box-shadow: inset 0 0 0 1px rgba(126, 255, 183, 0.78), 0 0 18px rgba(72, 245, 154, 0.22);
 }
 

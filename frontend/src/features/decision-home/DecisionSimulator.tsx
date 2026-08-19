@@ -134,9 +134,11 @@ export function DecisionSimulator({
       <section className="magi-home__decision-stage" aria-label="MAGI 合議マトリクス">
         <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`}>
           <svg className="network-links" viewBox="0 0 600 420" preserveAspectRatio="none" aria-hidden="true">
-            <line x1="270.2" y1="175.3" x2="182.2" y2="212.7" vectorEffect="non-scaling-stroke" />
-            <line x1="329.8" y1="175.3" x2="417.8" y2="212.7" vectorEffect="non-scaling-stroke" />
-            <line x1="264" y1="333.8" x2="336" y2="333.8" vectorEffect="non-scaling-stroke" />
+            <g className="network-connectors">
+              <line x1="259.2" y1="180" x2="193.2" y2="208" vectorEffect="non-scaling-stroke" />
+              <line x1="340.8" y1="180" x2="406.8" y2="208" vectorEffect="non-scaling-stroke" />
+              <line x1="276" y1="333.8" x2="324" y2="333.8" vectorEffect="non-scaling-stroke" />
+            </g>
           </svg>
           <div className="core-node">
             <span>MAGI</span>

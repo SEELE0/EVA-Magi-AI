@@ -87,6 +87,7 @@ export function DecisionHome() {
   return (
     <main className="magi-home">
       <div className="screen-noise" aria-hidden="true" />
+      <div className="magi-home__scanlines" aria-hidden="true" />
       <header className="topbar">
         <div className="brand-block">
           <span className="brand-mark" aria-hidden="true">

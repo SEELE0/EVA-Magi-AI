@@ -20,6 +20,14 @@ describe('DecisionHome narrow viewport CSS', () => {
     expect(css).toMatch(/\.magi-home__decision-stage > \.magi-network\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*600px;[^}]*min-width:\s*0;/);
   });
 
+  it('adds subtle scanlines and renders the reused nodes as transparent outlines', () => {
+    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.3;[^}]*repeating-linear-gradient/);
+    expect(css).toMatch(/\.magi-home__decision-stage \.agent-node\s*\{[^}]*background:\s*transparent;/);
+    expect(css).toMatch(/\.magi-home__decision-stage \.vote-state\s*\{[^}]*min-height:\s*34px;[^}]*font-size:\s*clamp\(16px,/);
+    expect(css).toMatch(/\.magi-home__decision-stage \.network-connectors line\s*\{[^}]*stroke:\s*#69dca0;/);
+    expect(css).toMatch(/\.agent-node\.vote-reject\s*\{\s*--node-outline:\s*#ff6258;/);
+  });
+
   it('allows mobile content to expose layout errors instead of clipping them', () => {
     expect(css).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.magi-home\s*\{[^}]*overflow:\s*visible;/);
   });
