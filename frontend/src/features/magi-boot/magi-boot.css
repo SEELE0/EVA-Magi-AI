@@ -50,7 +50,7 @@
   stroke-dashoffset: 1;
   opacity: 0;
   filter: drop-shadow(0 0 2px rgba(151, 193, 159, 0.2));
-  animation: magi-boot-trace-ring 1350ms cubic-bezier(0.4, 0, 0.2, 1) var(--delay) forwards;
+  animation: magi-boot-trace-ring var(--magi-ring-duration, 1350ms) cubic-bezier(0.4, 0, 0.2, 1) var(--delay) forwards;
 }
 
 .magi-boot .ring-label {
@@ -67,7 +67,7 @@
   stroke: var(--magi-orange-dim);
   stroke-width: 3.2;
   vector-effect: non-scaling-stroke;
-  animation: magi-boot-energize-core 1180ms ease-in-out 100ms forwards;
+  animation: magi-boot-energize-core var(--magi-core-duration, 1180ms) ease-in-out var(--magi-core-delay, 100ms) forwards;
 }
 
 .magi-boot .core-name,
@@ -75,7 +75,7 @@
 .magi-boot .core-original {
   fill: var(--magi-orange-dim);
   text-anchor: middle;
-  animation: magi-boot-energize-core-text 1180ms ease-in-out 100ms forwards;
+  animation: magi-boot-energize-core-text var(--magi-core-duration, 1180ms) ease-in-out var(--magi-core-delay, 100ms) forwards;
 }
 
 .magi-boot .core-name { font-size: 28px; font-weight: 900; }
@@ -93,7 +93,7 @@
 
 .magi-boot .persona-branch {
   opacity: 0;
-  animation: magi-boot-reveal-dark-frame 140ms linear var(--delay) forwards;
+  animation: magi-boot-reveal-dark-frame var(--magi-frame-duration, 140ms) linear var(--delay) forwards;
 }
 
 .magi-boot .branch-frame {
@@ -101,7 +101,7 @@
   stroke: var(--magi-orange-dim);
   stroke-width: 3.2;
   vector-effect: non-scaling-stroke;
-  animation: magi-boot-energize-branch 1050ms ease-in-out calc(var(--delay) + 80ms) forwards;
+  animation: magi-boot-energize-branch var(--magi-branch-duration, 1050ms) ease-in-out calc(var(--delay) + var(--magi-branch-offset, 80ms)) forwards;
 }
 
 .magi-boot .branch-structure {
@@ -109,7 +109,7 @@
   stroke: var(--magi-orange-dim);
   stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
-  animation: magi-boot-energize-branch 1050ms ease-in-out calc(var(--delay) + 80ms) forwards;
+  animation: magi-boot-energize-branch var(--magi-branch-duration, 1050ms) ease-in-out calc(var(--delay) + var(--magi-branch-offset, 80ms)) forwards;
 }
 
 .magi-boot .branch-name,
@@ -123,13 +123,13 @@
 .magi-boot .branch-name {
   font-size: 10.5px;
   font-weight: 900;
-  animation: magi-boot-power-node 520ms ease-out var(--node-delay) forwards;
+  animation: magi-boot-power-node var(--magi-node-duration, 520ms) ease-out var(--node-delay) forwards;
 }
 
 .magi-boot .branch-section {
   font-size: 12.5px;
   font-weight: 800;
-  animation: magi-boot-power-label 420ms ease-out var(--label-delay) forwards;
+  animation: magi-boot-power-label var(--magi-label-duration, 420ms) ease-out var(--label-delay) forwards;
 }
 
 .magi-boot .crt-scanlines,

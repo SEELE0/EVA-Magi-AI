@@ -16,6 +16,12 @@ export interface MagiBootTestProps {
   interactive?: boolean;
   /** Shows the component-local scanline and vignette overlays. */
   showCrtEffects?: boolean;
+  /**
+   * Multiplies every animation delay and duration without changing geometry.
+   * Keep the default at 1 for the standalone preview; embedded flows may use
+   * a shorter scale to match their own timeline.
+   */
+  animationTimeScale?: number;
   className?: string;
   style?: CSSProperties;
   onReplay?: () => void;
@@ -24,10 +30,27 @@ export interface MagiBootTestProps {
 type MagiBootStyle = CSSProperties & {
   '--magi-boot-size': string;
   '--magi-boot-background': string;
+  '--magi-ring-duration': string;
+  '--magi-core-duration': string;
+  '--magi-core-delay': string;
+  '--magi-frame-duration': string;
+  '--magi-branch-duration': string;
+  '--magi-branch-offset': string;
+  '--magi-node-duration': string;
+  '--magi-label-duration': string;
 };
 
 function resolveSize(size: number | string) {
   return typeof size === 'number' ? `${size}px` : size;
+}
+
+function normalizeAnimationTimeScale(value: number) {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(4, Math.max(0.05, value));
+}
+
+function scaledTime(milliseconds: number, scale: number) {
+  return `${Math.round(milliseconds * scale)}ms`;
 }
 
 const rings = [
@@ -62,10 +85,12 @@ export function MagiBootTest({
   background = '#020202',
   interactive = true,
   showCrtEffects = true,
+  animationTimeScale = 1,
   className,
   style,
   onReplay
 }: MagiBootTestProps) {
+  const timeScale = normalizeAnimationTimeScale(animationTimeScale);
   const reactId = useId().split(':').join('');
   const [seed, setSeed] = useState(0);
   const ringGradientId = `magi-ring-gradient-${reactId}`;
@@ -80,7 +105,15 @@ export function MagiBootTest({
   const componentStyle = {
     ...style,
     '--magi-boot-size': resolveSize(size),
-    '--magi-boot-background': background
+    '--magi-boot-background': background,
+    '--magi-ring-duration': scaledTime(1350, timeScale),
+    '--magi-core-duration': scaledTime(1180, timeScale),
+    '--magi-core-delay': scaledTime(100, timeScale),
+    '--magi-frame-duration': scaledTime(140, timeScale),
+    '--magi-branch-duration': scaledTime(1050, timeScale),
+    '--magi-branch-offset': scaledTime(80, timeScale),
+    '--magi-node-duration': scaledTime(520, timeScale),
+    '--magi-label-duration': scaledTime(420, timeScale)
   } as MagiBootStyle;
 
   function restart() {
@@ -143,7 +176,7 @@ export function MagiBootTest({
           <g className="ring-layer">
             {rings.map((ring, index) => {
               // const labelDelay = 1450 + index * 150;
-              const ringDelay = 1000 + index * 560;
+              const ringDelay = (1000 + index * 560) * timeScale;
 
               return (
                 <g key={ring.radius}>
@@ -154,7 +187,7 @@ export function MagiBootTest({
                     r={ring.radius}
                     pathLength="1"
                     style={{
-                      '--delay': `${ringDelay}ms`,
+                      '--delay': `${Math.round(ringDelay)}ms`,
                       stroke: `url(#${ringGradientId})`
                     } as CSSProperties}
                   />
@@ -184,8 +217,8 @@ export function MagiBootTest({
                   className="persona-branch"
                   key={branch.id}
                   style={{
-                    '--delay': `${branch.delay}ms`,
-                    '--node-delay': `${branch.delay + 2210}ms`
+                    '--delay': scaledTime(branch.delay, timeScale),
+                    '--node-delay': scaledTime(branch.delay + 2210, timeScale)
                   } as CSSProperties}
                   transform={`rotate(${branch.rotation} 360 328.67)`}
                 >
@@ -218,7 +251,7 @@ export function MagiBootTest({
                         textLength={section.width}
                         lengthAdjust="spacingAndGlyphs"
                         style={{
-                          '--label-delay': `${branch.delay + 400 + index * 430}ms`
+                          '--label-delay': scaledTime(branch.delay + 400 + index * 430, timeScale)
                         } as CSSProperties}
                       >
                         {section.label}

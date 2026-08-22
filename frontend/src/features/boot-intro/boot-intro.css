@@ -1,0 +1,695 @@
+/*
+ * Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * License: https://www.gnu.org/licenses/agpl-3.0.html
+ * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
+ */
+
+/* IBM-era terminal grammar: a fixed character field, POST transcript, hard
+   cursor and amber-phosphor persistence. MAGI remains the one non-terminal artifact. */
+
+.boot-intro {
+  --boot-phosphor: #f08a31;
+  --boot-phosphor-hot: #ffc06a;
+  --boot-phosphor-dim: rgba(240, 138, 49, 0.5);
+  --boot-phosphor-faint: rgba(240, 138, 49, 0.18);
+  --boot-amber: #ff9a3c;
+  --boot-online: #8ce89f;
+  --boot-black: #080301;
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  overflow: hidden;
+  color: var(--boot-phosphor);
+  font-family: "IBM Plex Mono", "Px437 IBM VGA8", "Courier New", ui-monospace, monospace;
+  font-synthesis: none;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: none;
+}
+
+.boot-intro[data-boot-phase='exit'],
+.boot-intro[data-boot-phase='resync'],
+.boot-intro[data-boot-phase='reveal'] { pointer-events: none; }
+
+.boot-power-stage,
+.boot-scanlines {
+  position: absolute;
+  inset: 0;
+}
+
+.boot-power-stage {
+  z-index: 2;
+  overflow: hidden;
+  background: var(--boot-black);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.boot-power-stage::after {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 42%, rgba(20, 7, 1, 0.3) 74%, rgba(0, 0, 0, 0.84) 118%),
+    linear-gradient(90deg, rgba(158, 61, 8, 0.03), transparent 20% 80%, rgba(158, 61, 8, 0.03));
+}
+
+.boot-intro[data-boot-phase='power-on'] .boot-power-stage,
+.boot-post .boot-power-stage {
+  opacity: 1;
+  visibility: visible;
+}
+
+.boot-intro[data-boot-phase='reveal'] .boot-power-stage { visibility: hidden; }
+
+.boot-power-screen {
+  position: absolute;
+  inset: 0;
+  background: #120602;
+  opacity: 0;
+  filter: brightness(1);
+  transform: scaleX(0.012) scaleY(0.0015);
+  transform-origin: center;
+  box-shadow: 0 0 90px rgba(255, 129, 28, 0.2) inset;
+  will-change: filter, opacity, transform;
+}
+
+.boot-power-screen::before {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: #ffe0ad;
+  box-shadow: 0 0 12px #ff9a32, 0 0 52px rgba(255, 122, 19, 0.92);
+  opacity: 0;
+  transform: translateY(-50%) scaleX(0.02) scaleY(1);
+  transform-origin: center;
+}
+
+.boot-power-screen::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, rgba(255, 232, 190, 0.68) 0 1%, rgba(255, 154, 60, 0.34) 5%, transparent 28%),
+    linear-gradient(180deg, transparent 44%, rgba(255, 146, 49, 0.16) 49%, rgba(255, 205, 137, 0.3) 50%, rgba(255, 146, 49, 0.12) 52%, transparent 57%);
+  opacity: 0;
+}
+
+.boot-intro[data-boot-phase='power-on'] .boot-power-screen {
+  animation: boot-power-on 920ms linear forwards;
+}
+
+.boot-intro[data-boot-phase='power-on'] .boot-power-screen::before {
+  animation: boot-power-beam 920ms linear forwards;
+}
+
+.boot-intro[data-boot-phase='power-on'] .boot-power-screen::after {
+  animation: boot-phosphor-bloom 920ms steps(12, end) forwards;
+}
+
+.boot-post .boot-power-screen {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.boot-post .boot-power-screen::before,
+.boot-post .boot-power-screen::after { opacity: 0; }
+
+.boot-stage-viewport {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+}
+
+.boot-stage-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--boot-stage-width, 1280px);
+  height: var(--boot-stage-height, 720px);
+  contain: layout paint;
+  transform: translate(-50%, -50%) scale(var(--boot-stage-scale, 1));
+  transform-origin: center;
+  will-change: transform;
+}
+
+.boot-post-console {
+  position: absolute;
+  z-index: 2;
+  inset: 32px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  color: var(--boot-phosphor);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: 0.055em;
+  text-shadow: 0 0 5px rgba(255, 159, 68, 0.5), 1px 0 rgba(214, 88, 18, 0.24);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-post .boot-post-console {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 45ms steps(1, end);
+}
+
+.boot-terminal-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid rgba(240, 138, 49, 0.62);
+  opacity: 0;
+  animation: boot-terminal-pop 45ms steps(1, end) 30ms forwards;
+}
+
+.boot-machine-mark {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.boot-machine-mark strong {
+  color: var(--boot-phosphor-hot);
+  font-size: 42px;
+  line-height: 0.86;
+  letter-spacing: -0.09em;
+}
+
+.boot-machine-mark span,
+.boot-ipl-register span,
+.boot-terminal-footer {
+  color: var(--boot-phosphor-dim);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.boot-ipl-register {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 3px;
+  text-align: right;
+}
+
+.boot-ipl-register strong {
+  color: var(--boot-phosphor-hot);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.boot-terminal-body {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: 700px minmax(0, 1fr);
+  gap: 32px;
+  overflow: hidden;
+}
+
+.boot-transcript {
+  min-width: 0;
+  padding-top: 28px;
+  overflow: hidden;
+}
+
+.boot-transcript p { margin: 0; }
+
+.boot-firmware-title,
+.boot-copyright {
+  overflow: hidden;
+  width: 0;
+  white-space: nowrap;
+  animation: boot-type-copy 420ms steps(36, end) 100ms forwards;
+  animation-play-state: paused;
+}
+
+.boot-firmware-title { color: var(--boot-phosphor-hot); }
+
+.boot-copyright {
+  margin-top: 2px !important;
+  color: var(--boot-phosphor-dim);
+  animation-duration: 320ms;
+  animation-delay: 600ms;
+  animation-timing-function: steps(26, end);
+}
+
+.boot-terminal-batch { margin-top: 22px; }
+
+.boot-terminal-line {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 4.5ch minmax(130px, 1fr) auto minmax(9ch, auto);
+  gap: 14px;
+  align-items: baseline;
+  padding: 2px 0;
+  opacity: 0;
+  clip-path: inset(0 100% 0 0);
+  animation: boot-type-line 85ms steps(16, end) forwards;
+  animation-delay: calc(380ms + var(--boot-line-index) * 130ms);
+}
+
+.boot-firmware-checks .boot-terminal-line {
+  animation-duration: 180ms;
+  animation-delay: calc(1000ms + var(--boot-line-index) * 300ms);
+  animation-play-state: paused;
+}
+
+.boot-post :is(.boot-firmware-title, .boot-copyright, .boot-firmware-checks .boot-terminal-line) {
+  animation-play-state: running;
+}
+
+.boot-address {
+  color: var(--boot-phosphor-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.boot-check-name {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.boot-check-name::after {
+  min-width: 2ch;
+  flex: 1;
+  content: "................................................................";
+  color: var(--boot-phosphor-faint);
+  overflow: hidden;
+}
+
+.boot-check-name small {
+  color: var(--boot-phosphor-dim);
+  font-size: 0.68em;
+  letter-spacing: 0.07em;
+}
+
+.boot-check-value {
+  color: var(--boot-phosphor-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.boot-terminal-line b {
+  color: var(--boot-phosphor-hot);
+  font-size: inherit;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.boot-ipl-batch { margin-top: 18px; }
+
+.boot-command,
+.boot-loader-copy {
+  overflow: hidden;
+  width: 0;
+  color: var(--boot-phosphor-hot);
+  white-space: nowrap;
+  animation: boot-type-copy 260ms steps(34, end) forwards;
+}
+
+.boot-loader-copy {
+  margin: 7px 0 8px !important;
+  color: var(--boot-phosphor);
+  animation-delay: 220ms;
+}
+
+.boot-ipl-batch .boot-terminal-line {
+  animation-delay: calc(430ms + var(--boot-line-index) * 130ms);
+}
+
+.boot-node-row .boot-check-name::after { color: rgba(255, 154, 60, 0.22); }
+.boot-node-row b { color: var(--boot-amber); text-shadow: 0 0 7px rgba(240, 139, 50, 0.48); }
+.boot-node-row.is-online b {
+  color: var(--boot-online);
+  text-shadow: 0 0 7px rgba(140, 232, 159, 0.62);
+}
+
+.boot-ready-block {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(240, 138, 49, 0.35);
+  opacity: 0;
+  animation: boot-terminal-pop 70ms steps(1, end) 80ms forwards;
+}
+
+.boot-ready-block > p:first-child {
+  color: var(--boot-phosphor-dim);
+  font-size: 0.82em;
+}
+
+.boot-ready-block > strong {
+  display: block;
+  margin: 4px 0 9px;
+  color: var(--boot-phosphor-hot);
+  font-size: 22px;
+  letter-spacing: 0.09em;
+}
+
+.boot-final-command {
+  display: flex;
+  width: auto;
+  align-items: center;
+  animation: none;
+}
+
+.boot-command-enter {
+  margin-left: 1ch;
+  color: var(--boot-phosphor-dim);
+  font-size: 0.78em;
+}
+
+.boot-block-cursor {
+  display: inline-block;
+  width: 0.72em;
+  height: 1.02em;
+  margin-left: 0.22em;
+  background: var(--boot-phosphor-hot);
+  box-shadow: 0 0 7px rgba(255, 159, 68, 0.68);
+  animation: boot-block-cursor 620ms steps(1, end) infinite;
+}
+
+.boot-handoff-block {
+  display: grid;
+  margin-top: 10px;
+  gap: 2px;
+}
+
+.boot-handoff-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  opacity: 0;
+  clip-path: inset(0 100% 0 0);
+  animation: boot-type-line 140ms steps(18, start) forwards;
+  animation-delay: calc(200ms + var(--boot-line-index) * 520ms);
+}
+
+.boot-handoff-line span {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.boot-handoff-line span::after {
+  min-width: 2ch;
+  flex: 1;
+  content: "................................................................";
+  color: var(--boot-phosphor-faint);
+  overflow: hidden;
+}
+
+.boot-handoff-line b {
+  color: var(--boot-phosphor-hot);
+  font: inherit;
+  font-weight: 700;
+}
+
+.boot-magi-slot {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  overflow: clip;
+  border-left: 1px dashed rgba(240, 138, 49, 0.2);
+  opacity: 0;
+}
+
+.boot-intro:is([data-boot-phase='magi'], [data-boot-phase='post-stream'], [data-boot-phase='exit'], [data-boot-phase='resync'], [data-boot-phase='reveal']) .boot-magi-slot {
+  opacity: 1;
+  animation: boot-terminal-pop 50ms steps(1, end) forwards;
+}
+
+.boot-magi-module {
+  position: relative;
+  width: 430px !important;
+  filter: saturate(0.96) contrast(1.12);
+  pointer-events: none;
+}
+
+/* The reusable MAGI artwork has a multicolor ring gradient. Inside the LCL
+   boot terminal only, collapse it to an orange/amber luminance scale. */
+.boot-magi-module stop:nth-child(1) { stop-color: #ff5008; }
+.boot-magi-module stop:nth-child(2) { stop-color: #ff6f16; }
+.boot-magi-module stop:nth-child(3) { stop-color: #ff9738; }
+.boot-magi-module stop:nth-child(4) { stop-color: #ffb95d; }
+.boot-magi-module stop:nth-child(5) { stop-color: #ffd28a; }
+
+.boot-coprocessor-label,
+.boot-coprocessor-state {
+  position: absolute;
+  z-index: 2;
+  color: var(--boot-phosphor-dim);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.boot-coprocessor-label { top: 28px; left: 22px; }
+.boot-coprocessor-state { right: 10px; bottom: 12px; color: var(--boot-amber); }
+.boot-coprocessor-state.is-online {
+  color: var(--boot-online);
+  text-shadow: 0 0 7px rgba(140, 232, 159, 0.62);
+}
+
+.boot-terminal-footer {
+  display: grid;
+  min-height: 36px;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid rgba(240, 138, 49, 0.46);
+}
+
+.boot-terminal-footer > strong {
+  color: var(--boot-phosphor);
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.boot-skip {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 0 18px;
+  border: 0;
+  border-left: 1px solid rgba(240, 138, 49, 0.35);
+  border-radius: 0;
+  color: var(--boot-phosphor-dim);
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.boot-skip kbd {
+  color: var(--boot-phosphor-hot);
+  background: transparent;
+  font: inherit;
+}
+
+.boot-skip:hover { color: var(--boot-phosphor-hot); }
+.boot-skip:focus-visible { outline: 1px solid var(--boot-phosphor-hot); outline-offset: 4px; }
+
+.boot-scanlines {
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 150, 57, 0.075) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+}
+
+.boot-intro[data-boot-phase='power-on'] .boot-scanlines,
+.boot-post .boot-scanlines {
+  opacity: 0.56;
+  animation: static-shift 180ms steps(2) infinite;
+}
+
+.boot-intro[data-boot-phase='reveal'] .boot-scanlines {
+  opacity: 0;
+  animation: none;
+}
+
+.boot-exit-curtain {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+}
+
+.boot-exit-curtain::before {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: var(--boot-phosphor-hot);
+  box-shadow: 0 0 11px rgba(255, 154, 60, 0.9);
+  opacity: 0;
+}
+
+.boot-intro[data-boot-phase='resync'] .boot-exit-curtain {
+  opacity: 1;
+  transition: opacity 28ms steps(1, end);
+}
+
+.boot-intro[data-boot-phase='reveal'] .boot-exit-curtain {
+  opacity: 0;
+  transition: opacity var(--boot-resync-blank-ms, 240ms) steps(3, end);
+}
+
+.boot-intro[data-boot-phase='reveal'] .boot-exit-curtain::before {
+  animation: boot-vertical-sync var(--boot-resync-blank-ms, 240ms) steps(3, end) 1;
+}
+
+@keyframes boot-power-on {
+  0% { opacity: 0; filter: brightness(2.1); transform: scaleX(0.012) scaleY(0.0015); }
+  9% { opacity: 1; filter: brightness(2.35); transform: scaleX(0.04) scaleY(0.002); }
+  28% { opacity: 1; filter: brightness(1.85); transform: scaleX(0.78) scaleY(0.003); }
+  39% { opacity: 1; filter: brightness(1.55); transform: scaleX(1) scaleY(0.008); }
+  54% { opacity: 1; filter: brightness(1.32); transform: scaleX(0.998) scaleY(0.18); }
+  68% { opacity: 1; filter: brightness(1.62); transform: scaleX(1.004) scaleY(1.035); }
+  76% { opacity: 0.86; filter: brightness(0.76); transform: scaleX(0.997) scaleY(0.94); }
+  84% { opacity: 1; filter: brightness(1.18); transform: scaleX(1.002) scaleY(1.012); }
+  93% { opacity: 0.96; filter: brightness(0.94); transform: scaleX(1) scaleY(0.992); }
+  100% { opacity: 1; filter: brightness(1); transform: scale(1); }
+}
+
+@keyframes boot-power-beam {
+  0%, 5% { opacity: 0; transform: translateY(-50%) scaleX(0.02) scaleY(1); }
+  10% { opacity: 1; transform: translateY(-50%) scaleX(0.05) scaleY(2.4); }
+  31% { opacity: 1; transform: translateY(-50%) scaleX(0.94) scaleY(1.4); }
+  43% { opacity: 0.94; transform: translateY(-50%) scaleX(1) scaleY(3.2); }
+  61% { opacity: 0.42; transform: translateY(-50%) scaleX(1) scaleY(10); }
+  72%, 100% { opacity: 0; transform: translateY(-50%) scaleX(1) scaleY(16); }
+}
+
+@keyframes boot-phosphor-bloom {
+  0%, 7% { opacity: 0; }
+  12% { opacity: 0.92; }
+  34% { opacity: 0.34; }
+  57% { opacity: 0.62; }
+  69% { opacity: 0.2; }
+  77% { opacity: 0.42; }
+  88%, 100% { opacity: 0; }
+}
+
+@keyframes boot-type-line {
+  0% { opacity: 1; clip-path: inset(0 100% 0 0); }
+  100% { opacity: 1; clip-path: inset(0); }
+}
+
+@keyframes boot-type-copy {
+  0% { width: 0; }
+  100% { width: 100%; }
+}
+
+@keyframes boot-terminal-pop {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes boot-block-cursor {
+  0%, 52% { opacity: 1; }
+  53%, 100% { opacity: 0; }
+}
+
+@keyframes boot-vertical-sync {
+  0% { top: 42%; opacity: 0; }
+  26% { top: 47%; opacity: 0.9; }
+  58% { top: 53%; opacity: 0.35; }
+  100% { top: 57%; opacity: 0; }
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-post-console {
+  inset: 32px;
+  font-size: 16px;
+  line-height: 1.18;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-terminal-header {
+  gap: 20px;
+  padding-bottom: 12px;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-machine-mark {
+  display: grid;
+  gap: 4px;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-machine-mark strong { font-size: 44px; }
+.boot-intro[data-boot-layout='portrait'] .boot-machine-mark span { font-size: 10px; }
+.boot-intro[data-boot-layout='portrait'] .boot-ipl-register span { display: none; }
+
+.boot-intro[data-boot-layout='portrait'] .boot-terminal-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 570px minmax(0, 1fr);
+  gap: 0;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-transcript { padding-top: 24px; }
+.boot-intro[data-boot-layout='portrait'] .boot-terminal-batch { margin-top: 20px; }
+.boot-intro[data-boot-layout='portrait'] .boot-ipl-batch { margin-top: 16px; }
+
+.boot-intro[data-boot-layout='portrait'] .boot-terminal-line {
+  grid-template-columns: 4.5ch minmax(170px, 1fr) auto minmax(8ch, auto);
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-check-name small { display: none; }
+.boot-intro[data-boot-layout='portrait'] .boot-ready-block { margin-top: 16px; }
+
+.boot-intro[data-boot-layout='portrait'] .boot-magi-slot {
+  border-top: 1px dashed rgba(240, 138, 49, 0.2);
+  border-left: 0;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-magi-module { width: 360px !important; }
+
+.boot-intro[data-boot-layout='portrait'] .boot-coprocessor-label { top: 20px; left: 0; }
+.boot-intro[data-boot-layout='portrait'] .boot-coprocessor-state { right: 0; bottom: 8px; }
+
+.boot-intro[data-boot-layout='portrait'] .boot-terminal-footer {
+  min-height: 44px;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  font-size: 10px;
+}
+
+.boot-intro[data-boot-layout='portrait'] .boot-terminal-footer > span { display: none; }
+.boot-intro[data-boot-layout='portrait'] .boot-skip { gap: 8px; padding-left: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-intro *,
+  .boot-intro *::before,
+  .boot-intro *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

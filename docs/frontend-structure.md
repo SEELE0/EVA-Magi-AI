@@ -36,8 +36,8 @@ frontend/
 
 `index.html` 加载 `src/app/main.tsx`，由 React 渲染 `App.tsx`。`App` 按以下顺序组装页面：
 
-1. `BootIntro`：显示 CRT 电源与 POST 系统自检动画。
-2. `DecisionHome`：显示 title 顶栏、原 MAGI 三节点判定动画和问题输入，并承载历史子路由。
+1. `BootIntro`：显示 CRT 电源与 POST 系统自检动画。每个浏览器会话只播放一次，`sessionStorage` 标记在动画播完或被跳过时才写入；点击画面或按 Esc/Enter/空格可跳过，`?boot=replay` 可强制重播。收尾由 `exit`（幕布淡入）和 `reveal`（幕后卸载内容、幕布淡出）两个阶段平滑交接，幕布时长由 `CURTAIN_FADE_MS` 通过 `--boot-curtain-fade-ms` 注入 CSS，阶段状态挂在根节点 `data-boot-phase` 上。动画结束后通过 `onFinished` 回调恢复背景交互。
+2. `DecisionHome`：显示 title 顶栏、原 MAGI 三节点判定动画和问题输入，并承载历史子路由。开机动画期间背景容器处于 `inert`，键盘焦点不会落入背景表单。
 
 `BootIntro` 检测到 `prefers-reduced-motion: reduce` 时会直接跳过动画。
 
@@ -164,6 +164,7 @@ npm run build
 
 - Mock 服务的三种裁定路径。
 - Remote 不可用时的自动降级。
+- BootIntro 的阶段推进、跳过交互、会话标记与 reduced-motion 降级（jsdom + 假定时器），以及 BootScene 静态结构与其 CSS 约束。
 - 新主页边界、节点配置、历史存储、完整模拟输出与窄屏 CSS 约束。
 - NERV 标志和 MAGI 几何动画的静态结构渲染。
 - BIOS 自检动画的关键文案与终端结构渲染。

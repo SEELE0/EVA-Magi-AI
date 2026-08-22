@@ -4,15 +4,20 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
  */
-// import { BiosStart } from '../features/bios-start';
-import { BootIntro } from '../features/boot-intro/BootIntro';
+import { useState } from 'react';
+import { BootIntro, shouldShowBootIntro } from '../features/boot-intro/BootIntro';
 import { DecisionHome } from '../features/decision-home';
 
 export default function App() {
+  const [introActive, setIntroActive] = useState(shouldShowBootIntro);
+
   return (
     <>
-      <BootIntro />
-      <DecisionHome />
+      <BootIntro onFinished={() => setIntroActive(false)} />
+      {/* inert keeps keyboard focus out of the console while the boot overlay is up. */}
+      <div inert={introActive}>
+        <DecisionHome />
+      </div>
     </>
   );
 }

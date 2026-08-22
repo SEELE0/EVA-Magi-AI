@@ -29,10 +29,17 @@ describe('MagiBoot module', () => {
 
   it('supports a transparent, non-interactive embedded mode', () => {
     const markup = renderToStaticMarkup(
-      <MagiBoot background="transparent" interactive={false} showCrtEffects={false} />
+      <MagiBoot
+        animationTimeScale={0.5}
+        background="transparent"
+        interactive={false}
+        showCrtEffects={false}
+      />
     );
 
     expect(markup).toContain('--magi-boot-background:transparent');
+    expect(markup).toContain('--magi-ring-duration:675ms');
+    expect(markup).toContain('--delay:500ms');
     expect(markup).not.toContain('role="button"');
     expect(markup).not.toContain('tabindex="0"');
     expect(markup).not.toContain('magi-boot--interactive');
