@@ -277,7 +277,7 @@ export function BootScene({ phase, onSkip }: BootSceneProps) {
                   <p className="boot-loader-copy">LOADING PERSONALITY MATRIX...</p>
                   {bootNodes.map((node, index) => (
                     <div
-                      className={`boot-terminal-line boot-node-row${flags.stream ? ' is-online' : ''}`}
+                      className={`boot-terminal-line boot-node-row ${flags.stream ? 'is-online' : 'is-waiting'}`}
                       key={node.name}
                       style={{ '--boot-line-index': index } as CSSProperties}
                     >
@@ -286,7 +286,15 @@ export function BootScene({ phase, onSkip }: BootSceneProps) {
                         {node.name}<small>{node.role}</small>
                       </span>
                       <span className="boot-check-value">CHANNEL {index + 1}</span>
-                      <b>{flags.stream ? 'ONLINE' : 'PASS'}</b>
+                      <b aria-label={flags.stream ? 'ONLINE' : 'WAITING'}>
+                        {flags.stream ? 'ONLINE' : (
+                          <>
+                            <span aria-hidden="true" className="boot-wait-marker">&gt;</span>
+                            <span>WAIT</span>
+                            <span aria-hidden="true" className="boot-wait-dots" />
+                          </>
+                        )}
+                      </b>
                     </div>
                   ))}
                 </div>

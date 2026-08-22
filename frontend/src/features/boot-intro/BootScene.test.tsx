@@ -24,6 +24,10 @@ describe('BootScene', () => {
     expect(markup).toContain('--magi-boot-size:min(100%, 430px)');
     expect(markup).toContain('--magi-boot-background:transparent');
     expect(markup).toContain('--magi-ring-duration:878ms');
+    expect(markup.match(/boot-node-row is-waiting/g)).toHaveLength(3);
+    expect(markup.match(/aria-label="WAITING"/g)).toHaveLength(3);
+    expect(markup.match(/boot-wait-dots/g)).toHaveLength(3);
+    expect(markup).not.toContain('>PASS</b>');
     expect(markup).not.toContain('THREE INDEPENDENT SYSTEMS ONLINE');
     expect(markup).not.toContain('START DECISION_CONSOLE');
   });
@@ -34,6 +38,8 @@ describe('BootScene', () => {
     expect(markup).toContain('data-boot-phase="post-stream"');
     expect(markup).toContain('MELCHIOR-1');
     expect(markup).toContain('boot-node-row is-online');
+    expect(markup).not.toContain('boot-node-row is-waiting');
+    expect(markup).not.toContain('boot-wait-dots');
     expect(markup).toContain('boot-coprocessor-state is-online');
     expect(markup).toContain('ONLINE');
     expect(markup).toContain('THREE INDEPENDENT SYSTEMS ONLINE');

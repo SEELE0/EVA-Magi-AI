@@ -336,6 +336,30 @@
 
 .boot-node-row .boot-check-name::after { color: rgba(255, 154, 60, 0.22); }
 .boot-node-row b { color: var(--boot-amber); text-shadow: 0 0 7px rgba(240, 139, 50, 0.48); }
+.boot-node-row.is-waiting b {
+  display: grid;
+  min-width: 9ch;
+  grid-template-columns: 1ch 4ch 3ch;
+  justify-content: end;
+  color: var(--boot-phosphor-dim);
+  text-shadow: none;
+  animation: boot-wait-breathe 1200ms ease-in-out infinite;
+}
+
+.boot-wait-marker {
+  text-align: left;
+}
+
+.boot-wait-dots {
+  width: 3ch;
+  text-align: left;
+}
+
+.boot-wait-dots::after {
+  content: "";
+  animation: boot-wait-dots 800ms steps(1, end) infinite;
+}
+
 .boot-node-row.is-online b {
   color: var(--boot-online);
   text-shadow: 0 0 7px rgba(140, 232, 159, 0.62);
@@ -623,6 +647,26 @@
   26% { top: 47%; opacity: 0.9; }
   58% { top: 53%; opacity: 0.35; }
   100% { top: 57%; opacity: 0; }
+}
+
+@keyframes boot-wait-dots {
+  0%, 24% { content: ""; }
+  25%, 49% { content: "."; }
+  50%, 74% { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+
+@keyframes boot-wait-breathe {
+  0%, 100% {
+    color: var(--boot-phosphor-dim);
+    opacity: 0.58;
+    text-shadow: none;
+  }
+  50% {
+    color: var(--boot-phosphor-hot);
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(255, 192, 106, 0.62);
+  }
 }
 
 .boot-intro[data-boot-layout='portrait'] .boot-post-console {

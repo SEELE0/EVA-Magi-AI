@@ -50,6 +50,16 @@ describe('BootIntro layout CSS', () => {
     expect(css).not.toMatch(/#8fcca0|#c5f4c8|#8df2aa|rgba\(111, 229, 143/);
   });
 
+  it('keeps all three personality channels in one synchronized waiting state', () => {
+    expect(css).toMatch(/\.boot-node-row\.is-waiting b\s*\{[^}]*animation:\s*boot-wait-breathe 1200ms ease-in-out infinite;/);
+    expect(css).toMatch(/\.boot-wait-dots::after\s*\{[^}]*animation:\s*boot-wait-dots 800ms steps\(1, end\) infinite;/);
+    expect(css).not.toContain('boot-node-poll');
+    expect(css).not.toMatch(/\.boot-node-row\.is-waiting b\s*\{[^}]*animation-delay:/);
+    expect(css).not.toMatch(/\.boot-wait-dots::after\s*\{[^}]*animation-delay:/);
+    expect(css).toMatch(/@keyframes boot-wait-dots[\s\S]*?content:\s*"\.\.\.";/);
+    expect(css).toMatch(/@keyframes boot-wait-breathe[\s\S]*?50%\s*\{[^}]*color:\s*var\(--boot-phosphor-hot\);[^}]*opacity:\s*1;/);
+  });
+
   it('keeps viewport units and overlapping size breakpoints out of the logical canvas', () => {
     expect(css).not.toMatch(/\b(?:vw|vh|cqi|cqb)\b/);
     expect(css).not.toMatch(/@media \((?:max|min)-(?:width|height):/);
