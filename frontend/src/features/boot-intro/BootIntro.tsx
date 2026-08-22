@@ -45,12 +45,14 @@ const BOOT_MAGI_TIME_SCALE = 0.65;
 const MAGI_BOOT_COMPLETE_MS = Math.round(
   MAGI_BOOT_START_MS + MAGI_BOOT_ANIMATION_DURATION_MS * BOOT_MAGI_TIME_SCALE + 100
 );
-const EXIT_START_MS = MAGI_BOOT_COMPLETE_MS + 2400;
-/** The terminal keeps control long enough for the display-driver handoff to be legible. */
-export const HANDOFF_DURATION_MS = 3600;
+/** Brief pause after START DECISION_CONSOLE before the first handoff row begins. */
+export const READY_HOLD_MS = 500;
+const EXIT_START_MS = MAGI_BOOT_COMPLETE_MS + READY_HOLD_MS;
+/** Both handoff rows finish at 0.86s, leaving a short visible confirmation hold. */
+export const HANDOFF_DURATION_MS = 1300;
 /** A real mode switch reads as a short signal loss, not a polished cross-fade. */
 export const RESYNC_BLANK_MS = 240;
-const REVEAL_SETTLE_MS = 450;
+const REVEAL_SETTLE_MS = 300;
 const RESYNC_START_MS = EXIT_START_MS + HANDOFF_DURATION_MS;
 const REVEAL_START_MS = RESYNC_START_MS + RESYNC_BLANK_MS;
 const INTRO_HIDDEN_MS = REVEAL_START_MS + REVEAL_SETTLE_MS;
@@ -137,6 +139,7 @@ export const BOOT_SCHEDULE_MS = {
   postHeader: POST_HEADER_START_MS,
   magi: MAGI_BOOT_START_MS,
   postStream: MAGI_BOOT_COMPLETE_MS,
+  readyHold: READY_HOLD_MS,
   exit: EXIT_START_MS,
   handoffDuration: HANDOFF_DURATION_MS,
   resync: RESYNC_START_MS,
@@ -329,7 +332,7 @@ export function BootScene({ phase, onSkip }: BootSceneProps) {
             <div className="boot-magi-slot">
               {flags.magi ? (
                 <>
-                  <span className="boot-coprocessor-label">COPROCESSOR DISPLAY · CHANNEL 01</span>
+                  <span className="boot-coprocessor-label">COPROCESSOR DISPLAY</span>
                   <MagiBoot
                     background="transparent"
                     className="boot-magi-module"

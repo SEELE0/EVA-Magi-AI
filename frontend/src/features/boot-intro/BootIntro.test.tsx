@@ -70,9 +70,13 @@ describe('BootIntro', () => {
     expect(currentPhase(handle)).toBeNull();
   });
 
-  it('holds the completed handoff lines long enough to be read', () => {
+  it('continues promptly after the command while keeping the handoff legible', () => {
+    expect(BOOT_SCHEDULE_MS.readyHold).toBe(500);
+    // The first handoff row begins 200ms into exit, so the visible command gap is about 700ms.
+    expect(BOOT_SCHEDULE_MS.readyHold + 200).toBeLessThanOrEqual(700);
     // The second row finishes at 0.86s (200ms start + 1 x 520ms stagger + 140ms print).
-    expect(BOOT_SCHEDULE_MS.handoffDuration - 860).toBeGreaterThanOrEqual(2000);
+    expect(BOOT_SCHEDULE_MS.handoffDuration - 860).toBeGreaterThanOrEqual(400);
+    expect(BOOT_SCHEDULE_MS.hidden - BOOT_SCHEDULE_MS.postStream).toBeLessThanOrEqual(2400);
   });
 
   it('writes the session flag only when the intro is over', () => {
