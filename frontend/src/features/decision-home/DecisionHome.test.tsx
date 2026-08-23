@@ -35,7 +35,7 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('正常');
     expect(markup).toContain('判定議題');
     expect(markup).toContain('判定開始');
-    expect(markup).toContain('最終判定');
+    expect(markup).toContain('magi-home__deliberation-grid');
     expect(markup).toContain('class="magi-network "');
     expect(markup).toContain('class="network-links"');
     expect(markup).toContain('viewBox="0 0 600 420"');
@@ -44,6 +44,7 @@ describe('DecisionHome structure', () => {
     expect(markup).not.toContain('EVENT LOG');
     expect(markup).not.toContain('magi-home__events');
     expect(markup).not.toContain('magi-home__verdict');
+    expect(markup).not.toContain('RESULT OF THE DELIBERATION');
     expect(markup).not.toContain('CONSENSUS');
     expect(markup).not.toContain('STATUS');
     expect(markup).not.toContain('RESPONSE');
