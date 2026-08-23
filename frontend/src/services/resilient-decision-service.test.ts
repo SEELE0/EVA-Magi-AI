@@ -6,17 +6,25 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain/decision';
-import type { DecisionService } from './decision-service';
+import { DecisionServiceError, type DecisionService } from './decision-service';
 import { ResilientDecisionService } from './resilient-decision-service';
 
 class UnavailableService implements DecisionService {
-  private unavailable(): never { throw new Error('network unavailable'); }
+  private unavailable(): never {
+    throw new DecisionServiceError('network unavailable', 'NETWORK_UNAVAILABLE', { retryable: true });
+  }
   getSystemStatus(): Promise<SystemStatus> { return Promise.reject(this.unavailable()); }
   getAgents(): Promise<Agent[]> { return Promise.reject(this.unavailable()); }
   createDecision(_request: DecisionRequest): Promise<Decision> { return Promise.reject(this.unavailable()); }
   getDecision(_decisionId: string): Promise<Decision> { return Promise.reject(this.unavailable()); }
   executeDecision(_decisionId: string): Promise<Decision> { return Promise.reject(this.unavailable()); }
   getEvents(_decisionId: string): Promise<DecisionEvent[]> { return Promise.reject(this.unavailable()); }
+}
+
+class BusinessErrorService extends UnavailableService {
+  getSystemStatus(): Promise<SystemStatus> {
+    return Promise.reject(new DecisionServiceError('invalid request', 'INVALID_REQUEST', { status: 422 }));
+  }
 }
 
 class LocalService implements DecisionService {
@@ -38,5 +46,15 @@ describe('ResilientDecisionService', () => {
     expect(status.connection).toBe('degraded');
     expect(status.source).toBe('mock');
     expect(status.notice).toContain('LOCAL EMULATOR');
+  });
+
+  it('does not hide a remote business error behind the local emulator', async () => {
+    const service = new ResilientDecisionService(new BusinessErrorService(), new LocalService());
+
+    await expect(service.getSystemStatus()).rejects.toMatchObject({
+      code: 'INVALID_REQUEST',
+      status: 422,
+      retryable: false
+    });
   });
 });

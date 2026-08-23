@@ -1,5 +1,7 @@
 # MAGI Boot Intro Design QA
 
+> 本文档记录历史视觉验收，不代表当前自动化测试总数或当前工作树的全部验证结果；当前验证命令以根目录 `README.md` 为准。
+
 - Reference: `/var/folders/nj/1r9ns1312jv6p28y151bxydm0000gn/T/codex-clipboard-15851033-0ce0-4871-ab43-36ebad42dd44.png`
 - Implementation: `/private/tmp/magi-angular-main-desktop.png`
 - Logo source: `/Users/ask/Documents/Magi-Nerv多agent协同AI/frontend/asset/images.jpeg`

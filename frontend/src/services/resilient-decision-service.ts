@@ -5,7 +5,7 @@
  * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
  */
 import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../domain/decision';
-import type { DecisionService } from './decision-service';
+import { canFallbackToLocal, type DecisionRequestOptions, type DecisionService } from './decision-service';
 
 /** Falls back once when the optional remote endpoint is unavailable. */
 export class ResilientDecisionService implements DecisionService {
@@ -16,24 +16,39 @@ export class ResilientDecisionService implements DecisionService {
     private readonly fallback: DecisionService
   ) {}
 
-  async getSystemStatus(): Promise<SystemStatus> {
+  async getSystemStatus(options?: DecisionRequestOptions): Promise<SystemStatus> {
     try {
-      const status = await this.active().getSystemStatus();
+      const status = await this.active().getSystemStatus(options);
       return this.usingFallback
         ? { ...status, connection: 'degraded', notice: 'REMOTE UNAVAILABLE: LOCAL EMULATOR ACTIVE' }
         : status;
-    } catch {
+    } catch (error) {
+      if (this.usingFallback || !canFallbackToLocal(error)) throw error;
       this.usingFallback = true;
-      const status = await this.fallback.getSystemStatus();
+      const status = await this.fallback.getSystemStatus(options);
       return { ...status, connection: 'degraded', notice: 'REMOTE UNAVAILABLE: LOCAL EMULATOR ACTIVE' };
     }
   }
 
-  getAgents(): Promise<Agent[]> { return this.withFallback((service) => service.getAgents()); }
-  createDecision(request: DecisionRequest): Promise<Decision> { return this.withFallback((service) => service.createDecision(request)); }
-  getDecision(decisionId: string): Promise<Decision> { return this.withFallback((service) => service.getDecision(decisionId)); }
-  executeDecision(decisionId: string): Promise<Decision> { return this.withFallback((service) => service.executeDecision(decisionId)); }
-  getEvents(decisionId: string): Promise<DecisionEvent[]> { return this.withFallback((service) => service.getEvents(decisionId)); }
+  getAgents(options?: DecisionRequestOptions): Promise<Agent[]> {
+    return this.withFallback((service) => service.getAgents(options));
+  }
+
+  createDecision(request: DecisionRequest, options?: DecisionRequestOptions): Promise<Decision> {
+    return this.withFallback((service) => service.createDecision(request, options));
+  }
+
+  getDecision(decisionId: string, options?: DecisionRequestOptions): Promise<Decision> {
+    return this.withFallback((service) => service.getDecision(decisionId, options));
+  }
+
+  executeDecision(decisionId: string, options?: DecisionRequestOptions): Promise<Decision> {
+    return this.withFallback((service) => service.executeDecision(decisionId, options));
+  }
+
+  getEvents(decisionId: string, options?: DecisionRequestOptions): Promise<DecisionEvent[]> {
+    return this.withFallback((service) => service.getEvents(decisionId, options));
+  }
 
   private active() { return this.usingFallback ? this.fallback : this.primary; }
 
@@ -41,7 +56,7 @@ export class ResilientDecisionService implements DecisionService {
     try {
       return await operation(this.active());
     } catch (error) {
-      if (this.usingFallback) throw error;
+      if (this.usingFallback || !canFallbackToLocal(error)) throw error;
       this.usingFallback = true;
       return operation(this.fallback);
     }

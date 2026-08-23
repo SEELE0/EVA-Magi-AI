@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Agent, AgentId, Decision, DecisionRequest, SystemStatus } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
+import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentNode } from '../decision-console/ConsolePrimitives';
 import {
   defaultPriority,
@@ -76,16 +77,21 @@ export function DecisionSimulator({
   const [priority, setPriority] = useState<DecisionRequest['priority']>(defaultPriority);
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pollTimer = useRef<number | null>(null);
+  const activeController = useRef<AbortController | null>(null);
+  const mounted = useRef(false);
 
-  useEffect(() => () => {
-    if (pollTimer.current !== null) window.clearInterval(pollTimer.current);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      activeController.current?.abort();
+      activeController.current = null;
+    };
   }, []);
 
-  function stopPolling() {
-    if (pollTimer.current === null) return;
-    window.clearInterval(pollTimer.current);
-    pollTimer.current = null;
+  function cancelActiveRun() {
+    activeController.current?.abort();
+    activeController.current = null;
   }
 
   function selectScenario(nextScenario: Scenario) {
@@ -102,27 +108,42 @@ export function DecisionSimulator({
 
     setError(null);
     setIsExecuting(true);
-    stopPolling();
+    cancelActiveRun();
+
+    const controller = new AbortController();
+    activeController.current = controller;
+    let polling: Promise<Decision> | null = null;
 
     try {
-      const created = await service.createDecision({ subject: subject.trim(), priority, simulationHint: scenario });
+      const requestOptions = { signal: controller.signal };
+      const created = await service.createDecision(
+        { subject: subject.trim(), priority, simulationHint: scenario },
+        requestOptions
+      );
+      if (!mounted.current || controller.signal.aborted) return;
       setDecision(created);
-      const execution = service.executeDecision(created.id);
-
-      pollTimer.current = window.setInterval(() => {
-        void service.getDecision(created.id).then(setDecision).catch(() => undefined);
-      }, 220);
-
-      const completed = await execution;
-      stopPolling();
+      polling = pollDecisionUntilTerminal(service, created.id, {
+        ...requestOptions,
+        onDecision: setDecision
+      });
+      const execution = await service.executeDecision(created.id, requestOptions);
+      const completed = isTerminalDecision(execution) ? execution : await polling;
+      controller.abort();
+      await polling.catch(() => undefined);
+      if (!mounted.current) return;
       setDecision(completed);
       onHistoryCreated(createDecisionHistoryEntry(completed, scenario, agents, configs));
       onStatusChange(await service.getSystemStatus());
     } catch (cause) {
-      stopPolling();
-      setError(cause instanceof Error ? cause.message : '判定回線に障害が発生しました');
+      const shouldReportError = mounted.current;
+      controller.abort();
+      await polling?.catch(() => undefined);
+      if (shouldReportError) {
+        setError(cause instanceof Error ? cause.message : '判定回線に障害が発生しました');
+      }
     } finally {
-      setIsExecuting(false);
+      if (activeController.current === controller) activeController.current = null;
+      if (mounted.current) setIsExecuting(false);
     }
   }
 

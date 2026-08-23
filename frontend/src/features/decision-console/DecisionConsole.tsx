@@ -4,10 +4,11 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../../domain/decision';
 import { createDecisionService } from '../../services/create-decision-service';
 import type { DecisionService } from '../../services/decision-service';
+import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentNode, PanelTitle, Readout, Telemetry } from './ConsolePrimitives';
 import {
   connectionCopy,
@@ -32,14 +33,25 @@ export function DecisionConsole() {
   const [scenario, setScenario] = useState<Scenario>('standard');
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activeController = useRef<AbortController | null>(null);
+  const mounted = useRef(false);
 
   useEffect(() => {
+    mounted.current = true;
     void Promise.all([service.getSystemStatus(), service.getAgents()])
       .then(([nextStatus, nextAgents]) => {
+        if (!mounted.current) return;
         setStatus(nextStatus);
         setAgents(nextAgents);
       })
-      .catch(() => setError('起動シーケンスが中断されました'));
+      .catch(() => {
+        if (mounted.current) setError('起動シーケンスが中断されました');
+      });
+    return () => {
+      mounted.current = false;
+      activeController.current?.abort();
+      activeController.current = null;
+    };
   }, []);
 
   const activeVotes = decision?.votes ?? null;
@@ -60,31 +72,39 @@ export function DecisionConsole() {
     setIsExecuting(true);
     setEvents([]);
 
+    const controller = new AbortController();
+    activeController.current = controller;
+    let polling: Promise<Decision> | null = null;
+
     try {
-      const created = await service.createDecision({ subject, priority, simulationHint: scenario });
+      const requestOptions = { signal: controller.signal };
+      const created = await service.createDecision({ subject: subject.trim(), priority, simulationHint: scenario }, requestOptions);
+      if (!mounted.current || controller.signal.aborted) return;
       setDecision(created);
-      setEvents(await service.getEvents(created.id));
-      const execution = service.executeDecision(created.id);
-
-      // Polling keeps the client compatible with the documented REST event endpoint.
-      const poll = window.setInterval(async () => {
-        const [latestDecision, latestEvents] = await Promise.all([
-          service.getDecision(created.id),
-          service.getEvents(created.id)
-        ]);
-        setDecision(latestDecision);
-        setEvents(latestEvents);
-      }, 220);
-
-      const completed = await execution;
-      window.clearInterval(poll);
+      setEvents(await service.getEvents(created.id, requestOptions));
+      polling = pollDecisionUntilTerminal(service, created.id, {
+        ...requestOptions,
+        onDecision: setDecision,
+        onEvents: setEvents
+      });
+      const execution = await service.executeDecision(created.id, requestOptions);
+      const completed = isTerminalDecision(execution) ? execution : await polling;
+      controller.abort();
+      await polling.catch(() => undefined);
+      if (!mounted.current) return;
       setDecision(completed);
       setEvents(await service.getEvents(created.id));
       setStatus(await service.getSystemStatus());
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '判定回線に障害が発生しました');
+      const shouldReportError = mounted.current;
+      controller.abort();
+      await polling?.catch(() => undefined);
+      if (shouldReportError) {
+        setError(cause instanceof Error ? cause.message : '判定回線に障害が発生しました');
+      }
     } finally {
-      setIsExecuting(false);
+      if (activeController.current === controller) activeController.current = null;
+      if (mounted.current) setIsExecuting(false);
     }
   }
 

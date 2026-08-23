@@ -12,21 +12,40 @@ import type {
   SystemStatus
 } from '../domain/decision';
 
+export interface DecisionRequestOptions {
+  signal?: AbortSignal;
+}
+
 export interface DecisionService {
-  getSystemStatus(): Promise<SystemStatus>;
-  getAgents(): Promise<Agent[]>;
-  createDecision(request: DecisionRequest): Promise<Decision>;
-  getDecision(decisionId: string): Promise<Decision>;
-  executeDecision(decisionId: string): Promise<Decision>;
-  getEvents(decisionId: string): Promise<DecisionEvent[]>;
+  getSystemStatus(options?: DecisionRequestOptions): Promise<SystemStatus>;
+  getAgents(options?: DecisionRequestOptions): Promise<Agent[]>;
+  createDecision(request: DecisionRequest, options?: DecisionRequestOptions): Promise<Decision>;
+  getDecision(decisionId: string, options?: DecisionRequestOptions): Promise<Decision>;
+  executeDecision(decisionId: string, options?: DecisionRequestOptions): Promise<Decision>;
+  getEvents(decisionId: string, options?: DecisionRequestOptions): Promise<DecisionEvent[]>;
+}
+
+export interface DecisionServiceErrorOptions {
+  retryable?: boolean;
+  status?: number;
 }
 
 export class DecisionServiceError extends Error {
   constructor(
     message: string,
-    public readonly code = 'SERVICE_ERROR'
+    public readonly code = 'SERVICE_ERROR',
+    options: DecisionServiceErrorOptions = {}
   ) {
     super(message);
     this.name = 'DecisionServiceError';
+    this.retryable = options.retryable ?? false;
+    this.status = options.status;
   }
+
+  public readonly retryable: boolean;
+  public readonly status?: number;
+}
+
+export function canFallbackToLocal(error: unknown): error is DecisionServiceError {
+  return error instanceof DecisionServiceError && error.retryable;
 }

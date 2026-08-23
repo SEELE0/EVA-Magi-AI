@@ -53,7 +53,7 @@ Vite 配置了五个构建入口：
 | `nerv-logo-anime-test.html` | `src/features/nerv-logo-anime/main.tsx` | 单独调试 NERV 标志动画 |
 | `bios-start-test.html` | `src/features/bios-start/BiosStart.tsx` | BIOS 自检动画的实验入口 |
 
-预览页用于组件级视觉验证，不参与主应用的业务路由。`bios-start-test.html` 目前直接加载组件模块，属于实验性入口；若要像其他预览页一样独立渲染，需要补充 React `createRoot` 入口。
+预览页用于组件级视觉验证，不参与主应用的业务路由。`bios-start-test.html` 通过 `src/features/bios-start/main.tsx` 独立渲染，仍属于实验性入口；它与其他预览页一样拥有自己的 React `createRoot` 入口。
 
 ## 分层与依赖方向
 
@@ -100,7 +100,7 @@ React 组件不直接调用 `fetch`，因此可以在不改动界面的情况下
 | --- | --- |
 | `mock-decision-service.ts` | 在内存中模拟完整决策过程，支持 standard/reject/review 场景 |
 | `http-decision-service.ts` | 按 REST 契约请求远程后端，并将网络与 HTTP 错误转换为 `DecisionServiceError` |
-| `resilient-decision-service.ts` | 远程请求失败后一次性切换至 Mock，后续请求继续使用 Mock |
+| `resilient-decision-service.ts` | 远程网络不可达、超时或服务端暂时不可用时一次性切换至 Mock；参数、权限、资源和业务错误继续上抛 |
 | `create-decision-service.ts` | 根据 Vite 环境变量组装正确的服务实例 |
 
 运行模式：
@@ -149,7 +149,7 @@ VITE_API_BASE_URL=http://localhost:8000
 3. 界面获得 `decisionId` 后调用 `executeDecision`。
 4. 执行期间每 220ms 调用 `getDecision`，旧 `is-scanning` 动画和逐票状态由领域对象驱动。
 5. 完成后生成三个 Agent 的用户可见模拟输出并写入本地历史。
-6. 历史路由读取列表或单条明细。Remote 模式下若基础决策后端失败，`ResilientDecisionService` 切换至 Mock。
+6. 历史路由读取列表或单条明细。Remote 模式下只有网络不可达、请求超时或 5xx/429 等可重试基础设施错误才会触发 `ResilientDecisionService` 切换至 Mock；业务错误不会被伪装成本地成功。
 
 未来把配置和历史迁移到后端时，应先扩展 `DecisionService`，对应 `docs/openapi.yaml` 的 configuration、历史分页和 results 路由；React 组件不要直接调用 `fetch`。
 
@@ -170,7 +170,7 @@ npm run build
 - NERV 标志和 MAGI 几何动画的静态结构渲染。
 - BIOS 自检动画的关键文案与终端结构渲染。
 
-新增服务实现时，应继续实现 `DecisionService` 接口；新增独立视觉页时，需同时在 `vite.config.ts` 的 `build.rollupOptions.input` 中注册 HTML 入口。
+新增服务实现时，应继续实现 `DecisionService` 接口，并在需要时传递 `AbortSignal` 以支持卸载和超时取消；新增独立视觉页时，需同时在 `vite.config.ts` 的 `build.rollupOptions.input` 中注册 HTML 入口。
 
 ## 源码许可标识
 
