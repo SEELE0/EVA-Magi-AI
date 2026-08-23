@@ -20,6 +20,24 @@ describe('DecisionHome narrow viewport CSS', () => {
     expect(css).toMatch(/\.magi-home__decision-stage > \.magi-network\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*600px;[^}]*min-width:\s*0;/);
   });
 
+  it('defines the standby-to-deliberation layout and subject transform', () => {
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="deliberation"\][\s\S]*?\.magi-home__deliberation-grid\s*\{[^}]*grid-template-columns:\s*minmax\(150px,\s*0\.22fr\)/);
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(0\.88\)/);
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.04\)/);
+  });
+
+  it('defines the screenshot-inspired terminal information layers', () => {
+    expect(css).toMatch(/\.magi-home__link-strip\s*\{/);
+    expect(css).toMatch(/\.magi-home__motion-banner\s*\{/);
+    expect(css).toMatch(/\.magi-home__system-stack\s*,\s*\.magi-home__layer-stack\s*\{/);
+    expect(css).toMatch(/\.magi-home__motion-banner\.verdict-rejected[\s\S]*?--home-alert/);
+    expect(css).toContain('--home-review: #f1d35c;');
+  });
+
+  it('provides a reduced-motion fallback for the terminal transition', () => {
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.magi-home__motion-banner[\s\S]*?animation:\s*none;[\s\S]*?transition:\s*none;/);
+  });
+
   it('adds subtle scanlines and renders the reused nodes as transparent outlines', () => {
     expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.3;[^}]*repeating-linear-gradient/);
     expect(css).toMatch(/\.magi-home__decision-stage \.agent-node\s*\{[^}]*background:\s*transparent;/);
@@ -30,6 +48,7 @@ describe('DecisionHome narrow viewport CSS', () => {
 
   it('allows mobile content to expose layout errors instead of clipping them', () => {
     expect(css).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.magi-home\s*\{[^}]*overflow:\s*visible;/);
+    expect(css).toMatch(/@media \(max-width: 480px\)[\s\S]*?grid-template-areas:[\s\S]*?"subject"[\s\S]*?"execute"[\s\S]*?"error"/);
   });
 
   it('allows history titles, metadata and response paragraphs to wrap', () => {
