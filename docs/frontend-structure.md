@@ -36,7 +36,7 @@ frontend/
 
 `index.html` 加载 `src/app/main.tsx`，由 React 渲染 `App.tsx`。`App` 按以下顺序组装页面：
 
-1. `BootIntro`：显示 CRT 电源与 POST 系统自检动画。每个浏览器会话只播放一次，`sessionStorage` 标记在动画播完或被跳过时才写入；点击画面或按 Esc/Enter/空格可跳过，`?boot=replay` 可强制重播。收尾由 `exit`（幕布淡入）和 `reveal`（幕后卸载内容、幕布淡出）两个阶段平滑交接，幕布时长由 `CURTAIN_FADE_MS` 通过 `--boot-curtain-fade-ms` 注入 CSS，阶段状态挂在根节点 `data-boot-phase` 上。动画结束后通过 `onFinished` 回调恢复背景交互。
+1. `BootIntro`：显示 CRT 电源开机、POST 自检、MAGI 几何加载与终端交接动画。每个浏览器会话只播放一次，`sessionStorage` 标记在动画播完或被跳过时才写入；按 Esc 或点击底部 BYPASS AUTO-IPL 按钮可跳过，`?boot=replay` 可强制重播。收尾依次经历 `exit`（显示驱动交接行）、`resync`（短促黑场，时长 `RESYNC_BLANK_MS` 经 `--boot-resync-blank-ms` 注入 CSS）与 `reveal`（露出主页）三个阶段；全部排期常量集中导出为 `BOOT_SCHEDULE_MS`，阶段状态挂在根节点 `data-boot-phase` 上。全屏舞台按横竖屏预设（`BOOT_STAGE_PRESETS`）等比缩放并记录在 `data-boot-layout`。动画结束后通过 `onFinished` 回调恢复背景交互。
 2. `DecisionHome`：显示 title 顶栏、原 MAGI 三节点判定动画和问题输入，并承载历史子路由。开机动画期间背景容器处于 `inert`，键盘焦点不会落入背景表单。
 
 `BootIntro` 检测到 `prefers-reduced-motion: reduce` 时会直接跳过动画。
@@ -140,7 +140,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ### `MagiBootTest` / `MagiBoot`
 
-通过 SVG 绘制核心三角形、同心圆和三个人格分支。支持 `size`、`className`、`style` 和 `onReplay`，点击或使用 Enter/空格键可重播。`MagiBoot` 是 `MagiBootTest` 的导出别名。
+通过 SVG 绘制核心三角形、同心圆和三个人格分支。支持 `size`、`background`、`interactive`、`showCrtEffects`、`animationTimeScale`（整体缩放动画时长而不改变几何）、`className`、`style` 和 `onReplay`，点击或使用 Enter/空格键可重播。`MagiBoot` 是 `MagiBootTest` 的导出别名。
 
 ## 典型数据流
 
@@ -163,7 +163,8 @@ npm run build
 当前单元测试覆盖：
 
 - Mock 服务的三种裁定路径。
-- Remote 不可用时的自动降级。
+- Remote 网络故障（含请求超时）时的一次性自动降级；后端业务错误如实上抛而不降级。
+- HTTP 服务的请求超时与后端错误码映射。
 - BootIntro 的阶段推进、跳过交互、会话标记与 reduced-motion 降级（jsdom + 假定时器），以及 BootScene 静态结构与其 CSS 约束。
 - 新主页边界、节点配置、历史存储、完整模拟输出与窄屏 CSS 约束。
 - NERV 标志和 MAGI 几何动画的静态结构渲染。

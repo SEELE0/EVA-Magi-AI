@@ -34,11 +34,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## 开机动画
 
-~~访问 `http://localhost:5173/` 会播放 NERV 标志的扇形展开、CRT 开机和系统自检动画，然后进入 MAGI 决策控制台。~~
-
-~~访问 `http://localhost:5173/` 会先播放 CRT 电源开机与 POST 系统自检动画，然后进入 MAGI 决策控制台。~~
-
-访问 `http://localhost:5173/` 会先播放 CRT 电源开机与 POST 系统自检动画，经黑场淡出进入 `DecisionHome`。动画每个浏览器会话只播放一次；点击画面或按 Esc/Enter/空格可随时跳过，URL 加 `?boot=replay` 可强制重播。当系统启用“减少动态效果”时，会跳过启动动画。主页业务区只包含旧版 MAGI 三节点判定动画和问题输入；title/topbar、状态与导航位于其上方。
+访问 `http://localhost:5173/` 会先播放 CRT 电源开机与 POST 系统自检动画，经显示驱动交接与短促黑场再同步进入 `DecisionHome`。动画每个浏览器会话只播放一次；按 Esc 或点击画面底部的 BYPASS AUTO-IPL 按钮可随时跳过，URL 加 `?boot=replay` 可强制重播。当系统启用“减少动态效果”时，会跳过启动动画。主页业务区只包含旧版 MAGI 三节点判定动画和问题输入；title/topbar、状态与导航位于其上方。
 
 NERV 标志动画与 MAGI 几何启动动画已拆分为可复用组件，可通过以下独立页面预览：
 
