@@ -2,9 +2,11 @@
 
 一个以 MAGI 决策系统为主题的前后端项目。当前已实现 React/Vite 前端模拟应用；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
 
+![1787762978228](image/README/1787762978228.png)
+
 ## 启动
 
-仅在 Mac 本机预览时，从仓库根目录执行：
+仅在本机预览时，从仓库根目录执行：
 
 ```bash
 npm install
