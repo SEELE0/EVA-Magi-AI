@@ -10,7 +10,8 @@ export default defineConfig({
         decisionConsoleLab: 'decision-console-lab.html',
         magiBootTest: 'magi-boot-test.html',
         nervLogoAnimeTest: 'nerv-logo-anime-test.html',
-        biosStartTest: 'bios-start-test.html'
+        biosStartTest: 'bios-start-test.html',
+        magiDirectLinkTest: 'magi-direct-link-test.html'
       }
     }
   },
