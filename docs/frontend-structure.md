@@ -9,16 +9,18 @@ frontend/
 ├── asset/                              原始图像资源
 ├── index.html                          主应用 HTML 入口
 ├── magi-boot-test.html                 MAGI 几何动画预览入口
+├── magi-direct-link-test.html          原作风格直连页预览入口
 ├── nerv-logo-anime-test.html           NERV 标志动画预览入口
 ├── src/
 │   ├── app/                              主应用组装与全局样式
-│   ├── domain/                           跨界面、跨服务共用的领域类型
+│   ├── domain/                           跨界面、跨服务领域类型与主页模式
 │   ├── features/
 │   │   ├── bios-start/                  BIOS 自检动画组件与实验入口
 │   │   ├── boot-intro/                  主页 CRT/POST 开机层
 │   │   ├── decision-console/            保留的旧控制台组件与试验田
 │   │   ├── decision-home/               当前主页、节点配置、历史与明细
 │   │   ├── magi-boot/                   MAGI 几何启动组件与预览页
+│   │   ├── magi-direct-link-test/       原作风格直连界面与预览页
 │   │   └── nerv-logo-anime/             NERV 标志组件与预览页
 │   ├── labs/                             旧控制台独立实验页入口
 │   ├── services/                         决策服务接口、Mock、HTTP 与降级适配
@@ -36,20 +38,21 @@ frontend/
 
 `index.html` 加载 `src/app/main.tsx`，由 React 渲染 `App.tsx`。`App` 按以下顺序组装页面：
 
-1. `BootIntro`：显示 CRT 电源开机、POST 自检、MAGI 几何加载与终端交接动画。每个浏览器会话只播放一次，`sessionStorage` 标记在动画播完或被跳过时才写入；按 Esc 或点击底部 BYPASS AUTO-IPL 按钮可跳过，`?boot=replay` 可强制重播。收尾依次经历 `exit`（显示驱动交接行）、`resync`（短促黑场，时长 `RESYNC_BLANK_MS` 经 `--boot-resync-blank-ms` 注入 CSS）与 `reveal`（露出主页）三个阶段；全部排期常量集中导出为 `BOOT_SCHEDULE_MS`，阶段状态挂在根节点 `data-boot-phase` 上。全屏舞台按横竖屏预设（`BOOT_STAGE_PRESETS`）等比缩放并记录在 `data-boot-layout`。动画结束后通过 `onFinished` 回调恢复背景交互。
-2. `DecisionHome`：显示 title 顶栏、原 MAGI 三节点判定动画和问题输入，并承载历史子路由。开机动画期间背景容器处于 `inert`，键盘焦点不会落入背景表单。
+1. `BootIntro`：显示 CRT 电源开机、POST 自检、MAGI 几何加载与终端交接动画。主流程是 `power-on → post-header → magi → post-stream → mode-select → exit → resync → reveal`。Esc 与 BYPASS AUTO-IPL 只快进到 `mode-select`，不完成启动；用户确认 `original` 或 `modern` 后才写入 `sessionStorage`、执行显示驱动交接并露出主页。桌面端保留方向键/Enter；`(hover: none) and (pointer: coarse)` 输入设备显示两步触控确认。`?boot=replay` 可强制重播。排期常量集中导出为 `BOOT_SCHEDULE_MS`，阶段状态挂在 `data-boot-phase` 上，舞台按 `BOOT_STAGE_PRESETS` 等比缩放并记录在 `data-boot-layout`。
+2. `App`：通过 `domain/home-mode.ts` 读写当前标签页的主页模式。`original` 渲染 `MagiDirectLinkTest`，`modern` 渲染 `DecisionHome`。开机层消失前，背景容器保持 `inert`，键盘焦点不会落入背景界面。
 
-`BootIntro` 检测到 `prefers-reduced-motion: reduce` 时会直接跳过动画。
+`BootIntro` 检测到 `prefers-reduced-motion: reduce` 时会直接进入模式选择，不会跳过选择进入主页。
 
 ### 独立预览页
 
-Vite 配置了五个构建入口：
+Vite 配置了六个构建入口：
 
 | 页面 | React 入口 | 用途 |
 | --- | --- | --- |
 | `index.html` | `src/app/main.tsx` | 完整应用 |
 | `decision-console-lab.html` | `src/labs/decision-console/main.tsx` | 保留旧 `DecisionConsole` 的组件实验页 |
 | `magi-boot-test.html` | `src/features/magi-boot/main.tsx` | 单独调试 MAGI 几何动画 |
+| `magi-direct-link-test.html` | `src/features/magi-direct-link-test/main.tsx` | 单独预览原作风格 MAGI Direct Link 界面 |
 | `nerv-logo-anime-test.html` | `src/features/nerv-logo-anime/main.tsx` | 单独调试 NERV 标志动画 |
 | `bios-start-test.html` | `src/features/bios-start/BiosStart.tsx` | BIOS 自检动画的实验入口 |
 
@@ -116,7 +119,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## 当前模拟应用
 
-`DecisionHome.tsx` 是当前主容器：
+`DecisionHome.tsx` 是 `modern` 模式的主容器：
 
 - `#/` 只显示原 title 顶栏、复用的三节点判定舞台、问题/优先级/场景输入和紧凑裁定。
 - 鼠标悬停、键盘聚焦或点击节点会显示可配置提示并打开 `AgentConfigDialog`。
@@ -132,7 +135,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ### `BiosStart`
 
-显示橙色 CRT BIOS 硬件自检、三个 MAGI 节点上线与终端交接动画。组件已由 `features/bios-start/index.ts` 导出，但主应用 `App.tsx` 中的导入仍处于注释状态，当前主页继续使用 `BootIntro`。
+显示橙色 CRT BIOS 硬件自检、三个 MAGI 节点上线与终端交接动画。组件已由 `features/bios-start/index.ts` 导出，但主应用并未挂载它，当前启动层使用 `BootIntro`。
 
 ### `NervLogoAnime`
 
@@ -154,6 +157,15 @@ VITE_API_BASE_URL=http://localhost:8000
 未来把配置和历史迁移到后端时，应先扩展 `DecisionService`，对应 `docs/openapi.yaml` 的 configuration、历史分页和 results 路由；React 组件不要直接调用 `fetch`。
 
 ## 测试与构建
+
+本机启动与同局域网手机联调分别使用：
+
+```bash
+npm run dev
+npm run dev -- --host 0.0.0.0 --port 5174
+```
+
+第二条命令会让 Vite 监听所有网卡；手机需访问终端输出的 `Network` 地址。如果只监听 `127.0.0.1`，局域网设备无法连接。
 
 ```bash
 npm run test
