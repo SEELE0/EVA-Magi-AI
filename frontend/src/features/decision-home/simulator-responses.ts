@@ -2,7 +2,6 @@
  * Copyright (C) 2026 SEELE0
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
- * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
  */
 import { AGENT_IDS, type Agent, type AgentId, type Decision, type Vote } from '../../domain/decision';
 import type { Scenario } from '../decision-console/console-config';

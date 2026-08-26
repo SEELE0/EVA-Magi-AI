@@ -2,7 +2,6 @@
  * Copyright (C) 2026 SEELE0
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
- * Commercial license: https://github.com/SEELE0/EVAMagi-AI/blob/main/COMMERCIAL_LICENSE.md
  */
 // Vitest runs in Node, while the production tsconfig intentionally omits Node globals.
 // @ts-expect-error Node's built-in module is available to the test runtime.

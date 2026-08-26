@@ -92,9 +92,12 @@ npm run lint:api
 
 ## 许可证
 
-本项目采用双重许可：
+本项目采用 **GNU AGPL-3.0-or-later** 单一许可：可以免费使用、修改及部署，但必须遵守 AGPL 的源码提供义务（含网络交互场景下向用户提供对应源代码）。
 
-1. **GNU AGPL-3.0-or-later**：可以免费使用、修改及部署，但必须遵守 AGPL 的源码提供及其他义务。
-2. **商业许可证**：如果需要闭源使用、集成到闭源产品或无法遵守 AGPL，请联系版权方取得商业授权。
+完整条款见仓库根目录的 [LICENSE](LICENSE) 或 [GNU AGPL-3.0 官方原文](https://www.gnu.org/licenses/agpl-3.0.html)。
 
-完整条款见 [GNU AGPL-3.0 官方原文](https://www.gnu.org/licenses/agpl-3.0.html)和 [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md)。
+## 二创声明
+
+- 本项目是以《新世纪福音战士》（新世紀エヴァンゲリオン）中 MAGI 决策系统为主题的**非商业粉丝二次创作项目**，与 Khara 及任何相关权利方无关。
+- 「新世纪福音战士」「エヴァンゲリオン」「MAGI」「NERV」等名称与相关素材的著作权、商标权归其原权利人所有；项目中由本项目作者编写的代码，其著作权归项目作者，并按上述 AGPL 许可发布。
+- 本项目不用于任何商业用途。若权利人认为本项目内容不适当，请通过 [GitHub Issues](https://github.com/SEELE0/EVAMagi-AI/issues) 联系，确认后将及时处理。
