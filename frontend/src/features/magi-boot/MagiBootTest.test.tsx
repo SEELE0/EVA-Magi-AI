@@ -45,4 +45,10 @@ describe('MagiBoot module', () => {
     expect(markup).not.toContain('crt-vignette');
     expect(markup).not.toContain('crt-scanlines');
   });
+
+  it('can render directly at the completed animation frame', () => {
+    const markup = renderToStaticMarkup(<MagiBoot animationComplete />);
+
+    expect(markup).toContain('magi-boot--complete');
+  });
 });

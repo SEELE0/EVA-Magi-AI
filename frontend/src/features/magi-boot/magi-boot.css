@@ -132,6 +132,50 @@
   animation: magi-boot-power-label var(--magi-label-duration, 420ms) ease-out var(--label-delay) forwards;
 }
 
+/* Used when a parent flow fast-forwards its intro. The component mounts at the
+   same final frame its animations would normally reach. */
+.magi-boot--complete :is(
+  .ring-trace,
+  .ring-label,
+  .core-triangle,
+  .core-name,
+  .core-number,
+  .core-original,
+  .hierarchy-number,
+  .persona-branch,
+  .branch-frame,
+  .branch-structure,
+  .branch-name,
+  .branch-section
+) {
+  animation: none;
+}
+
+.magi-boot--complete .ring-trace {
+  opacity: 0.78;
+  stroke-dashoffset: 0;
+}
+
+.magi-boot--complete .ring-label { opacity: 0.86; transform: translateX(0); }
+.magi-boot--complete .hierarchy-number,
+.magi-boot--complete .persona-branch { opacity: 1; }
+
+.magi-boot--complete :is(.core-triangle, .branch-frame, .branch-structure) {
+  stroke: var(--magi-orange);
+  filter: drop-shadow(0 0 1.5px rgba(255, 131, 2, 0.64)) drop-shadow(0 0 7px rgba(255, 81, 2, 0.76));
+}
+
+.magi-boot--complete :is(.core-name, .core-number, .core-original) {
+  fill: var(--magi-orange);
+  filter: drop-shadow(0 0 3px rgba(255, 81, 2, 0.6));
+}
+
+.magi-boot--complete :is(.branch-name, .branch-section) {
+  fill: var(--magi-orange);
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(255, 81, 2, 0.66));
+}
+
 .magi-boot .crt-scanlines,
 .magi-boot .crt-vignette {
   position: absolute;

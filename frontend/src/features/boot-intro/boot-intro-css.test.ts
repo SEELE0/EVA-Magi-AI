@@ -64,9 +64,17 @@ describe('BootIntro layout CSS', () => {
     expect(css).not.toMatch(/@media \((?:max|min)-(?:width|height):/);
   });
 
-  it('uses one portrait composition whose free row absorbs extra height', () => {
-    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-terminal-body\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*grid-template-rows:\s*570px minmax\(0, 1fr\);/);
+  it('uses one touch-safe portrait composition whose free row absorbs extra height', () => {
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-terminal-body\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*grid-template-rows:\s*710px minmax\(0, 1fr\);/);
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-option\s*\{[^}]*min-height:\s*68px;/);
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-confirm\s*\{[^}]*min-height:\s*68px;/);
     expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-magi-slot\s*\{[^}]*border-top:\s*1px dashed/);
+  });
+
+  it('shows the explicit confirm command only for coarse non-hover input', () => {
+    expect(css).toMatch(/\.boot-mode-confirm\s*\{[^}]*display:\s*none;/);
+    expect(css).toMatch(/@media \(hover: none\) and \(pointer: coarse\)\s*\{[\s\S]*?\.boot-mode-confirm\s*\{\s*display:\s*grid;/);
+    expect(css).not.toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-help--keyboard\s*\{[^}]*display:\s*none;/);
   });
 
   it('keeps the MAGI artwork fixed inside the shared canvas coordinate system', () => {

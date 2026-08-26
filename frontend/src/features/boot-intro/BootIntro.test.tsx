@@ -6,6 +6,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BOOT_INTRO_SESSION_KEY, BOOT_SCHEDULE_MS, BootIntro } from './BootIntro';
 
@@ -16,11 +17,11 @@ interface IntroHandle {
   root: Root;
 }
 
-function renderIntro(onFinished?: () => void): IntroHandle {
+function renderIntro(props: ComponentProps<typeof BootIntro> = {}): IntroHandle {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  act(() => root.render(<BootIntro onFinished={onFinished} />));
+  act(() => root.render(<BootIntro {...props} />));
   return { container, root };
 }
 
@@ -32,6 +33,21 @@ function advance(ms: number) {
   act(() => {
     vi.advanceTimersByTime(ms);
   });
+}
+
+function press(key: string) {
+  const event = new KeyboardEvent('keydown', { key, cancelable: true });
+  act(() => window.dispatchEvent(event));
+  return event;
+}
+
+function advanceToModeSelect() {
+  advance(BOOT_SCHEDULE_MS.modeSelect);
+}
+
+function finishConfirmedIntro() {
+  press('Enter');
+  advance(BOOT_SCHEDULE_MS.confirmedHidden);
 }
 
 describe('BootIntro', () => {
@@ -49,7 +65,7 @@ describe('BootIntro', () => {
     document.body.removeAttribute('style');
   });
 
-  it('plays every phase on schedule and unmounts after the reveal', () => {
+  it('plays the boot sequence, waits for a mode choice, then performs the handoff', () => {
     const handle = renderIntro();
 
     expect(currentPhase(handle)).toBe('power-on');
@@ -59,7 +75,13 @@ describe('BootIntro', () => {
     expect(currentPhase(handle)).toBe('magi');
     advance(BOOT_SCHEDULE_MS.postStream - BOOT_SCHEDULE_MS.magi);
     expect(currentPhase(handle)).toBe('post-stream');
-    advance(BOOT_SCHEDULE_MS.exit - BOOT_SCHEDULE_MS.postStream);
+    advance(BOOT_SCHEDULE_MS.modeSelect - BOOT_SCHEDULE_MS.postStream);
+    expect(currentPhase(handle)).toBe('mode-select');
+
+    advance(5000);
+    expect(currentPhase(handle)).toBe('mode-select');
+
+    press('Enter');
     expect(currentPhase(handle)).toBe('exit');
     advance(BOOT_SCHEDULE_MS.handoffDuration);
     expect(currentPhase(handle)).toBe('resync');
@@ -69,23 +91,62 @@ describe('BootIntro', () => {
     expect(currentPhase(handle)).toBeNull();
   });
 
-  it('continues promptly after the command while keeping the handoff legible', () => {
+  it('opens the selector promptly after the command and keeps confirmed handoff legible', () => {
     expect(BOOT_SCHEDULE_MS.readyHold).toBe(500);
-    // The first handoff row begins 200ms into exit, so the visible command gap is about 700ms.
-    expect(BOOT_SCHEDULE_MS.readyHold + 200).toBeLessThanOrEqual(700);
+    expect(BOOT_SCHEDULE_MS.modeSelect - BOOT_SCHEDULE_MS.postStream).toBe(500);
     // The second row finishes at 0.86s (200ms start + 1 x 520ms stagger + 140ms print).
     expect(BOOT_SCHEDULE_MS.handoffDuration - 860).toBeGreaterThanOrEqual(400);
-    expect(BOOT_SCHEDULE_MS.hidden - BOOT_SCHEDULE_MS.postStream).toBeLessThanOrEqual(2400);
+    expect(BOOT_SCHEDULE_MS.confirmedHidden).toBeLessThanOrEqual(1900);
   });
 
-  it('writes the session flag only when the intro is over', () => {
+  it('switches the highlighted mode with either arrow and confirms only on Enter', () => {
+    const onModeSelected = vi.fn();
+    const handle = renderIntro({ initialMode: 'modern', onModeSelected });
+
+    advanceToModeSelect();
+    const options = [...handle.container.querySelectorAll<HTMLElement>('[role="radio"]')];
+    expect(options).toHaveLength(2);
+    expect(options[1]?.getAttribute('aria-checked')).toBe('true');
+
+    expect(press('ArrowUp').defaultPrevented).toBe(true);
+    expect(options[0]?.getAttribute('aria-checked')).toBe('true');
+    expect(onModeSelected).not.toHaveBeenCalled();
+
+    expect(press('ArrowDown').defaultPrevented).toBe(true);
+    expect(options[1]?.getAttribute('aria-checked')).toBe('true');
+    press('ArrowUp');
+    press('Enter');
+
+    expect(onModeSelected).toHaveBeenCalledWith('original');
+    expect(currentPhase(handle)).toBe('exit');
+  });
+
+  it('lets touch and mouse users select a row and confirm it explicitly', () => {
+    const onModeSelected = vi.fn();
+    const handle = renderIntro({ initialMode: 'modern', onModeSelected });
+
+    press('Escape');
+    const originalOption = handle.container.querySelectorAll<HTMLButtonElement>('[role="radio"]')[0];
+    const confirmButton = handle.container.querySelector<HTMLButtonElement>('.boot-mode-confirm');
+
+    act(() => originalOption?.click());
+    expect(originalOption?.getAttribute('aria-checked')).toBe('true');
+    expect(confirmButton?.textContent).toContain('CONFIRM ORIGINAL / DIRECT LINK');
+    expect(onModeSelected).not.toHaveBeenCalled();
+
+    act(() => confirmButton?.click());
+    expect(onModeSelected).toHaveBeenCalledWith('original');
+    expect(currentPhase(handle)).toBe('exit');
+  });
+
+  it('does not write the boot session flag while waiting for a choice', () => {
     const handle = renderIntro();
 
-    advance(BOOT_SCHEDULE_MS.postStream);
-    expect(currentPhase(handle)).toBe('post-stream');
+    advanceToModeSelect();
+    expect(currentPhase(handle)).toBe('mode-select');
     expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBeNull();
 
-    advance(BOOT_SCHEDULE_MS.hidden - BOOT_SCHEDULE_MS.postStream);
+    finishConfirmedIntro();
     expect(currentPhase(handle)).toBeNull();
     expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBe('1');
   });
@@ -93,10 +154,10 @@ describe('BootIntro', () => {
   it('stays hidden for the rest of the tab session after playing once', () => {
     window.sessionStorage.setItem(BOOT_INTRO_SESSION_KEY, '1');
     const onFinished = vi.fn();
-    const handle = renderIntro(onFinished);
+    const handle = renderIntro({ onFinished });
 
     expect(handle.container.querySelector('.boot-intro')).toBeNull();
-    advance(BOOT_SCHEDULE_MS.hidden);
+    advance(0);
     expect(currentPhase(handle)).toBeNull();
     expect(onFinished).toHaveBeenCalled();
   });
@@ -110,33 +171,40 @@ describe('BootIntro', () => {
     expect(currentPhase(handle)).toBe('power-on');
   });
 
-  it('skips to the ending on Escape and still marks the session', () => {
-    const handle = renderIntro();
+  it('fast-forwards to mode selection on Escape without entering the homepage', () => {
+    const onFinished = vi.fn();
+    const handle = renderIntro({ onFinished });
 
     advance(BOOT_SCHEDULE_MS.magi + 100);
     expect(currentPhase(handle)).toBe('magi');
 
-    act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    });
-    expect(currentPhase(handle)).toBe('resync');
-    expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBe('1');
+    press('Escape');
+    expect(currentPhase(handle)).toBe('mode-select');
+    expect(handle.container.querySelector('.magi-boot--complete')).not.toBeNull();
+    expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBeNull();
+    expect(onFinished).not.toHaveBeenCalled();
 
-    advance(BOOT_SCHEDULE_MS.skipHidden);
-    expect(currentPhase(handle)).toBeNull();
+    advance(BOOT_SCHEDULE_MS.modeSelect + 5000);
+    expect(currentPhase(handle)).toBe('mode-select');
+    expect(handle.container.querySelector('.magi-boot--complete')).not.toBeNull();
+
+    press('Escape');
+    expect(currentPhase(handle)).toBe('mode-select');
+    expect(onFinished).not.toHaveBeenCalled();
   });
 
-  it('skips from the explicit skip control', () => {
+  it('fast-forwards to mode selection from the explicit skip control', () => {
     const handle = renderIntro();
 
     advance(500);
     act(() => {
       handle.container.querySelector<HTMLButtonElement>('.boot-skip')?.click();
     });
-    expect(currentPhase(handle)).toBe('resync');
+    expect(currentPhase(handle)).toBe('mode-select');
+    expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBeNull();
 
-    advance(BOOT_SCHEDULE_MS.skipHidden);
-    expect(currentPhase(handle)).toBeNull();
+    advance(BOOT_SCHEDULE_MS.modeSelect + 5000);
+    expect(currentPhase(handle)).toBe('mode-select');
   });
 
   it('does not hijack the space key away from focused controls', () => {
@@ -150,22 +218,26 @@ describe('BootIntro', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
-  it('hides the intro immediately for prefers-reduced-motion', () => {
+  it('bypasses animation but preserves mode selection for reduced motion', () => {
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }));
     const onFinished = vi.fn();
-    const handle = renderIntro(onFinished);
+    const handle = renderIntro({ onFinished });
 
-    expect(handle.container.querySelector('.boot-intro')).toBeNull();
-    expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBe('1');
-    advance(BOOT_SCHEDULE_MS.hidden);
+    expect(currentPhase(handle)).toBe('mode-select');
+    expect(window.sessionStorage.getItem(BOOT_INTRO_SESSION_KEY)).toBeNull();
+    expect(onFinished).not.toHaveBeenCalled();
+
+    finishConfirmedIntro();
+    expect(currentPhase(handle)).toBeNull();
     expect(onFinished).toHaveBeenCalled();
   });
 
   it('calls onFinished when the intro completes naturally', () => {
     const onFinished = vi.fn();
-    renderIntro(onFinished);
+    renderIntro({ onFinished });
 
-    advance(BOOT_SCHEDULE_MS.hidden);
+    advanceToModeSelect();
+    finishConfirmedIntro();
 
     expect(onFinished).toHaveBeenCalled();
   });
@@ -176,7 +248,7 @@ describe('BootIntro', () => {
 
     act(() => root.unmount());
 
-    advance(BOOT_SCHEDULE_MS.hidden);
+    advance(BOOT_SCHEDULE_MS.modeSelect + BOOT_SCHEDULE_MS.confirmedHidden);
   });
 
   it('locks page scroll only while the intro is visible', () => {
@@ -188,7 +260,10 @@ describe('BootIntro', () => {
     act(() => {
       handle.container.querySelector<HTMLButtonElement>('.boot-skip')?.click();
     });
-    advance(BOOT_SCHEDULE_MS.skipHidden);
+    expect(currentPhase(handle)).toBe('mode-select');
+    expect(document.body.style.overflow).toBe('hidden');
+
+    finishConfirmedIntro();
 
     expect(document.body.style.overflow).toBe('auto');
   });

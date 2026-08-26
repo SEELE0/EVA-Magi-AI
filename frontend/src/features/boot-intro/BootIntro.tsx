@@ -4,6 +4,7 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { DEFAULT_HOME_MODE, type HomeMode } from '../../domain/home-mode';
 import { MAGI_BOOT_ANIMATION_DURATION_MS, MagiBoot } from '../magi-boot';
 import './boot-intro.css';
 
@@ -12,12 +13,17 @@ export type BootPhase =
   | 'post-header'
   | 'magi'
   | 'post-stream'
+  | 'mode-select'
   | 'exit'
   | 'resync'
   | 'reveal';
 
 interface BootSceneProps {
   phase: BootPhase;
+  animationSkipped?: boolean;
+  selectedMode?: HomeMode;
+  onModeChange?: (mode: HomeMode) => void;
+  onModeConfirm?: () => void;
   onSkip?: () => void;
 }
 
@@ -31,6 +37,10 @@ interface BootStageLayout {
 }
 
 export interface BootIntroProps {
+  /** The initially highlighted homepage, usually restored from this tab's session. */
+  initialMode?: HomeMode;
+  /** Fired only after the user explicitly confirms a mode. */
+  onModeSelected?: (mode: HomeMode) => void;
   /**
    * Fired once the intro is over — completed, skipped, or not played at all —
    * so the shell can restore interactivity of the app underneath.
@@ -44,18 +54,15 @@ const BOOT_MAGI_TIME_SCALE = 0.65;
 const MAGI_BOOT_COMPLETE_MS = Math.round(
   MAGI_BOOT_START_MS + MAGI_BOOT_ANIMATION_DURATION_MS * BOOT_MAGI_TIME_SCALE + 100
 );
-/** Brief pause after START DECISION_CONSOLE before the first handoff row begins. */
+/** Brief pause after START DECISION_CONSOLE before the selector becomes available. */
 export const READY_HOLD_MS = 500;
-const EXIT_START_MS = MAGI_BOOT_COMPLETE_MS + READY_HOLD_MS;
+const MODE_SELECT_START_MS = MAGI_BOOT_COMPLETE_MS + READY_HOLD_MS;
 /** Both handoff rows finish at 0.86s, leaving a short visible confirmation hold. */
 export const HANDOFF_DURATION_MS = 1300;
 /** A real mode switch reads as a short signal loss, not a polished cross-fade. */
 export const RESYNC_BLANK_MS = 240;
 const REVEAL_SETTLE_MS = 300;
-const RESYNC_START_MS = EXIT_START_MS + HANDOFF_DURATION_MS;
-const REVEAL_START_MS = RESYNC_START_MS + RESYNC_BLANK_MS;
-const INTRO_HIDDEN_MS = REVEAL_START_MS + REVEAL_SETTLE_MS;
-const SKIP_HIDDEN_MS = RESYNC_BLANK_MS + REVEAL_SETTLE_MS;
+const CONFIRMED_HIDDEN_MS = HANDOFF_DURATION_MS + RESYNC_BLANK_MS + REVEAL_SETTLE_MS;
 
 export const BOOT_INTRO_SESSION_KEY = 'magi-nerv:boot-intro-played';
 const BOOT_REPLAY_PARAM = 'boot';
@@ -139,14 +146,11 @@ export const BOOT_SCHEDULE_MS = {
   magi: MAGI_BOOT_START_MS,
   postStream: MAGI_BOOT_COMPLETE_MS,
   readyHold: READY_HOLD_MS,
-  exit: EXIT_START_MS,
+  modeSelect: MODE_SELECT_START_MS,
   handoffDuration: HANDOFF_DURATION_MS,
-  resync: RESYNC_START_MS,
   resyncBlank: RESYNC_BLANK_MS,
-  reveal: REVEAL_START_MS,
   revealSettle: REVEAL_SETTLE_MS,
-  skipHidden: SKIP_HIDDEN_MS,
-  hidden: INTRO_HIDDEN_MS
+  confirmedHidden: CONFIRMED_HIDDEN_MS
 } as const;
 
 /** Cumulative rendering flags per phase; keep in sync with the data-boot-phase selectors in boot-intro.css. */
@@ -155,6 +159,7 @@ const BOOT_PHASE_FLAGS: Record<BootPhase, { post: boolean; magi: boolean; stream
   'post-header': { post: true, magi: false, stream: false },
   magi: { post: true, magi: true, stream: false },
   'post-stream': { post: true, magi: true, stream: true },
+  'mode-select': { post: true, magi: true, stream: true },
   exit: { post: true, magi: true, stream: true },
   resync: { post: true, magi: true, stream: true },
   reveal: { post: true, magi: true, stream: true }
@@ -165,9 +170,10 @@ const BOOT_PHASE_STEP: Record<BootPhase, string> = {
   'post-header': '01',
   magi: '02',
   'post-stream': '03',
-  exit: '04',
-  resync: '05',
-  reveal: '06'
+  'mode-select': '04',
+  exit: '05',
+  resync: '06',
+  reveal: '07'
 };
 
 const BOOT_PHASE_LABEL: Record<BootPhase, string> = {
@@ -175,9 +181,10 @@ const BOOT_PHASE_LABEL: Record<BootPhase, string> = {
   'post-header': 'POWER-ON SELF TEST',
   magi: 'INITIAL PROGRAM LOAD',
   'post-stream': 'SYSTEM READY',
+  'mode-select': 'DISPLAY MODE SELECTION',
   exit: 'DISPLAY DRIVER HANDOFF',
   resync: 'VIDEO RESYNCHRONIZATION',
-  reveal: 'DECISION CONSOLE'
+  reveal: 'SELECTED INTERFACE'
 };
 
 export function shouldShowBootIntro() {
@@ -214,9 +221,38 @@ const firmwareChecks = [
   { address: '0003', label: 'DIRECT ACCESS LINK', value: 'MAGI_01', state: 'ESTABLISHED' }
 ];
 
-export function BootScene({ phase, onSkip }: BootSceneProps) {
+const homeModeOptions: ReadonlyArray<{
+  mode: HomeMode;
+  code: string;
+  title: string;
+  detail: string;
+}> = [
+  {
+    mode: 'original',
+    code: '01',
+    title: 'ORIGINAL / DIRECT LINK',
+    detail: 'MAGI DIRECT LINK CONNECTION'
+  },
+  {
+    mode: 'modern',
+    code: '02',
+    title: 'MODERN / DECISION HOME',
+    detail: 'MAGI DECISION INTERFACE'
+  }
+];
+
+export function BootScene({
+  phase,
+  animationSkipped = false,
+  selectedMode = DEFAULT_HOME_MODE,
+  onModeChange,
+  onModeConfirm,
+  onSkip
+}: BootSceneProps) {
   const flags = BOOT_PHASE_FLAGS[phase];
   const stage = useBootStageLayout();
+  const selectedOption = homeModeOptions.find((option) => option.mode === selectedMode)
+    ?? homeModeOptions[0];
   const className = ['boot-intro', flags.post ? 'boot-post' : '']
     .filter(Boolean)
     .join(' ');
@@ -310,17 +346,64 @@ export function BootScene({ phase, onSkip }: BootSceneProps) {
                     A:\&gt; START DECISION_CONSOLE
                     {phase === 'post-stream' ? (
                       <span aria-hidden="true" className="boot-block-cursor" />
-                    ) : phase === 'exit' ? (
+                    ) : phase === 'mode-select' || phase === 'exit' ? (
                       <span aria-hidden="true" className="boot-command-enter">[ENTER]</span>
                     ) : null}
                   </p>
+                  {phase === 'mode-select' ? (
+                    <div className="boot-mode-selector">
+                      <p className="boot-mode-selector__title">SELECT DISPLAY MODE</p>
+                      <div aria-label="选择主页显示模式" className="boot-mode-options" role="radiogroup">
+                        {homeModeOptions.map((option) => {
+                          const selected = option.mode === selectedMode;
+                          return (
+                            <button
+                              aria-checked={selected}
+                              className={`boot-mode-option${selected ? ' is-selected' : ''}`}
+                              key={option.mode}
+                              onClick={() => onModeChange?.(option.mode)}
+                              role="radio"
+                              type="button"
+                            >
+                              <span aria-hidden="true" className="boot-mode-cursor">{selected ? '>' : '\u00a0'}</span>
+                              <span className="boot-mode-code">{option.code}</span>
+                              <strong>{option.title}</strong>
+                              <small>{option.detail}</small>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div aria-label="使用上下键选择，按回车键确认模式" className="boot-mode-help boot-mode-help--keyboard">
+                        <span><kbd>↑</kbd> / <kbd>↓</kbd> SELECT</span>
+                        <i aria-hidden="true">|</i>
+                        <span>PRESS <kbd>ENTER</kbd> TO CHOOSE MODE</span>
+                      </div>
+                      <div aria-label="点击选项进行选择" className="boot-mode-help boot-mode-help--touch">
+                        <span>TAP AN OPTION TO SELECT</span>
+                      </div>
+                      <button
+                        aria-label={`确认进入 ${selectedOption.title} 模式`}
+                        className="boot-mode-confirm"
+                        onClick={onModeConfirm}
+                        type="button"
+                      >
+                        <span aria-hidden="true">&gt;</span>
+                        <strong>CONFIRM {selectedOption.title}</strong>
+                        <kbd>[ENTER]</kbd>
+                      </button>
+                    </div>
+                  ) : null}
                   {phase === 'exit' ? (
                     <div aria-label="正在切换至图形决策终端" className="boot-handoff-block">
                       <div className="boot-handoff-line" style={{ '--boot-line-index': 0 } as CSSProperties}>
-                        <span>LOADING DISPLAY DRIVER</span><b>OK</b>
+                        <span>
+                          {selectedMode === 'original'
+                            ? 'LOADING DIRECT LINK DISPLAY DRIVER'
+                            : 'LOADING DECISION HOME DISPLAY DRIVER'}
+                        </span><b>OK</b>
                       </div>
                       <div className="boot-handoff-line" style={{ '--boot-line-index': 1 } as CSSProperties}>
-                        <span>MOUNTING MAGI PERSONALITY NODES</span><b>OK</b>
+                        <span>MOUNTING SELECTED INTERFACE</span><b>OK</b>
                       </div>
                     </div>
                   ) : null}
@@ -333,6 +416,7 @@ export function BootScene({ phase, onSkip }: BootSceneProps) {
                 <>
                   <span className="boot-coprocessor-label">COPROCESSOR DISPLAY</span>
                   <MagiBoot
+                    animationComplete={animationSkipped}
                     background="transparent"
                     className="boot-magi-module"
                     interactive={false}
@@ -366,25 +450,33 @@ export function BootScene({ phase, onSkip }: BootSceneProps) {
   );
 }
 
-export function BootIntro({ onFinished }: BootIntroProps) {
+export function BootIntro({
+  initialMode = DEFAULT_HOME_MODE,
+  onModeSelected,
+  onFinished
+}: BootIntroProps) {
   const [phase, setPhase] = useState<BootPhase>('power-on');
   const [visible, setVisible] = useState(shouldShowBootIntro);
-  const [skipRequested, setSkipRequested] = useState(false);
+  const [animationSkipped, setAnimationSkipped] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<HomeMode>(initialMode);
+  const phaseRef = useRef(phase);
+  const selectedModeRef = useRef(selectedMode);
+  const skipToModeSelectRef = useRef<() => void>(() => undefined);
+  const confirmModeRef = useRef<() => void>(() => undefined);
+  const onModeSelectedRef = useRef(onModeSelected);
   const onFinishedRef = useRef(onFinished);
 
+  phaseRef.current = phase;
+  selectedModeRef.current = selectedMode;
+
   useEffect(() => {
+    onModeSelectedRef.current = onModeSelected;
     onFinishedRef.current = onFinished;
-  }, [onFinished]);
+  }, [onFinished, onModeSelected]);
 
   useEffect(() => {
     if (!visible) {
       onFinishedRef.current?.();
-      return;
-    }
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      markBootIntroAsPlayed();
-      setVisible(false);
       return;
     }
 
@@ -393,22 +485,27 @@ export function BootIntro({ onFinished }: BootIntroProps) {
     const timers: number[] = [];
     let ended = false;
 
-    // Natural completion, explicit skip and tab-hide all funnel through here,
-    // so the session flag is written exactly once, when the intro is over.
-    const beginEnding = (skipHandoff = false) => {
+    const clearTimers = () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      timers.length = 0;
+    };
+
+    // Skipping means fast-forwarding to the required choice, never bypassing it.
+    const showModeSelector = () => {
+      if (ended || phaseRef.current === 'mode-select') return;
+      clearTimers();
+      setAnimationSkipped(true);
+      phaseRef.current = 'mode-select';
+      setPhase('mode-select');
+    };
+    skipToModeSelectRef.current = showModeSelector;
+
+    // Only a confirmed mode choice completes the intro and records the session.
+    const beginEnding = () => {
       if (ended) return;
       ended = true;
       markBootIntroAsPlayed();
-      timers.forEach((timer) => window.clearTimeout(timer));
-
-      if (skipHandoff) {
-        setPhase('resync');
-        timers.push(
-          window.setTimeout(() => setPhase('reveal'), RESYNC_BLANK_MS),
-          window.setTimeout(() => setVisible(false), SKIP_HIDDEN_MS)
-        );
-        return;
-      }
+      clearTimers();
 
       setPhase('exit');
       timers.push(
@@ -418,37 +515,76 @@ export function BootIntro({ onFinished }: BootIntroProps) {
       );
     };
 
-    timers.push(
-      window.setTimeout(() => setPhase('post-header'), POST_HEADER_START_MS),
-      window.setTimeout(() => setPhase('magi'), MAGI_BOOT_START_MS),
-      window.setTimeout(() => setPhase('post-stream'), MAGI_BOOT_COMPLETE_MS),
-      window.setTimeout(() => beginEnding(false), EXIT_START_MS)
-    );
+    const confirmMode = () => {
+      if (ended || phaseRef.current !== 'mode-select') return;
+      onModeSelectedRef.current?.(selectedModeRef.current);
+      beginEnding();
+    };
+    confirmModeRef.current = confirmMode;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      showModeSelector();
+    } else {
+      timers.push(
+        window.setTimeout(() => setPhase('post-header'), POST_HEADER_START_MS),
+        window.setTimeout(() => setPhase('magi'), MAGI_BOOT_START_MS),
+        window.setTimeout(() => setPhase('post-stream'), MAGI_BOOT_COMPLETE_MS),
+        window.setTimeout(() => setPhase('mode-select'), MODE_SELECT_START_MS)
+      );
+    }
 
     const skipOnKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        beginEnding(true);
+        showModeSelector();
+        return;
+      }
+
+      if (phaseRef.current !== 'mode-select') return;
+
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const nextMode = selectedModeRef.current === 'original' ? 'modern' : 'original';
+        selectedModeRef.current = nextMode;
+        setSelectedMode(nextMode);
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        confirmMode();
       }
     };
     const skipOnHide = () => {
-      if (document.visibilityState === 'hidden') beginEnding(true);
+      if (document.visibilityState === 'hidden') showModeSelector();
     };
 
     window.addEventListener('keydown', skipOnKey);
     document.addEventListener('visibilitychange', skipOnHide);
 
-    if (skipRequested) beginEnding(true);
-
     return () => {
       document.body.style.overflow = previousBodyOverflow;
-      timers.forEach((timer) => window.clearTimeout(timer));
+      skipToModeSelectRef.current = () => undefined;
+      confirmModeRef.current = () => undefined;
+      clearTimers();
       window.removeEventListener('keydown', skipOnKey);
       document.removeEventListener('visibilitychange', skipOnHide);
     };
-  }, [skipRequested, visible]);
+  }, [visible]);
 
   if (!visible) return null;
 
-  return <BootScene onSkip={() => setSkipRequested(true)} phase={phase} />;
+  return (
+    <BootScene
+      animationSkipped={animationSkipped}
+      onModeChange={(mode) => {
+        selectedModeRef.current = mode;
+        setSelectedMode(mode);
+      }}
+      onModeConfirm={() => confirmModeRef.current()}
+      onSkip={() => skipToModeSelectRef.current()}
+      phase={phase}
+      selectedMode={selectedMode}
+    />
+  );
 }

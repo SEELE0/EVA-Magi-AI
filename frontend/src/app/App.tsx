@@ -6,16 +6,28 @@
 import { useState } from 'react';
 import { BootIntro, shouldShowBootIntro } from '../features/boot-intro/BootIntro';
 import { DecisionHome } from '../features/decision-home';
+import { MagiDirectLinkTest } from '../features/magi-direct-link-test/main';
+import { readHomeMode, saveHomeMode, type HomeMode } from '../domain/home-mode';
 
 export default function App() {
   const [introActive, setIntroActive] = useState(shouldShowBootIntro);
+  const [homeMode, setHomeMode] = useState(readHomeMode);
+
+  const selectHomeMode = (mode: HomeMode) => {
+    saveHomeMode(mode);
+    setHomeMode(mode);
+  };
 
   return (
     <>
-      <BootIntro onFinished={() => setIntroActive(false)} />
+      <BootIntro
+        initialMode={homeMode}
+        onFinished={() => setIntroActive(false)}
+        onModeSelected={selectHomeMode}
+      />
       {/* inert keeps keyboard focus out of the console while the boot overlay is up. */}
       <div inert={introActive}>
-        <DecisionHome />
+        {homeMode === 'original' ? <MagiDirectLinkTest /> : <DecisionHome />}
       </div>
     </>
   );

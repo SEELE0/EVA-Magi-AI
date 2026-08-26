@@ -46,15 +46,44 @@ describe('BootScene', () => {
     expect(markup).toContain('START DECISION_CONSOLE');
     expect(markup).toContain('boot-block-cursor');
     expect(markup).not.toContain('LOADING DISPLAY DRIVER');
+    expect(markup).not.toContain('SELECT DISPLAY MODE');
+  });
+
+  it('renders a terminal-native mode selector with the chosen row highlighted', () => {
+    const markup = renderToStaticMarkup(
+      <BootScene phase="mode-select" selectedMode="original" />
+    );
+
+    expect(markup).toContain('data-boot-phase="mode-select"');
+    expect(markup).toContain('SELECT DISPLAY MODE');
+    expect(markup).toContain('ORIGINAL / DIRECT LINK');
+    expect(markup).toContain('MODERN / DECISION HOME');
+    expect(markup.match(/role="radio"/g)).toHaveLength(2);
+    expect(markup).toContain('aria-checked="true" class="boot-mode-option is-selected"');
+    expect(markup).toMatch(/boot-mode-options[\s\S]*boot-mode-help/);
+    expect(markup).toContain('<kbd>↑</kbd> / <kbd>↓</kbd> SELECT');
+    expect(markup).toContain('PRESS <kbd>ENTER</kbd> TO CHOOSE MODE');
+    expect(markup).toContain('TAP AN OPTION TO SELECT');
+    expect(markup).toContain('CONFIRM ORIGINAL / DIRECT LINK');
+    expect(markup).toContain('启动阶段：DISPLAY MODE SELECTION');
+    expect(markup).not.toContain('LOADING DIRECT LINK DISPLAY DRIVER');
+  });
+
+  it('renders the MAGI graphic at its completed frame after animation fast-forward', () => {
+    const markup = renderToStaticMarkup(
+      <BootScene animationSkipped phase="mode-select" selectedMode="modern" />
+    );
+
+    expect(markup).toContain('magi-boot--complete');
   });
 
   it('prints a display-driver handoff after the command is entered', () => {
-    const markup = renderToStaticMarkup(<BootScene phase="exit" />);
+    const markup = renderToStaticMarkup(<BootScene phase="exit" selectedMode="original" />);
 
     expect(markup).toContain('data-boot-phase="exit"');
     expect(markup).toContain('[ENTER]');
-    expect(markup).toContain('LOADING DISPLAY DRIVER');
-    expect(markup).toContain('MOUNTING MAGI PERSONALITY NODES');
+    expect(markup).toContain('LOADING DIRECT LINK DISPLAY DRIVER');
+    expect(markup).toContain('MOUNTING SELECTED INTERFACE');
     expect(markup).not.toContain('boot-block-cursor');
   });
 

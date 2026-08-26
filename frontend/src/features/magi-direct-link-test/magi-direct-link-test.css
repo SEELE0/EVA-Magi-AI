@@ -11,25 +11,26 @@
   font-display: swap;
 }
 
-:root {
+.direct-link-page {
   color: #ff7131;
   background: #020303;
   font-family: "DIN Condensed", "Avenir Next Condensed", Impact, sans-serif;
   font-synthesis: none;
 }
 
-* { box-sizing: border-box; }
+.direct-link-page,
+.direct-link-page * { box-sizing: border-box; }
 
-html,
-body,
-#root {
+html:has(.direct-link-page),
+body:has(.direct-link-page),
+#root:has(.direct-link-page) {
   width: 100%;
   min-width: 320px;
   min-height: 100%;
   margin: 0;
 }
 
-body {
+body:has(.direct-link-page) {
   overflow: hidden;
   background: #020303;
 }
@@ -43,7 +44,7 @@ body {
   background: #020303;
 }
 
-.terminal-screen {
+.direct-link-page .terminal-screen {
   position: relative;
   width: min(100vw, 75svh);
   height: min(100svh, 133.3333vw);
@@ -53,8 +54,8 @@ body {
   background: #020303;
 }
 
-.terminal-screen::before,
-.terminal-screen::after {
+.direct-link-page .terminal-screen::before,
+.direct-link-page .terminal-screen::after {
   position: absolute;
   z-index: 2;
   inset: 0;
@@ -62,7 +63,7 @@ body {
   pointer-events: none;
 }
 
-.terminal-screen::before {
+.direct-link-page .terminal-screen::before {
   opacity: 0.08;
   background: repeating-linear-gradient(
     to bottom,
@@ -73,11 +74,11 @@ body {
   );
 }
 
-.terminal-screen::after {
+.direct-link-page .terminal-screen::after {
   box-shadow: inset 0 0 84px 22px rgba(0, 0, 0, 0.68);
 }
 
-.terminal-graphic {
+.direct-link-page .terminal-graphic {
   position: relative;
   z-index: 1;
   display: block;
@@ -86,89 +87,89 @@ body {
   background: #020303;
 }
 
-.terminal-graphic text {
+.direct-link-page .terminal-graphic text {
   dominant-baseline: alphabetic;
   paint-order: stroke fill;
   stroke: rgba(255, 255, 255, 0.018);
   stroke-width: 0.45px;
 }
 
-.terminal-orange {
+.direct-link-page .terminal-orange {
   fill: #f7871e;
   stroke: #d1421f;
   filter: url(#orange-glow);
 }
 
-.terminal-header rect {
+.direct-link-page .terminal-header rect {
   fill: none;
   stroke-width: 2.25px;
 }
 
-.terminal-header__divider {
+.direct-link-page .terminal-header__divider {
   stroke-width: 2.25px;
 }
 
-.motion-result__rails rect {
+.direct-link-page .motion-result__rails rect {
   fill: none;
   stroke-width: 2.25px;
 }
 
-.header-line,
-.motion-copy,
-.motion-title,
-.system-data,
-.connection-data {
+.direct-link-page .header-line,
+.direct-link-page .motion-copy,
+.direct-link-page .motion-title,
+.direct-link-page .system-data,
+.direct-link-page .connection-data {
   font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   font-weight: 400;
 }
 
-.header-line {
+.direct-link-page .header-line {
   letter-spacing: 0;
 }
 
-.header-line--small {
+.direct-link-page .header-line--small {
   font-size: 26px;
   font-weight: 400;
 }
 
-.header-line--access {
+.direct-link-page .header-line--access {
   font-size: 34px;
   font-weight: 400;
 }
 
-.header-line--superuser {
+.direct-link-page .header-line--superuser {
   font-size: 39px;
   font-weight: 400;
 }
 
-.motion-copy {
+.direct-link-page .motion-copy {
   font-size: 36px;
   font-weight: 400;
 }
 
-.motion-title {
+.direct-link-page .motion-title {
   font-size: 43px;
   font-weight: 400;
 }
 
-.system-data {
+.direct-link-page .system-data {
   font-size: 24px;
   font-weight: 400;
   letter-spacing: 0.45px;
 }
 
-.connection-data {
+.direct-link-page .connection-data {
   font-size: 19px;
   font-weight: 400;
   letter-spacing: 0;
 }
 
-.connection-data__small {
+.direct-link-page .connection-data__small {
   font-size: 17px;
   font-weight: 400;
 }
 
-.magi-geometry {
+.direct-link-page .magi-geometry {
   color: #72ffc5;
   fill: #72ffc5;
   stroke: #72ffc5;
@@ -176,25 +177,25 @@ body {
   shape-rendering: geometricPrecision;
 }
 
-.magi-outline,
-.magi-core,
-.vote-box,
-.magi-connector--lower {
+.direct-link-page .magi-outline,
+.direct-link-page .magi-core,
+.direct-link-page .vote-box,
+.direct-link-page .magi-connector--lower {
   fill: none;
   stroke: currentcolor;
   stroke-linecap: butt;
   stroke-linejoin: miter;
 }
 
-.magi-outline { stroke-width: 3px; }
-.magi-core { stroke-width: 3px; }
-.vote-box { stroke-width: 3px; }
-.magi-connector-band {
+.direct-link-page .magi-outline { stroke-width: 3px; }
+.direct-link-page .magi-core { stroke-width: 3px; }
+.direct-link-page .vote-box { stroke-width: 3px; }
+.direct-link-page .magi-connector-band {
   fill: currentcolor;
   stroke: none;
 }
 
-.agent-name {
+.direct-link-page .agent-name {
   fill: #72ffc5;
   stroke: none;
   font-family: "DIN Condensed", Impact, "Avenir Next Condensed", sans-serif;
@@ -204,11 +205,11 @@ body {
   text-anchor: middle;
 }
 
-.agent-name--balthasar { font-size: 68px; }
-.agent-name--casper { font-size: 66px; }
-.agent-name--melchior { font-size: 60px; }
+.direct-link-page .agent-name--balthasar { font-size: 68px; }
+.direct-link-page .agent-name--casper { font-size: 66px; }
+.direct-link-page .agent-name--melchior { font-size: 60px; }
 
-.magi-label {
+.direct-link-page .magi-label {
   fill: #72ffc5;
   stroke: none;
   font-family: "Times New Roman", Times, Georgia, serif;
@@ -217,7 +218,7 @@ body {
   text-anchor: middle;
 }
 
-.vote-text {
+.direct-link-page .vote-text {
   fill: #72ffc5;
   stroke: none;
   font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans CJK JP", sans-serif;
@@ -227,21 +228,23 @@ body {
   text-anchor: middle;
 }
 
-.vote-box--denied {
+.direct-link-page .vote-box--denied {
   color: #ff2424;
   fill: none;
   stroke: #ff2424;
   filter: url(#red-glow);
 }
 
-.vote-text--denied {
+.direct-link-page .vote-text--denied {
   fill: #ff2424;
   stroke: none;
   filter: url(#red-glow);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  .direct-link-page *,
+  .direct-link-page *::before,
+  .direct-link-page *::after {
     scroll-behavior: auto !important;
   }
 }

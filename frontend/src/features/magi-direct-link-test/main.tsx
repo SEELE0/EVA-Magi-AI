@@ -283,6 +283,12 @@ export function MagiDirectLinkTest() {
 const hotGlobal = globalThis as typeof globalThis & {
   __magiDirectLinkRoot?: ReturnType<typeof createRoot>;
 };
-const root = hotGlobal.__magiDirectLinkRoot ?? createRoot(document.getElementById('root')!);
-hotGlobal.__magiDirectLinkRoot = root;
-root.render(<MagiDirectLinkTest />);
+const standaloneRoot = typeof document === 'undefined'
+  ? null
+  : document.querySelector<HTMLElement>('[data-magi-direct-link-root]');
+
+if (standaloneRoot) {
+  const root = hotGlobal.__magiDirectLinkRoot ?? createRoot(standaloneRoot);
+  hotGlobal.__magiDirectLinkRoot = root;
+  root.render(<MagiDirectLinkTest />);
+}

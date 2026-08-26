@@ -21,6 +21,8 @@ export interface MagiBootTestProps {
    * a shorter scale to match their own timeline.
    */
   animationTimeScale?: number;
+  /** Renders the SVG directly in its fully energized final state. */
+  animationComplete?: boolean;
   className?: string;
   style?: CSSProperties;
   onReplay?: () => void;
@@ -85,6 +87,7 @@ export function MagiBootTest({
   interactive = true,
   showCrtEffects = true,
   animationTimeScale = 1,
+  animationComplete = false,
   className,
   style,
   onReplay
@@ -99,6 +102,7 @@ export function MagiBootTest({
   const classes = [
     'magi-boot',
     interactive ? 'magi-boot--interactive' : '',
+    animationComplete ? 'magi-boot--complete' : '',
     className ?? ''
   ].filter(Boolean).join(' ');
   const componentStyle = {
