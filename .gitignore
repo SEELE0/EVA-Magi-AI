@@ -38,3 +38,5 @@ Thumbs.db
 # Python virtualenvs
 .venv/
 venv/
+
+.zcode/
