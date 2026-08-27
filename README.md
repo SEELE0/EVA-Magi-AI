@@ -1,6 +1,8 @@
 # MAGI CRT Decision Console
 
-一个以 MAGI 决策系统为主题的前后端项目。当前已实现 React/Vite 前端模拟应用；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
+本项目是一个以 MAGI 决策系统为基础设定开发的多agent 协同决策项目。
+
+当前已实现 React/Vite 前端模拟应用；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
 
 ![1787762978228](image/README/1787762978228.png)
 
@@ -15,30 +17,13 @@ npm run dev
 
 根目录的 npm 脚本会转发到 `frontend/` 工作区。Vite 会输出本地访问地址，通常是 `http://localhost:5173`。如果该端口已被占用，以终端实际显示的端口为准。
 
-### 手机与局域网预览
+### 局域网内设备预览
 
 让同一 Wi-Fi 下的手机或其他设备访问时，Vite 必须监听所有网卡：
 
 ```bash
 npm run dev -- --host 0.0.0.0 --port 5174
 ```
-
-终端会输出类似下面的地址。手机应访问 `Network` 地址，而不是 `localhost`：
-
-```text
-Local:   http://localhost:5174/
-Network: http://192.168.x.x:5174/
-```
-
-macOS 上可以用 `ipconfig getifaddr en0` 查看当前 Wi-Fi IPv4 地址。`127.0.0.1` 只代表本机回环；如果 Vite 只监听 `127.0.0.1:5173`，手机无法通过局域网访问。
-
-仍然无法访问时，依次检查：
-
-- Mac 与手机是否连接同一 Wi-Fi，且不是开启设备隔离的访客网络。
-- 「系统设置 → 隐私与安全性 → 本地网络」是否允许运行 Vite 的终端或 Codex。
-- macOS 防火墙是否允许 Node.js 的入站连接。
-- VPN/代理是否开启了「拦截局域网」；必要时启用「允许局域网」或暂时关闭代理。
-- 访问地址使用 `http://`，并且端口与 Vite 终端输出一致。
 
 ## 运行模式
 
@@ -61,7 +46,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## 开机动画与主页模式
 
-访问主页会先播放 CRT 电源开机、POST 系统自检和 MAGI 人格连接动画，最后停在 `SELECT DISPLAY MODE` 供用户选择：
+访问主页会先播放 CRT 电源开机、系统自检动画，最后停在 `SELECT DISPLAY MODE` 供用户选择：
 
 - `ORIGINAL / DIRECT LINK`：进入尽量还原原作构图的 MAGI Direct Link 界面。
 - `MODERN / DECISION HOME`：进入可输入议题、执行三人格判定和查看历史的现代化主页。
