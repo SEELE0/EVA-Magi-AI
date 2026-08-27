@@ -41,3 +41,5 @@ venv/
 
 .zcode/
 docs/design-qa.md
+docs/ux-audits/*
+docs/ux-audits/
