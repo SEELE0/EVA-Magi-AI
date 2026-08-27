@@ -40,3 +40,4 @@ Thumbs.db
 venv/
 
 .zcode/
+docs/design-qa.md
