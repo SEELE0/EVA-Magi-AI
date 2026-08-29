@@ -13,7 +13,7 @@ describe('direct-link stylesheet isolation', () => {
   it('does not leak shared MAGI or terminal class names into the boot screen', () => {
     const sharedSelectors = [
       'terminal-orange',
-      'magi-geometry',
+      'magi-network',
       'magi-outline',
       'magi-label',
       'agent-name'
@@ -33,10 +33,11 @@ describe('direct-link stylesheet isolation', () => {
   it('defines landscape reflow, collapsing input, and transform-only network motion', () => {
     expect(css).toContain('@media (orientation: landscape)');
     expect(css).toMatch(/\.motion-composer\.is-collapsed\s*\{[^}]*max-height:\s*0;/);
-    expect(css).toMatch(/\.direct-link-page \.magi-geometry\s*\{[^}]*transition:\s*transform 520ms/);
+    expect(css).toMatch(/\.direct-link-page \.magi-network\s*\{[^}]*transition:\s*transform 520ms/);
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toMatch(/\.motion-composer\s*\{[^}]*width:\s*min\(100%, 720px\)/);
     expect(css).toMatch(/@media \(orientation: landscape\)[\s\S]*?\.motion-composer\s*\{[^}]*max-height:\s*104px/);
+    expect(css).toMatch(/@media \(min-width: 720px\) and \(orientation: portrait\)[\s\S]*?\.motion-composer__controls\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(190px, 220px\)/);
   });
 
   it('layers terminal information independently from centered MAGI geometry', () => {

@@ -81,10 +81,13 @@ export interface DirectLinkInformationLayout {
 
 export type MagiNetworkState = 'compose' | 'active';
 
-export interface MagiNetworkPosition {
+export interface MagiNetworkTransform {
   readonly x: number;
   readonly y: number;
   readonly scale: number;
+}
+
+export interface MagiNetworkPosition extends MagiNetworkTransform {
   readonly activeYOffset: number;
 }
 
@@ -112,20 +115,16 @@ const PORTRAIT_NETWORK_POSITION: MagiNetworkPosition = {
 export function resolveMagiNetworkPosition(
   position: MagiNetworkPosition,
   state: MagiNetworkState,
-) {
+): MagiNetworkTransform {
   return {
     x: position.x,
     y: position.y + (state === 'active' ? position.activeYOffset : 0),
     scale: position.scale,
-  } as const;
+  };
 }
 
-export function toMagiNetworkTransform(
-  position: MagiNetworkPosition,
-  state: MagiNetworkState,
-) {
-  const resolved = resolveMagiNetworkPosition(position, state);
-  return `translate(${resolved.x}px, ${resolved.y}px) scale(${resolved.scale})`;
+export function toMagiNetworkTransform(transform: MagiNetworkTransform) {
+  return `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`;
 }
 
 export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLinkLayoutPreset> = {
@@ -134,10 +133,10 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
     network: PORTRAIT_NETWORK_POSITION,
     information: {
       preserveAspectRatio: 'xMinYMin meet',
-      header: { origin: [22, 30], width: 328, height: 101 },
-      motion: { origin: [22, 141], width: 387, height: 83 },
-      systemData: { origin: [22, 255], width: 150, height: 234 },
-      connectionData: { origin: [548, 270], width: 153, height: 230 },
+      header: { origin: [22, 30], width: 326, height: 71 },
+      motion: { origin: [22, 111], width: 387, height: 83 },
+      systemData: { origin: [22, 225], width: 150, height: 234 },
+      connectionData: { origin: [548, 240], width: 153, height: 230 },
     },
   },
   'portrait-wide': {
@@ -145,10 +144,10 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
     network: PORTRAIT_NETWORK_POSITION,
     information: {
       preserveAspectRatio: 'xMinYMin meet',
-      header: { origin: [22, 30], width: 328, height: 101 },
-      motion: { origin: [22, 141], width: 387, height: 83 },
-      systemData: { origin: [22, 255], width: 150, height: 234 },
-      connectionData: { origin: [598, 270], width: 153, height: 230 },
+      header: { origin: [22, 30], width: 326, height: 71 },
+      motion: { origin: [22, 111], width: 387, height: 83 },
+      systemData: { origin: [22, 225], width: 150, height: 234 },
+      connectionData: { origin: [598, 240], width: 153, height: 230 },
     },
   },
   landscape: {
@@ -161,25 +160,25 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
     },
     information: {
       preserveAspectRatio: 'xMidYMid meet',
-      header: { origin: [28, 24], width: 387, height: 101 },
+      header: { origin: [28, 24], width: 326, height: 71 },
       motion: { origin: [1025, 24], width: 387, height: 83 },
-      systemData: { origin: [28, 160], width: 150, height: 234 },
-      connectionData: { origin: [1100, 180], width: 153, height: 230 },
+      systemData: { origin: [28, 131], width: 150, height: 234 },
+      connectionData: { origin: [1100, 151], width: 153, height: 230 },
     },
   },
 };
 
 export const TERMINAL_MODULE_LAYOUT = {
   header: {
-    width: 328,
-    height: 101,
-    radius: 0,
+    width: 326,
+    height: 71,
+    radius: 10,
     contentInset: 13,
-    frameInset: 5,
+    frameInset: 0,
     accessValueOffset: 159,
-    dividerOffset: 49,
-    firstBaseline: 37,
-    secondBaseline: 86,
+    dividerOffset: 32,
+    firstBaseline: 25,
+    secondBaseline: 66,
   },
   motion: {
     railWidth: 7,

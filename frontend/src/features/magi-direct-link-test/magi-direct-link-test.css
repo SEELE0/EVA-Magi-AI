@@ -167,7 +167,7 @@ body:has(.direct-link-page) {
   stroke-width: 2.25px;
 }
 
-.direct-link-page .terminal-header__divider { stroke-width: 2.25px; }
+.direct-link-page .terminal-header__divider { stroke-width: 2.25px; stroke-linecap: round; }
 
 .direct-link-page .header-line,
 .direct-link-page .motion-copy,
@@ -207,7 +207,7 @@ body:has(.direct-link-page) {
   filter: drop-shadow(0 0 3px rgba(242, 206, 82, 0.66));
 }
 
-.direct-link-page .magi-geometry {
+.direct-link-page .magi-network {
   color: var(--direct-green);
   fill: var(--direct-green);
   stroke: var(--direct-green);
@@ -533,6 +533,25 @@ body:has(.direct-link-page) {
   .motion-composer__controls { gap: 6px; }
   .motion-composer textarea { font-size: 16px; }
   .motion-composer button { font-size: 18px; }
+}
+
+@media (min-width: 720px) and (orientation: portrait) {
+  .motion-composer {
+    max-height: 132px;
+    padding-right: 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-left: 12px;
+  }
+
+  .motion-composer fieldset { padding: 6px 8px 7px; }
+  .motion-composer label { margin: 0 0 4px; font-size: 12px; }
+  .motion-composer__controls {
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 220px);
+    gap: 10px;
+  }
+  .motion-composer textarea { min-height: 42px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
+  .motion-composer__input > span { padding-top: 6px; font-size: 20px; }
+  .motion-composer button { min-height: 44px; font-size: 17px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

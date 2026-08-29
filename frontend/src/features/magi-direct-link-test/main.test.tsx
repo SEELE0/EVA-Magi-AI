@@ -152,6 +152,9 @@ describe('MagiDirectLinkTest', () => {
     expect(networkComponent?.querySelectorAll('.agent-module')).toHaveLength(3);
     expect(networkComponent?.querySelectorAll('[data-connector]')).toHaveLength(3);
     expect(networkComponent?.querySelector('.magi-core')).not.toBeNull();
+    expect(networkComponent?.dataset.positionX).toBe('0');
+    expect(networkComponent?.dataset.positionY).toBe('-25');
+    expect(networkComponent?.dataset.scale).toBe('1');
     expect(networkComponent?.style.transform).toBe('translate(0px, -25px) scale(1)');
   });
 
@@ -171,6 +174,7 @@ describe('MagiDirectLinkTest', () => {
     expect(phase(container)).toBe('transitioning');
     expect(container.querySelector('.motion-composer')?.classList.contains('is-collapsed')).toBe(true);
     expect(container.querySelector('.agent-module')?.getAttribute('aria-disabled')).toBe('true');
+    expect(container.querySelector<SVGGElement>('[data-magi-network]')?.dataset.positionY).toBe('-81');
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.style.transform).toBe('translate(0px, -81px) scale(1)');
 
     await advance(520);
@@ -182,8 +186,7 @@ describe('MagiDirectLinkTest', () => {
     await advance(220);
     expect(phase(container)).toBe('final');
     expect([...container.querySelectorAll('.vote-text')].map((node) => node.textContent)).toEqual(['承認', '否決', '承認']);
-    expect(container.querySelector('.motion-copy')?.textContent).toBe('RESULT OF THE DELIBERATION');
-    expect(container.querySelector('.motion-copy')?.textContent).not.toContain('FINAL VERDICT');
+    expect(container.querySelector('.motion-copy')?.textContent).toBe('FINAL VERDICT : 承認 / 02 / 03');
     expect(container.querySelector<HTMLButtonElement>('.direct-link-new-motion')).not.toBeNull();
 
     act(() => container.querySelector<HTMLButtonElement>('.direct-link-new-motion')?.click());

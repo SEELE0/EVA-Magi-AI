@@ -22,6 +22,7 @@ import type { AgentConfigMap, AgentRuntimeConfig } from '../decision-home/simula
 import {
   DIRECT_LINK_LAYOUT_PRESETS,
   TERMINAL_MODULE_LAYOUT,
+  resolveMagiNetworkPosition,
   toSvgTranslate,
   type DirectLinkPanelPlacement,
   type DirectLinkLayoutMode,
@@ -294,6 +295,7 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
   const preset = DIRECT_LINK_LAYOUT_PRESETS[props.layoutMode];
   const isRunning = props.phase === 'transitioning' || props.phase === 'deliberation';
   const networkState = isRunning || props.phase === 'final' ? 'active' : 'compose';
+  const networkTransform = resolveMagiNetworkPosition(preset.network, networkState);
   const accessibleSubject = props.subject.trim() || '等待输入议题';
   const viewBox = `0 0 ${preset.viewBox.width} ${preset.viewBox.height}`;
 
@@ -314,9 +316,9 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
         <MagiNetwork
           disabled={isRunning}
           onOpenConfig={props.onOpenConfig}
-          position={preset.network}
           scanning={isRunning}
           state={networkState}
+          transform={networkTransform}
           votes={props.decision?.votes ?? DEFAULT_VOTES}
         />
       </svg>

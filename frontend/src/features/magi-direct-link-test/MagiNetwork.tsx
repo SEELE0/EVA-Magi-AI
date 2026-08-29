@@ -10,15 +10,15 @@ import {
   toMagiNetworkTransform,
   toSvgPoints,
   type AgentModuleLayout,
-  type MagiNetworkPosition,
   type MagiNetworkState,
+  type MagiNetworkTransform,
 } from './layout';
 
-interface MagiNetworkProps {
+export interface MagiNetworkProps {
   readonly disabled: boolean;
-  readonly position: MagiNetworkPosition;
   readonly scanning: boolean;
   readonly state: MagiNetworkState;
+  readonly transform: MagiNetworkTransform;
   readonly votes: Decision['votes'];
   readonly onOpenConfig: (agentId: AgentId) => void;
 }
@@ -59,7 +59,7 @@ function activateAgent(
   onOpenConfig(agentId);
 }
 
-export function MagiNetwork({ disabled, position, scanning, state, votes, onOpenConfig }: MagiNetworkProps) {
+export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpenConfig }: MagiNetworkProps) {
   const layout = MAGI_NETWORK_LAYOUT;
   const [lowerStartX, lowerStartY] = layout.lowerConnector.start;
   const [lowerEndX] = layout.lowerConnector.end;
@@ -67,10 +67,13 @@ export function MagiNetwork({ disabled, position, scanning, state, votes, onOpen
 
   return (
     <g
-      className={`magi-geometry magi-network${scanning ? ' is-scanning' : ''}`}
+      className={`magi-network${scanning ? ' is-scanning' : ''}`}
       data-magi-network=""
       data-network-state={state}
-      style={{ transform: toMagiNetworkTransform(position, state) }}
+      data-position-x={transform.x}
+      data-position-y={transform.y}
+      data-scale={transform.scale}
+      style={{ transform: toMagiNetworkTransform(transform) }}
     >
       {layout.diagonalConnectors.map((connector) => <polygon key={connector.id} className="magi-connector-band" data-connector={connector.id} points={toSvgPoints(connector.points)} />)}
       <path className="magi-connector--lower" data-connector="lower" d={`M${lowerStartX} ${lowerStartY}H${lowerEndX}`} strokeWidth={layout.lowerConnector.width} />

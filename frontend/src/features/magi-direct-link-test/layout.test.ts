@@ -86,10 +86,10 @@ describe('MAGI constraint-driven layout', () => {
     expect(DIRECT_LINK_LAYOUT_PRESETS.portrait.network).toBe(DIRECT_LINK_LAYOUT_PRESETS['portrait-wide'].network);
     expect(DIRECT_LINK_LAYOUT_PRESETS.portrait.network).toEqual({ x: 0, y: -25, scale: 1, activeYOffset: -56 });
     expect(DIRECT_LINK_LAYOUT_PRESETS.landscape.network).toEqual({ x: 370, y: -191, scale: 1, activeYOffset: -51 });
-    expect(toMagiNetworkTransform(DIRECT_LINK_LAYOUT_PRESETS.portrait.network, 'compose')).toBe('translate(0px, -25px) scale(1)');
-    expect(toMagiNetworkTransform(DIRECT_LINK_LAYOUT_PRESETS.portrait.network, 'active')).toBe('translate(0px, -81px) scale(1)');
-    expect(toMagiNetworkTransform(DIRECT_LINK_LAYOUT_PRESETS.landscape.network, 'compose')).toBe('translate(370px, -191px) scale(1)');
-    expect(toMagiNetworkTransform(DIRECT_LINK_LAYOUT_PRESETS.landscape.network, 'active')).toBe('translate(370px, -242px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.portrait.network, 'compose'))).toBe('translate(0px, -25px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.portrait.network, 'active'))).toBe('translate(0px, -81px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.landscape.network, 'compose'))).toBe('translate(370px, -191px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.landscape.network, 'active'))).toBe('translate(370px, -242px) scale(1)');
     expect(MAGI_NETWORK_LAYOUT.agents.map((agent) => agent.agentId)).toEqual([
       'BALTHASAR-2',
       'CASPER-3',
@@ -103,8 +103,16 @@ describe('MAGI constraint-driven layout', () => {
 
     expect(portrait.preserveAspectRatio).toBe('xMinYMin meet');
     expect(landscape.preserveAspectRatio).toBe('xMidYMid meet');
-    expect(TERMINAL_MODULE_LAYOUT.header.radius).toBe(0);
+    expect(TERMINAL_MODULE_LAYOUT.header.radius).toBe(10);
     expect(TERMINAL_MODULE_LAYOUT.motion.railRadius).toBe(0);
+
+    const headerFrame = TERMINAL_MODULE_LAYOUT.header;
+    expect(headerFrame.frameInset).toBe(0);
+    expect(headerFrame.firstBaseline).toBeLessThanOrEqual(26);
+    expect(headerFrame.height - headerFrame.secondBaseline).toBeLessThanOrEqual(6);
+    expect(headerFrame.dividerOffset - headerFrame.firstBaseline).toBeLessThanOrEqual(8);
+    expect(headerFrame.secondBaseline - headerFrame.dividerOffset).toBeGreaterThanOrEqual(30);
+
     expect(portrait.header.origin[0]).toBe(portrait.motion.origin[0]);
     expect(portrait.header.origin[0]).toBe(portrait.systemData.origin[0]);
     expect(portrait.motion.origin[1]).toBeGreaterThanOrEqual(portrait.header.origin[1] + portrait.header.height);
@@ -115,7 +123,8 @@ describe('MAGI constraint-driven layout', () => {
     const rightMargin = DIRECT_LINK_LAYOUT_PRESETS.landscape.viewBox.width
       - landscape.motion.origin[0]
       - landscape.motion.width;
-    expect(landscape.header.width).toBe(landscape.motion.width);
+    expect(landscape.header.width).toBe(TERMINAL_MODULE_LAYOUT.header.width);
+    expect(portrait.header.width).toBe(TERMINAL_MODULE_LAYOUT.header.width);
     expect(landscape.header.origin[1]).toBe(landscape.motion.origin[1]);
     expect(rightMargin).toBe(leftMargin);
     expect(landscape.systemData.origin[1] - landscape.header.origin[1] - landscape.header.height).toBeGreaterThanOrEqual(30);
