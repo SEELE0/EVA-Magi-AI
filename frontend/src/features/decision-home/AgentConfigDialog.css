@@ -5,7 +5,7 @@
  */
 .magi-home__config-dialog {
   --config-accent: var(--home-sodium, #ffad42);
-  --config-phosphor: var(--home-phosphor, #48f59a);
+  --config-phosphor: var(--home-sodium, #ffad42);
   width: min(820px, calc(100vw - 32px));
   max-width: none;
   max-height: min(900px, calc(100dvh - 32px));

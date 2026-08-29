@@ -204,6 +204,8 @@ describe('MagiDirectLinkTest', () => {
     expect(phase(container)).toBe('error');
     expect(container.querySelector<HTMLTextAreaElement>('#direct-link-motion')?.value).toBe(draft.subject);
     expect(container.querySelector('[role="alert"]')?.textContent).toBe('REMOTE LINK LOST');
+    expect(container.querySelector('.motion-copy')?.textContent).toContain('SIGNAL FAILURE / RETRY ENABLED');
+    expect(container.querySelector('.direct-link-live-status')?.textContent).toContain('SIGNAL FAILURE. REMOTE LINK LOST');
   });
 
   it('opens all three node identities and keeps configuration only in page memory', () => {

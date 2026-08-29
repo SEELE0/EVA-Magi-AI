@@ -8,6 +8,7 @@ import {
   DEFAULT_MAGI_NETWORK_METRICS,
   DIRECT_LINK_LAYOUT_PRESETS,
   MAGI_NETWORK_LAYOUT,
+  TERMINAL_MODULE_LAYOUT,
   createMagiNetworkLayout,
   resolveMagiNetworkPosition,
   toMagiNetworkTransform,
@@ -100,6 +101,10 @@ describe('MAGI constraint-driven layout', () => {
     const portrait = DIRECT_LINK_LAYOUT_PRESETS.portrait.information;
     const landscape = DIRECT_LINK_LAYOUT_PRESETS.landscape.information;
 
+    expect(portrait.preserveAspectRatio).toBe('xMinYMin meet');
+    expect(landscape.preserveAspectRatio).toBe('xMidYMid meet');
+    expect(TERMINAL_MODULE_LAYOUT.header.radius).toBe(0);
+    expect(TERMINAL_MODULE_LAYOUT.motion.railRadius).toBe(0);
     expect(portrait.header.origin[0]).toBe(portrait.motion.origin[0]);
     expect(portrait.header.origin[0]).toBe(portrait.systemData.origin[0]);
     expect(portrait.motion.origin[1]).toBeGreaterThanOrEqual(portrait.header.origin[1] + portrait.header.height);

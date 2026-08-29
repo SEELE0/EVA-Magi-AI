@@ -11,17 +11,16 @@ import {
   type FormEvent,
 } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { AgentId, Decision } from '../../domain/decision';
+import type { AgentId, Decision, DecisionRequest } from '../../domain/decision';
 import { createDecisionService } from '../../services/create-decision-service';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentConfigDialog } from '../decision-home/AgentConfigDialog';
+import { verdictCopy } from '../decision-console/console-config';
 import { cloneAgentConfigs } from '../decision-home/simulator-config';
 import type { AgentConfigMap, AgentRuntimeConfig } from '../decision-home/simulator-types';
 import {
-  CONNECTION_DATA_LINES,
   DIRECT_LINK_LAYOUT_PRESETS,
-  SYSTEM_DATA_LINES,
   TERMINAL_MODULE_LAYOUT,
   toSvgTranslate,
   type DirectLinkPanelPlacement,
@@ -53,6 +52,41 @@ const TRANSITION_DURATION_MS = 520;
 const ORIENTATION_QUERY = '(orientation: landscape)';
 const WIDE_PORTRAIT_QUERY = '(orientation: portrait) and (min-width: 720px)';
 const defaultService = createDecisionService();
+
+function shortDecisionCode(id?: string) {
+  if (!id) return 'WAIT';
+  return id.replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase() || 'WAIT';
+}
+
+function priorityCode(priority?: DecisionRequest['priority']) {
+  return priority === 'critical' ? 'AAA' : priority === 'low' ? 'A' : 'AA';
+}
+
+function systemMode(phase: DirectLinkPhase) {
+  if (phase === 'transitioning') return 'SYNC';
+  if (phase === 'deliberation') return 'EXEC';
+  if (phase === 'final') return 'HOLD';
+  if (phase === 'error') return 'FAULT';
+  return 'IDLE';
+}
+
+function consensusLabel(decision: Decision | null) {
+  if (!decision || decision.verdict === 'pending') return '00 / 03';
+  if (decision.verdict === 'review') return 'NO MAJORITY';
+  const targetVote = decision.verdict === 'approved' ? 'approve' : 'reject';
+  const count = Object.values(decision.votes).filter((vote) => vote === targetVote).length;
+  return `${String(count).padStart(2, '0')} / 03`;
+}
+
+function directLinkStatus(phase: DirectLinkPhase, decision: Decision | null, error: string | null) {
+  if (phase === 'error') return `SIGNAL FAILURE. ${error ?? '判定回線に障害が発生しました。'}`;
+  if (phase === 'transitioning') return 'DIRECT LINK TRANSITIONING.';
+  if (phase === 'deliberation') return 'DELIBERATION IN PROGRESS. 三人格の投票を受信中。';
+  if (phase === 'final' && decision) {
+    return `FINAL VERDICT: ${verdictCopy[decision.verdict].label}. CONSENSUS ${consensusLabel(decision)}.`;
+  }
+  return 'AWAITING MOTION.';
+}
 
 function subscribeToLayout(callback: () => void) {
   if (typeof window === 'undefined' || !window.matchMedia) return () => undefined;
@@ -128,49 +162,101 @@ function TerminalHeader({ placement }: { readonly placement: DirectLinkPanelPlac
   );
 }
 
-function MotionResult({ phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'phase' | 'subject'> & { readonly placement: DirectLinkPanelPlacement }) {
+function MotionResult({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: DirectLinkPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.motion;
   const secondRailX = layout.railWidth + layout.railGap;
   const rightRailX = placement.width - layout.railWidth;
   const rightSecondRailX = rightRailX - layout.railWidth - layout.railGap;
   const lines = motionLines(subject);
-  const result = phase === 'compose' || phase === 'error'
-    ? 'AWAITING MOTION'
+  const verdict = decision?.verdict ?? 'pending';
+  const result = phase === 'error'
+    ? 'SIGNAL FAILURE / RETRY ENABLED'
+    : phase === 'compose'
+      ? 'AWAITING MOTION'
     : phase === 'final'
-      ? 'RESULT OF THE DELIBERATION'
+      ? `FINAL VERDICT : ${verdictCopy[verdict].label} / ${consensusLabel(decision)}`
       : 'DELIBERATION IN PROGRESS';
 
   return (
-    <g className="terminal-orange motion-result" transform={toSvgTranslate(placement.origin)}>
+    <g className={`motion-result is-${phase === 'error' ? 'error' : verdict}`} transform={toSvgTranslate(placement.origin)}>
       <title>{subject.trim() || '议题等待输入'}</title>
-      <g className="motion-result__rails">
+      <g className="terminal-orange motion-result__rails">
         <rect width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
         <rect x={secondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
         <rect x={rightSecondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
         <rect x={rightRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
       </g>
-      <text x={layout.contentInset} y="27" className="motion-copy">{result}</text>
-      <text x={layout.contentInset} y={lines.length === 1 ? 70 : 55} className="motion-title">
+      <text x={layout.contentInset} y="27" className="terminal-orange motion-copy">{result}</text>
+      <text x={layout.contentInset} y={lines.length === 1 ? 70 : 55} className="terminal-orange motion-title">
         {lines.map((line, index) => <tspan x={layout.contentInset} dy={index === 0 ? 0 : 24} key={line}>{line}</tspan>)}
       </text>
     </g>
   );
 }
 
-function SystemData({ placement }: { readonly placement: DirectLinkPanelPlacement }) {
+function SystemData({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: DirectLinkPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.systemData;
+  const lines = [
+    `CODE : ${shortDecisionCode(decision?.id)}`,
+    'FILE :',
+    'MAGI.SYS',
+    'PAYLOAD :',
+    `${String(Array.from(subject).length).padStart(3, '0')} CH`,
+    'EX_MODE :',
+    systemMode(phase),
+    'PRIORITY :',
+    priorityCode(decision?.priority),
+  ];
+
   return (
     <g className="terminal-orange system-data" transform={toSvgTranslate(placement.origin)}>
-      {SYSTEM_DATA_LINES.map((line, index) => <text key={line} y={index * layout.lineHeight}>{line}</text>)}
+      {lines.map((line, index) => <text key={`${index}-${line}`} y={index * layout.lineHeight}>{line}</text>)}
     </g>
   );
 }
 
-function ConnectionData({ placement }: { readonly placement: DirectLinkPanelPlacement }) {
+function ConnectionData({ decision, phase, placement }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase'> & { readonly placement: DirectLinkPanelPlacement }) {
+  const physicalStatus = phase === 'error'
+    ? 'L401 - LINK FAULT'
+    : phase === 'transitioning'
+      ? 'L401 - CONNECTING'
+      : phase === 'deliberation'
+        ? 'L401 - STREAM ACTIVE'
+        : phase === 'final'
+          ? 'L401 - RESULT LOCKED'
+          : 'L401 - BASIC READY';
+  const lines = [
+    { text: 'Layer 3:', baseline: 0 },
+    { text: 'Connection Control:', baseline: 26, small: true },
+    { text: systemMode(phase), baseline: 52 },
+    { text: 'Layer 2:', baseline: 89 },
+    { text: 'Data Link:', baseline: 115 },
+    { text: decision ? `DL-${shortDecisionCode(decision.id)}` : 'NO CARRIER', baseline: 141 },
+    { text: 'Layer 1:', baseline: 178 },
+    { text: 'Physical Interface:', baseline: 204, small: true },
+    { text: physicalStatus, baseline: 230, small: true },
+  ];
+
   return (
     <g className="terminal-orange connection-data" transform={toSvgTranslate(placement.origin)}>
-      {CONNECTION_DATA_LINES.map((line) => (
-        <text key={line.text} y={line.baseline} className={'small' in line ? 'connection-data__small' : undefined}>{line.text}</text>
+      {lines.map((line, index) => (
+        <text key={`${index}-${line.text}`} y={line.baseline} className={'small' in line ? 'connection-data__small' : undefined}>{line.text}</text>
+      ))}
+    </g>
+  );
+}
+
+function TerminalCalibration({ height, width }: { height: number; width: number }) {
+  const ticks = Array.from({ length: 12 }, (_, index) => 72 + (index * (height - 144)) / 11);
+
+  return (
+    <g className="terminal-calibration">
+      <path d={`M14 52V14H52 M${width - 52} 14H${width - 14}V52 M14 ${height - 52}V${height - 14}H52 M${width - 52} ${height - 14}H${width - 14}V${height - 52}`} />
+      {ticks.map((tick, index) => (
+        <g key={tick}>
+          <line className={index % 3 === 0 ? 'is-major' : undefined} x1="10" y1={tick} x2={index % 3 === 0 ? 34 : 24} y2={tick} />
+          <line className={index % 3 === 0 ? 'is-major' : undefined} x1={width - 10} y1={tick} x2={width - (index % 3 === 0 ? 34 : 24)} y2={tick} />
+        </g>
       ))}
     </g>
   );
@@ -215,14 +301,15 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
     <div className="terminal-graphic" data-layout={props.layoutMode}>
       <svg aria-hidden="true" className="terminal-information-layer" viewBox={viewBox} preserveAspectRatio={preset.information.preserveAspectRatio}>
         <defs><OrangeGlowFilter /></defs>
+        <TerminalCalibration height={preset.viewBox.height} width={preset.viewBox.width} />
         <g className="terminal-chrome">
           <TerminalHeader placement={preset.information.header} />
-          <SystemData placement={preset.information.systemData} />
-          <ConnectionData placement={preset.information.connectionData} />
+          <SystemData decision={props.decision} phase={props.phase} placement={preset.information.systemData} subject={props.subject} />
+          <ConnectionData decision={props.decision} phase={props.phase} placement={preset.information.connectionData} />
         </g>
-        <MotionResult phase={props.phase} placement={preset.information.motion} subject={props.subject} />
+        <MotionResult decision={props.decision} phase={props.phase} placement={preset.information.motion} subject={props.subject} />
       </svg>
-      <svg className="terminal-network-layer" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`MAGI direct link deliberation terminal. Motion: ${accessibleSubject}`}>
+      <svg className="terminal-network-layer" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="group" aria-label={`MAGI direct link deliberation terminal. Motion: ${accessibleSubject}`}>
         <defs><NetworkGlowFilters /></defs>
         <MagiNetwork
           disabled={isRunning}
@@ -360,6 +447,9 @@ export function MagiDirectLinkTest({ service = defaultService }: MagiDirectLinkT
 
   return (
     <main className={`direct-link-page phase-${phase}`} data-layout={layoutMode} data-phase={phase}>
+      <p className="direct-link-live-status" aria-live={phase === 'error' ? 'assertive' : 'polite'}>
+        {directLinkStatus(phase, decision, error)}
+      </p>
       <div className="direct-link-workspace">
         <section className="terminal-screen" aria-label="MAGI direct link terminal screen">
           <MagiTerminalGraphic decision={decision} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />

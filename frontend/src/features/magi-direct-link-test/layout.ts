@@ -72,7 +72,7 @@ export interface DirectLinkPanelPlacement {
 }
 
 export interface DirectLinkInformationLayout {
-  readonly preserveAspectRatio: 'xMinYMin meet' | 'xMinYMin slice';
+  readonly preserveAspectRatio: 'xMinYMin meet' | 'xMidYMid meet';
   readonly header: DirectLinkPanelPlacement;
   readonly motion: DirectLinkPanelPlacement;
   readonly systemData: DirectLinkPanelPlacement;
@@ -160,7 +160,7 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
       activeYOffset: -51,
     },
     information: {
-      preserveAspectRatio: 'xMinYMin slice',
+      preserveAspectRatio: 'xMidYMid meet',
       header: { origin: [28, 24], width: 387, height: 101 },
       motion: { origin: [1025, 24], width: 387, height: 83 },
       systemData: { origin: [28, 160], width: 150, height: 234 },
@@ -173,7 +173,7 @@ export const TERMINAL_MODULE_LAYOUT = {
   header: {
     width: 328,
     height: 101,
-    radius: 7,
+    radius: 0,
     contentInset: 13,
     frameInset: 5,
     accessValueOffset: 159,
@@ -184,7 +184,7 @@ export const TERMINAL_MODULE_LAYOUT = {
   motion: {
     railWidth: 7,
     railHeight: 83,
-    railRadius: 3.5,
+    railRadius: 0,
     railGap: 4,
     contentInset: 28,
     contentWidth: 329,
@@ -196,30 +196,6 @@ export const TERMINAL_MODULE_LAYOUT = {
     lineHeight: 26,
   },
 } as const;
-
-export const SYSTEM_DATA_LINES = [
-  'CODE : 258',
-  'FILE :',
-  'MAGI.SYS',
-  'EXTENTION :',
-  '4096',
-  'EX_MODE :',
-  'OFF',
-  'PRIORITY :',
-  'AAA',
-] as const;
-
-export const CONNECTION_DATA_LINES = [
-  { text: 'Layer 3:', baseline: 0 },
-  { text: 'Connection Control:', baseline: 26, small: true },
-  { text: '0.031', baseline: 52 },
-  { text: 'Layer 2:', baseline: 89 },
-  { text: 'Data Link:', baseline: 115 },
-  { text: '0.021 - UAPO', baseline: 141 },
-  { text: 'Layer 1:', baseline: 178 },
-  { text: 'Physical Connection:', baseline: 204, small: true },
-  { text: 'L401 - Basic Interface', baseline: 230, small: true },
-] as const;
 
 export const DEFAULT_MAGI_NETWORK_METRICS: MagiNetworkMetrics = {
   canvasWidth: TERMINAL_VIEWBOX.width,

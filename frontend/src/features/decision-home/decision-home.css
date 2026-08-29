@@ -11,6 +11,9 @@
   --home-alert: #ff584d;
   --home-review: #f1d35c;
   --home-paper: #f2e4c7;
+  --home-line: #6f2e1f;
+  --home-muted: #cf8d68;
+  --home-locked: #ffd166;
   position: relative;
   isolation: isolate;
   width: min(1540px, calc(100% - 32px));
@@ -20,6 +23,7 @@
   overflow: hidden;
   border: 1px solid #93410b;
   color: var(--home-paper);
+  font-family: var(--font-eva-ui);
   background:
     repeating-linear-gradient(0deg, rgba(255, 128, 23, 0.025) 0 1px, transparent 1px 4px),
     radial-gradient(circle at 50% 42%, rgba(27, 59, 38, 0.12), transparent 42%),
@@ -71,6 +75,24 @@
 .magi-home__history {
   position: relative;
   z-index: 1;
+}
+
+.magi-home .brand-block h1,
+.magi-home__motion-result strong,
+.magi-home__page-heading h2,
+.magi-home__detail-heading h2 {
+  font-family: var(--font-eva-display);
+}
+
+.magi-home .readout,
+.magi-home__system-status,
+.magi-home__link-strip,
+.magi-home__stack-heading,
+.magi-home__system-stack,
+.magi-home__layer-stack,
+.magi-home__history time {
+  font-family: var(--font-eva-data);
+  font-variant-numeric: tabular-nums;
 }
 
 .magi-home__navigation {
@@ -147,10 +169,7 @@
 }
 
 .magi-home__navigation nav a:focus-visible,
-.magi-home__history a:focus-visible,
-.magi-home__config-dialog button:focus-visible,
-.magi-home__config-dialog input:focus-visible,
-.magi-home__config-dialog textarea:focus-visible {
+.magi-home__history a:focus-visible {
   outline: 2px solid var(--home-sodium);
   outline-offset: 3px;
 }
@@ -171,6 +190,7 @@
 
 .magi-home__link-strip,
 .magi-home__motion-banner,
+.magi-home__failure-banner,
 .magi-home__deliberation-grid,
 .magi-home__input-dock {
   position: relative;
@@ -272,6 +292,52 @@
   color: var(--home-sodium);
 }
 
+.magi-home__simulator.phase-final .magi-home__motion-result {
+  min-height: 54px;
+  padding: 10px 12px;
+  border: 1px solid currentcolor;
+  background: repeating-linear-gradient(90deg, rgba(255, 173, 66, 0.08) 0 12px, transparent 12px 18px);
+}
+
+.magi-home__simulator.phase-final .magi-home__motion-result strong {
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 12px currentcolor;
+}
+
+.magi-home__failure-banner {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 14px;
+  min-height: 76px;
+  padding: 10px 14px 10px 0;
+  border: 2px solid rgba(255, 88, 77, 0.82);
+  color: #ff8f84;
+  background:
+    linear-gradient(90deg, rgba(255, 44, 37, 0.13), transparent 46%),
+    rgba(15, 4, 3, 0.94);
+  animation: magi-home-fault-lock 280ms steps(2, end) 2;
+}
+
+.magi-home__failure-stripe {
+  background: repeating-linear-gradient(-55deg, var(--home-alert) 0 6px, #2a0907 6px 12px);
+}
+
+.magi-home__failure-banner > div { display: grid; min-width: 0; align-content: center; gap: 3px; }
+.magi-home__failure-banner span,
+.magi-home__failure-banner small,
+.magi-home__failure-banner b {
+  font-family: var(--font-eva-data);
+  font-variant-numeric: tabular-nums;
+}
+.magi-home__failure-banner span { color: #c94e44; font-size: 10px; letter-spacing: 0.12em; }
+.magi-home__failure-banner strong { font-size: clamp(17px, 2vw, 25px); letter-spacing: 0.05em; }
+.magi-home__failure-banner small { max-width: 80ch; overflow-wrap: anywhere; color: #d88176; font-size: 11px; }
+.magi-home__failure-banner b { align-self: center; color: #ffb056; font-size: 10px; letter-spacing: 0.1em; white-space: nowrap; }
+
 .magi-home__deliberation-grid {
   display: grid;
   min-width: 0;
@@ -322,6 +388,30 @@
   border-bottom: 1px solid rgba(130, 80, 17, 0.32);
 }
 
+.magi-home__threshold-bar,
+.magi-home__latency-rail {
+  position: relative;
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(130, 80, 17, 0.42);
+  background: repeating-linear-gradient(90deg, rgba(255, 173, 66, 0.1) 0 7px, transparent 7px 10px);
+}
+
+.magi-home__threshold-bar {
+  grid-column: 1 / -1;
+  margin-top: -3px;
+}
+
+.magi-home__threshold-bar::after,
+.magi-home__latency-rail::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--magi-level);
+  content: "";
+  background: repeating-linear-gradient(90deg, var(--home-sodium) 0 7px, transparent 7px 10px);
+}
+
 .magi-home__system-stack dt,
 .magi-home__system-stack dd {
   min-width: 0;
@@ -363,7 +453,10 @@
   text-align: right;
 }
 
-.magi-home__layer-stack li > small { grid-column: 1 / -1; }
+.magi-home__layer-stack li > small,
+.magi-home__latency-rail { grid-column: 1 / -1; }
+.magi-home__latency-rail { margin-top: 2px; }
+.magi-home__latency-rail::after { background: repeating-linear-gradient(90deg, #69dca0 0 7px, transparent 7px 10px); }
 .magi-home__layer-stack li.vote-reject > b { color: var(--home-alert); }
 .magi-home__layer-stack li.vote-abstain > b { color: var(--home-review); }
 
@@ -395,6 +488,7 @@
 }
 
 .magi-home__decision-stage {
+  position: relative;
   container: decision-stage / inline-size;
   display: grid;
   width: 100%;
@@ -406,7 +500,70 @@
   overflow: visible;
 }
 
+.magi-home__instrument-overlay {
+  position: absolute;
+  z-index: 0;
+  inset: clamp(10px, 2vw, 24px);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.48;
+  background:
+    repeating-linear-gradient(90deg, rgba(111, 46, 31, 0.18) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(0deg, rgba(111, 46, 31, 0.14) 0 1px, transparent 1px 24px);
+  transition: opacity 180ms steps(2, end);
+}
+
+.magi-home__instrument-overlay > i {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255, 173, 66, 0.72);
+  border-style: solid;
+}
+
+.magi-home__instrument-overlay > i.is-top-left { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.magi-home__instrument-overlay > i.is-top-right { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.magi-home__instrument-overlay > i.is-bottom-left { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.magi-home__instrument-overlay > i.is-bottom-right { right: 0; bottom: 0; border-width: 0 2px 2px 0; }
+
+.magi-home__calibration-rail {
+  position: absolute;
+  color: #9d662e;
+  font: 9px/1 var(--font-eva-data);
+  letter-spacing: 0.08em;
+}
+
+.magi-home__calibration-rail.is-left {
+  top: 44px;
+  bottom: 44px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  border-left: 8px solid transparent;
+  background: repeating-linear-gradient(0deg, rgba(255, 173, 66, 0.62) 0 1px, transparent 1px 12px) left/8px 100% no-repeat;
+  writing-mode: vertical-rl;
+}
+
+.magi-home__calibration-rail.is-bottom {
+  right: 42px;
+  bottom: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 173, 66, 0.38);
+}
+
+.magi-home__simulator[data-phase="deliberation"] .magi-home__instrument-overlay {
+  opacity: 0.82;
+  animation: magi-home-grid-refresh 740ms steps(3, end) infinite;
+}
+
+.magi-home__simulator[data-phase="final"] .magi-home__instrument-overlay { opacity: 0.68; }
+.magi-home__simulator[data-phase="error"] .magi-home__instrument-overlay { opacity: 0.72; filter: sepia(1) saturate(5) hue-rotate(320deg); }
+
 .magi-home__decision-stage > .magi-network {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 600px;
   min-width: 0;
@@ -579,7 +736,7 @@
   font-size: 10px;
   line-height: 16px;
   white-space: nowrap;
-  opacity: 0;
+  opacity: 0.52;
   transform: translateY(4px);
   transition: opacity 120ms linear, transform 120ms ease-out;
 }
@@ -625,9 +782,7 @@
 }
 
 .magi-home__subject-field textarea,
-.magi-home__dock-field select,
-.magi-home__config-field input,
-.magi-home__config-field textarea {
+.magi-home__dock-field select {
   width: 100%;
   border: 1px solid #825011;
   border-radius: 0;
@@ -913,73 +1068,6 @@
   line-height: 1.75;
 }
 
-.magi-home__config-dialog {
-  width: min(820px, calc(100vw - 32px));
-  max-width: none;
-  max-height: min(900px, calc(100dvh - 32px));
-  margin: auto;
-  padding: 0;
-  overflow: auto;
-  border: 1px solid var(--home-sodium);
-  border-radius: 0;
-  color: #d9bd82;
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 173, 66, 0.02) 0 1px, transparent 1px 4px),
-    #050806;
-  box-shadow: 0 0 0 1px rgba(255, 173, 66, 0.08) inset, 0 24px 80px rgba(0, 0, 0, 0.86);
-}
-
-.magi-home__config-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.78);
-  backdrop-filter: blur(2px);
-}
-
-.magi-home__config-form { display: grid; gap: 16px; padding: 24px 28px; }
-.magi-home__config-header { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid #885810; }
-.magi-home__config-header p,
-.magi-home__config-header h2 { margin: 0; }
-.magi-home__config-header p { color: #775925; font: 9px SFMono-Regular, Consolas, monospace; letter-spacing: 0.14em; }
-.magi-home__config-header h2 { margin-top: 5px; color: var(--home-phosphor); font-size: 22px; }
-.magi-home__dialog-close { display: inline-flex; min-height: 44px; align-items: center; gap: 7px; padding: 0 10px; border: 0; color: var(--home-sodium); background: transparent; }
-.magi-home__dialog-close span:first-child { font-size: 25px; font-weight: 300; }
-
-.magi-home__config-identity {
-  display: grid;
-  grid-template-columns: auto minmax(150px, 1fr) auto minmax(180px, 1fr);
-  gap: 10px 16px;
-  align-items: baseline;
-  padding-bottom: 14px;
-  border-bottom: 1px dashed #78500f;
-}
-
-.magi-home__config-identity span { color: #8f672b; font-size: 10px; }
-.magi-home__config-identity strong { color: var(--home-phosphor); font-size: 13px; }
-
-.magi-home__connection-options { min-width: 0; margin: 0; padding: 0 0 15px; border: 0; border-bottom: 1px dashed #78500f; }
-.magi-home__connection-options legend { margin-bottom: 8px; color: #b97b2d; font-size: 11px; }
-.magi-home__connection-options > div { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.magi-home__connection-options label { display: flex; min-height: 44px; align-items: center; gap: 8px; color: #d5ad65; font-size: 12px; cursor: pointer; }
-.magi-home__connection-options input { width: 18px; height: 18px; accent-color: var(--home-sodium); }
-
-.magi-home__config-field { display: grid; min-width: 0; grid-template-columns: 112px minmax(0, 1fr); align-items: start; gap: 12px; }
-.magi-home__config-field > span { padding-top: 14px; color: #bc7d2e; font: 11px SFMono-Regular, Consolas, monospace; }
-.magi-home__config-field input { min-height: 46px; padding: 0 12px; }
-.magi-home__config-field textarea { min-height: 196px; padding: 12px; resize: vertical; line-height: 1.55; }
-
-.magi-home__credential-note {
-  margin: 0;
-  padding: 12px 14px;
-  border: 1px solid #745217;
-  color: #c99646;
-  font-size: 11px;
-  line-height: 1.55;
-}
-
-.magi-home__config-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 2px; }
-.magi-home__config-actions button { min-width: 160px; min-height: 48px; border: 1px solid #805511; border-radius: 0; color: #cf9948; background: transparent; }
-.magi-home__config-actions button[type="submit"] { border-color: var(--home-sodium); color: var(--home-sodium); }
-.magi-home__config-actions button:hover { background: rgba(255, 173, 66, 0.07); }
-
 @keyframes magi-home-signal {
   50% { opacity: 0.25; }
 }
@@ -987,6 +1075,16 @@
 @keyframes magi-home-terminal-in {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes magi-home-grid-refresh {
+  0%, 100% { filter: brightness(0.78); }
+  50% { filter: brightness(1.24); }
+}
+
+@keyframes magi-home-fault-lock {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 
 @media (max-width: 1020px) {
@@ -1023,6 +1121,8 @@
   .magi-home__simulator[data-phase="deliberation"],
   .magi-home__simulator[data-phase="final"] { grid-template-rows: auto auto auto auto; }
   .magi-home__link-strip { align-items: flex-start; flex-direction: column; justify-content: center; gap: 3px; padding-top: 7px; padding-bottom: 7px; }
+  .magi-home__failure-banner { grid-template-columns: 12px minmax(0, 1fr); }
+  .magi-home__failure-banner b { grid-column: 2; justify-self: start; }
   .magi-home__deliberation-grid,
   .magi-home__simulator[data-phase="deliberation"] .magi-home__deliberation-grid,
   .magi-home__simulator[data-phase="final"] .magi-home__deliberation-grid { grid-template-columns: 1fr; min-height: auto; }
@@ -1077,11 +1177,6 @@
   .magi-home__detail-subject { grid-column: 1 / -1; }
   .magi-home__agent-output dl { grid-template-columns: 1fr; }
   .magi-home__response-copy { width: 100%; padding-right: 0; padding-left: 0; }
-  .magi-home__config-dialog { width: 100vw; height: 100dvh; max-height: none; margin: 0; }
-  .magi-home__config-form { min-height: 100%; padding: 18px 16px; }
-  .magi-home__config-identity { grid-template-columns: auto 1fr; }
-  .magi-home__config-field { grid-template-columns: 1fr; gap: 5px; }
-  .magi-home__config-field > span { padding-top: 0; }
 }
 
 @media (max-width: 480px) {
@@ -1090,6 +1185,8 @@
   .magi-home__navigation nav { width: 100%; border-top: 1px solid rgba(145, 64, 12, 0.38); }
   .magi-home__navigation nav a { min-width: 0; flex: 1; }
   .magi-home__link-strip { font-size: 9px; letter-spacing: 0.04em; }
+  .magi-home__failure-banner { gap: 10px; padding-right: 10px; }
+  .magi-home__failure-banner strong { font-size: 16px; }
   .magi-home__decision-stage { padding-top: 16px; }
   .magi-home__node-hotspot > span { top: -28px; min-height: 24px; padding: 3px 6px; font-size: 8px; }
   .magi-home__input-dock {
@@ -1107,10 +1204,6 @@
   .magi-home__detail-heading { grid-template-columns: 1fr; }
   .magi-home__detail-subject { grid-column: auto; grid-row: auto; }
   .magi-home__agent-output header > div { align-items: flex-start; flex-direction: column; }
-  .magi-home__config-header h2 { font-size: 18px; }
-  .magi-home__dialog-close span:last-child { display: none; }
-  .magi-home__config-actions { flex-direction: column-reverse; }
-  .magi-home__config-actions button { width: 100%; }
 }
 
 @media (max-width: 390px) {
@@ -1121,8 +1214,6 @@
   .magi-home__history-list a { padding-right: 8px; padding-left: 8px; }
   .magi-home__history-votes { max-width: 100%; }
   .magi-home__empty-state { margin-top: 7vh; padding: 20px 14px; }
-  .magi-home__config-form { padding: 14px 10px; }
-  .magi-home__connection-options > div { display: grid; grid-template-columns: 1fr; gap: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1132,6 +1223,8 @@
   .magi-home__motion-banner,
   .magi-home__system-stack,
   .magi-home__layer-stack,
+  .magi-home__failure-banner,
+  .magi-home__instrument-overlay,
   .magi-home__decision-stage > .magi-network {
     animation: none;
     transition: none;

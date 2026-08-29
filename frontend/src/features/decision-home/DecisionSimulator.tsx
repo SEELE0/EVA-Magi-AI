@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Agent, AgentId, Decision, DecisionRequest, SystemStatus } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
@@ -85,33 +85,58 @@ function MotionBanner({
   );
 }
 
+function FailureBanner({ decisionId, message }: { decisionId?: string; message: string }) {
+  return (
+    <section className="magi-home__failure-banner" role="alert" aria-live="assertive">
+      <div className="magi-home__failure-stripe" aria-hidden="true" />
+      <div>
+        <span>SIGNAL FAILURE / {shortDecisionCode(decisionId)}</span>
+        <strong>DIRECT LINK INTERRUPTED</strong>
+        <small>{message}</small>
+      </div>
+      <b>RETRY ENABLED</b>
+    </section>
+  );
+}
+
 function SystemStack({
   decisionId,
+  phase,
   subject,
-  priority,
-  isExecuting
+  priority
 }: {
   decisionId?: string;
+  phase: SimulatorPhase;
   subject: string;
   priority: DecisionRequest['priority'];
-  isExecuting: boolean;
 }) {
+  const subjectLength = Array.from(subject).length;
+  const payloadLevel = Math.min(100, Math.max(4, (subjectLength / 240) * 100));
+  const priorityLevel = priority === 'critical' ? 100 : priority === 'normal' ? 66 : 33;
+  const execMode = phase === 'deliberation' ? 'EXEC' : phase === 'error' ? 'FAULT' : 'HOLD';
   const rows = [
-    ['CODE', shortDecisionCode(decisionId)],
-    ['FILE', 'MAGI.SYS'],
-    ['PAYLOAD', `${subject.length.toString().padStart(3, '0')} CH`],
-    ['EXEC MODE', isExecuting ? 'EXEC' : 'HOLD'],
-    ['PRIORITY', priorityCode(priority)]
+    { label: 'CODE', value: shortDecisionCode(decisionId) },
+    { label: 'FILE', value: 'MAGI.SYS' },
+    { label: 'PAYLOAD', value: `${subjectLength.toString().padStart(3, '0')} CH`, level: payloadLevel },
+    { label: 'EXEC MODE', value: execMode },
+    { label: 'PRIORITY', value: priorityCode(priority), level: priorityLevel }
   ];
 
   return (
     <aside className="magi-home__system-stack" aria-label="MAGI 系统参数">
       <p className="magi-home__stack-heading">SYSTEM / CODE</p>
       <dl>
-        {rows.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
+        {rows.map((row) => (
+          <div key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
+            {row.level ? (
+              <span
+                className="magi-home__threshold-bar"
+                style={{ '--magi-level': `${row.level}%` } as CSSProperties}
+                aria-hidden="true"
+              />
+            ) : null}
           </div>
         ))}
       </dl>
@@ -132,6 +157,11 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
               <strong>{agent.id}</strong>
               <b>{voteCopy[vote]}</b>
               <small>{healthCopy[agent.health]} / {agent.latencyMs}ms</small>
+              <span
+                className="magi-home__latency-rail"
+                style={{ '--magi-level': `${Math.min(100, (agent.latencyMs / 80) * 100)}%` } as CSSProperties}
+                aria-hidden="true"
+              />
             </li>
           );
         })}
@@ -141,15 +171,15 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
 }
 
 function NodeConfigHotspots({ disabled, onOpen }: { disabled: boolean; onOpen: (agentId: AgentId) => void }) {
-  const hotspots: Array<{ agentId: AgentId; position: 'top' | 'left' | 'right' }> = [
-    { agentId: 'BALTHASAR-2', position: 'top' },
-    { agentId: 'CASPER-3', position: 'left' },
-    { agentId: 'MELCHIOR-1', position: 'right' }
+  const hotspots: Array<{ agentId: AgentId; code: string; position: 'top' | 'left' | 'right' }> = [
+    { agentId: 'BALTHASAR-2', code: 'CFG-01', position: 'top' },
+    { agentId: 'CASPER-3', code: 'CFG-02', position: 'left' },
+    { agentId: 'MELCHIOR-1', code: 'CFG-03', position: 'right' }
   ];
 
   return (
     <div className="magi-home__node-hotspots" aria-label="人格ノード設定">
-      {hotspots.map(({ agentId, position }) => (
+      {hotspots.map(({ agentId, code, position }) => (
         <div key={agentId} className={`magi-home__node-hotspot is-${position}`}>
           <button
             type="button"
@@ -157,9 +187,22 @@ function NodeConfigHotspots({ disabled, onOpen }: { disabled: boolean; onOpen: (
             disabled={disabled}
             aria-label={`${agentId} の設定を開く`}
           />
-          <span aria-hidden="true">設定を開く</span>
+          <span aria-hidden="true">{code}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+function InstrumentOverlay() {
+  return (
+    <div className="magi-home__instrument-overlay" aria-hidden="true">
+      <i className="is-top-left" />
+      <i className="is-top-right" />
+      <i className="is-bottom-left" />
+      <i className="is-bottom-right" />
+      <span className="magi-home__calibration-rail is-left">00&nbsp;&nbsp;25&nbsp;&nbsp;50&nbsp;&nbsp;75&nbsp;&nbsp;99</span>
+      <span className="magi-home__calibration-rail is-bottom">REF-03 / MAGI SYNC FIELD</span>
     </div>
   );
 }
@@ -264,20 +307,29 @@ export function DecisionSimulator({
 
   const votes = decision?.votes;
   const verdict = decision?.verdict ?? 'pending';
-  const phase: SimulatorPhase = isExecuting ? 'deliberation' : decision ? 'final' : error ? 'error' : 'standby';
+  const hasTerminalDecision = decision ? isTerminalDecision(decision) : false;
+  const phase: SimulatorPhase = isExecuting
+    ? 'deliberation'
+    : error
+      ? 'error'
+      : hasTerminalDecision
+        ? 'final'
+        : 'standby';
   const showTerminal = phase === 'deliberation' || phase === 'final';
 
   return (
     <div className={`magi-home__simulator phase-${phase}`} data-phase={phase}>
       {showTerminal ? <LinkStrip /> : null}
       {showTerminal ? <MotionBanner subject={subject} verdict={verdict} isExecuting={isExecuting} /> : null}
+      {error ? <FailureBanner decisionId={decision?.id} message={error} /> : null}
 
       <div className="magi-home__deliberation-grid">
         {showTerminal ? (
-          <SystemStack decisionId={decision?.id} subject={subject} priority={priority} isExecuting={isExecuting} />
+          <SystemStack decisionId={decision?.id} phase={phase} subject={subject} priority={priority} />
         ) : null}
 
         <section className="magi-home__decision-stage" aria-label="MAGI 合议マトリクス">
+          <InstrumentOverlay />
           <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`}>
             <svg className="network-links" viewBox="0 0 600 420" preserveAspectRatio="none" aria-hidden="true">
               <g className="network-connectors">
@@ -360,14 +412,14 @@ export function DecisionSimulator({
           <small>EXECUTE DECISION</small>
         </button>
 
-        {decision && !isExecuting ? (
+        {phase === 'final' ? (
           <button className="magi-home__new-motion" type="button" onClick={resetForNewMotion}>
             <span>新しい動議</span>
             <small>NEW MOTION</small>
           </button>
         ) : null}
 
-        {error ? <p className="magi-home__error" role="alert">{error}</p> : null}
+        {error ? <p className="magi-home__error" aria-hidden="true">{error}</p> : null}
       </section>
     </div>
   );

@@ -1,7 +1,18 @@
+@font-face {
+  font-family: "IBM Plex Sans Condensed";
+  src: url("/fonts/IBMPlexSansCondensed-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   color: #ffc06a;
   background: #090401;
-  --font-eva: "Matisse EB", "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Noto Sans JP", "Hiragino Mincho ProN", serif;
+  --font-eva-display: "Matisse EB", "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  --font-eva-ui: "IBM Plex Sans Condensed", "Arial Narrow", "Noto Sans JP", sans-serif;
+  --font-eva-data: SFMono-Regular, Consolas, "Liberation Mono", ui-monospace, monospace;
+  --font-eva: var(--font-eva-display);
   font-family: var(--font-eva);
   font-synthesis: none;
 }
