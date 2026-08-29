@@ -29,4 +29,16 @@ describe('AgentConfigDialog BASE URL validation', () => {
     expect(markup).toContain('type="url"');
     expect(markup).toContain('required=""');
   });
+
+  it('exposes an original terminal skin without changing the form contract', () => {
+    const config = cloneAgentConfigs()['BALTHASAR-2'];
+    const markup = renderToStaticMarkup(
+      <AgentConfigDialog config={config} onClose={() => undefined} onSave={() => undefined} variant="original" />
+    );
+
+    expect(markup).toContain('magi-home__config-dialog--original');
+    expect(markup).toContain('BALTHASAR-2 ノード設定');
+    expect(markup).toContain('API KEY');
+    expect(markup).toContain('役割カード PROMPT');
+  });
 });

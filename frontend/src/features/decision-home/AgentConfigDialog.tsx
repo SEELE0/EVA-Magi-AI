@@ -6,16 +6,18 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { connectionModeCopy } from './simulator-config';
 import type { AgentConnectionMode, AgentRuntimeConfig } from './simulator-types';
+import './AgentConfigDialog.css';
 
 interface AgentConfigDialogProps {
   config: AgentRuntimeConfig | null;
   onClose: () => void;
   onSave: (config: AgentRuntimeConfig) => void;
+  variant?: 'modern' | 'original';
 }
 
 const connectionModes = Object.keys(connectionModeCopy) as AgentConnectionMode[];
 
-export function AgentConfigDialog({ config, onClose, onSave }: AgentConfigDialogProps) {
+export function AgentConfigDialog({ config, onClose, onSave, variant = 'modern' }: AgentConfigDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState<AgentRuntimeConfig | null>(config ? { ...config } : null);
 
@@ -42,7 +44,7 @@ export function AgentConfigDialog({ config, onClose, onSave }: AgentConfigDialog
   return (
     <dialog
       ref={dialogRef}
-      className="magi-home__config-dialog"
+      className={`magi-home__config-dialog magi-home__config-dialog--${variant}`}
       aria-labelledby="magi-home-config-title"
       onCancel={(event) => {
         event.preventDefault();

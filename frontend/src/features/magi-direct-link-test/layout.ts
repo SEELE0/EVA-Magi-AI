@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
+import type { AgentId } from '../../domain/decision';
 
 export type SvgPoint = readonly [x: number, y: number];
 
@@ -20,9 +21,8 @@ export interface TextPlacement {
 
 export interface AgentModuleLayout {
   readonly id: 'balthasar' | 'casper' | 'melchior';
+  readonly agentId: AgentId;
   readonly name: string;
-  readonly vote: '承認' | '否定';
-  readonly decision: 'approved' | 'denied';
   readonly frame: readonly SvgPoint[];
   readonly namePlacement: TextPlacement;
   readonly voteBox: SvgBox;
@@ -63,14 +63,114 @@ export interface MagiNetworkLayout {
   readonly label: TextPlacement;
 }
 
+export type DirectLinkLayoutMode = 'portrait' | 'portrait-wide' | 'landscape';
+
+export interface DirectLinkPanelPlacement {
+  readonly origin: SvgPoint;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface DirectLinkInformationLayout {
+  readonly preserveAspectRatio: 'xMinYMin meet' | 'xMinYMin slice';
+  readonly header: DirectLinkPanelPlacement;
+  readonly motion: DirectLinkPanelPlacement;
+  readonly systemData: DirectLinkPanelPlacement;
+  readonly connectionData: DirectLinkPanelPlacement;
+}
+
+export type MagiNetworkState = 'compose' | 'active';
+
+export interface MagiNetworkPosition {
+  readonly x: number;
+  readonly y: number;
+  readonly scale: number;
+  readonly activeYOffset: number;
+}
+
+export interface DirectLinkLayoutPreset {
+  readonly viewBox: {
+    readonly width: number;
+    readonly height: number;
+  };
+  readonly network: MagiNetworkPosition;
+  readonly information: DirectLinkInformationLayout;
+}
+
 export const TERMINAL_VIEWBOX = {
   width: 720,
   height: 960,
 } as const;
 
+const PORTRAIT_NETWORK_POSITION: MagiNetworkPosition = {
+  x: 0,
+  y: -25,
+  scale: 1,
+  activeYOffset: -56,
+};
+
+export function resolveMagiNetworkPosition(
+  position: MagiNetworkPosition,
+  state: MagiNetworkState,
+) {
+  return {
+    x: position.x,
+    y: position.y + (state === 'active' ? position.activeYOffset : 0),
+    scale: position.scale,
+  } as const;
+}
+
+export function toMagiNetworkTransform(
+  position: MagiNetworkPosition,
+  state: MagiNetworkState,
+) {
+  const resolved = resolveMagiNetworkPosition(position, state);
+  return `translate(${resolved.x}px, ${resolved.y}px) scale(${resolved.scale})`;
+}
+
+export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLinkLayoutPreset> = {
+  portrait: {
+    viewBox: TERMINAL_VIEWBOX,
+    network: PORTRAIT_NETWORK_POSITION,
+    information: {
+      preserveAspectRatio: 'xMinYMin meet',
+      header: { origin: [22, 30], width: 328, height: 101 },
+      motion: { origin: [22, 141], width: 387, height: 83 },
+      systemData: { origin: [22, 255], width: 150, height: 234 },
+      connectionData: { origin: [548, 270], width: 153, height: 230 },
+    },
+  },
+  'portrait-wide': {
+    viewBox: TERMINAL_VIEWBOX,
+    network: PORTRAIT_NETWORK_POSITION,
+    information: {
+      preserveAspectRatio: 'xMinYMin meet',
+      header: { origin: [22, 30], width: 328, height: 101 },
+      motion: { origin: [22, 141], width: 387, height: 83 },
+      systemData: { origin: [22, 255], width: 150, height: 234 },
+      connectionData: { origin: [598, 270], width: 153, height: 230 },
+    },
+  },
+  landscape: {
+    viewBox: { width: 1440, height: 720 },
+    network: {
+      x: 370,
+      y: -191,
+      scale: 1,
+      activeYOffset: -51,
+    },
+    information: {
+      preserveAspectRatio: 'xMinYMin slice',
+      header: { origin: [28, 24], width: 387, height: 101 },
+      motion: { origin: [1025, 24], width: 387, height: 83 },
+      systemData: { origin: [28, 160], width: 150, height: 234 },
+      connectionData: { origin: [1100, 180], width: 153, height: 230 },
+    },
+  },
+};
+
 export const TERMINAL_MODULE_LAYOUT = {
   header: {
-    origin: [38, 30] as SvgPoint,
     width: 328,
     height: 101,
     radius: 7,
@@ -82,7 +182,6 @@ export const TERMINAL_MODULE_LAYOUT = {
     secondBaseline: 86,
   },
   motion: {
-    origin: [39, 141] as SvgPoint,
     railWidth: 7,
     railHeight: 83,
     railRadius: 3.5,
@@ -94,11 +193,7 @@ export const TERMINAL_MODULE_LAYOUT = {
     width: 387,
   },
   systemData: {
-    origin: [36, 271] as SvgPoint,
     lineHeight: 26,
-  },
-  connectionData: {
-    origin: [529, 374] as SvgPoint,
   },
 } as const;
 
@@ -284,9 +379,8 @@ export const createMagiNetworkLayout = (
     agents: [
       {
         id: 'balthasar',
+        agentId: 'BALTHASAR-2',
         name: 'BALTHASAR:2',
-        vote: '承認',
-        decision: 'approved',
         frame: upperFrame,
         namePlacement: {
           anchor: point(centerX, metrics.top + 84),
@@ -305,9 +399,8 @@ export const createMagiNetworkLayout = (
       },
       {
         id: 'casper',
+        agentId: 'CASPER-3',
         name: 'CASPER:3',
-        vote: '否定',
-        decision: 'denied',
         frame: leftFrame,
         namePlacement: {
           anchor: point(centerX - 169, hubShoulderY + 239),
@@ -326,9 +419,8 @@ export const createMagiNetworkLayout = (
       },
       {
         id: 'melchior',
+        agentId: 'MELCHIOR-1',
         name: 'MELCHIOR:1',
-        vote: '承認',
-        decision: 'approved',
         frame: rightFrame,
         namePlacement: {
           anchor: point(centerX + 169, hubShoulderY + 245),

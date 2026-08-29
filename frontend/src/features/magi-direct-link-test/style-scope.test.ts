@@ -29,4 +29,30 @@ describe('direct-link stylesheet isolation', () => {
     expect(css).not.toMatch(/^\s*\*\s*,/m);
     expect(css).toContain('.direct-link-page *::before');
   });
+
+  it('defines landscape reflow, collapsing input, and transform-only network motion', () => {
+    expect(css).toContain('@media (orientation: landscape)');
+    expect(css).toMatch(/\.motion-composer\.is-collapsed\s*\{[^}]*max-height:\s*0;/);
+    expect(css).toMatch(/\.direct-link-page \.magi-geometry\s*\{[^}]*transition:\s*transform 520ms/);
+    expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(css).toMatch(/\.motion-composer\s*\{[^}]*width:\s*min\(100%, 720px\)/);
+    expect(css).toMatch(/@media \(orientation: landscape\)[\s\S]*?\.motion-composer\s*\{[^}]*max-height:\s*104px/);
+  });
+
+  it('layers terminal information independently from centered MAGI geometry', () => {
+    expect(css).toContain('.direct-link-page .terminal-information-layer');
+    expect(css).toContain('.direct-link-page .terminal-network-layer');
+    expect(css).toMatch(/\.direct-link-workspace\s*\{[^}]*width:\s*100vw/);
+  });
+
+  it('keeps rejection red inside the vote badge', () => {
+    expect(css).not.toMatch(/\.agent-module\.vote-reject\s*\{[^}]*color:\s*var\(--direct-red\)/);
+    expect(css).toMatch(/\.vote-box--reject\s*\{[^}]*stroke:\s*var\(--direct-red\)/);
+    expect(css).toMatch(/\.vote-text--reject\s*\{[^}]*fill:\s*var\(--direct-red\)/);
+  });
+
+  it('restores terminal information brightness in the final phase', () => {
+    expect(css).not.toMatch(/\.phase-final \.terminal-chrome\s*\{[^}]*opacity:\s*0\.18/);
+    expect(css).toMatch(/\.phase-deliberation \.terminal-chrome\s*\{[^}]*opacity:\s*0\.18/);
+  });
 });
