@@ -6,7 +6,7 @@
 import type { CSSProperties } from 'react';
 import './nerv-logo-anime.css';
 
-const nervLogoUrl = new URL('../../../asset/images.jpeg', import.meta.url).href;
+const nervLogoUrl = new URL('../../asset/images.jpeg', import.meta.url).href;
 
 export interface NervLogoAnimeProps {
   /** CSS width value or a pixel number. */

@@ -7,10 +7,11 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        decisionConsoleLab: 'decision-console-lab.html',
-        magiBootTest: 'magi-boot-test.html',
-        nervLogoAnimeTest: 'nerv-logo-anime-test.html',
-        biosStartTest: 'bios-start-test.html',
+        decisionConsoleLab: 'design_test/decision-console-lab.html',
+        magiBootTest: 'design_test/magi-boot-test.html',
+        nervLogoAnimeTest: 'design_test/nerv-logo-anime-test.html',
+        biosStartTest: 'design_test/bios-start-test.html',
+        evaWaveformTest: 'design_test/eva-waveform-test.html',
         magiDirectLinkTest: 'magi-direct-link-test.html'
       }
     }

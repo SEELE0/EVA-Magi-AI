@@ -32,6 +32,30 @@ const intersects = (
   second: { left: number; top: number; right: number; bottom: number },
 ) => first.left < second.right && first.right > second.left && first.top < second.bottom && first.bottom > second.top;
 
+const mapMeetBoundsToViewport = (
+  bounds: { left: number; top: number; right: number; bottom: number },
+  viewport: { width: number; height: number },
+  viewBox: { width: number; height: number },
+  preserveAspectRatio: string,
+) => {
+  const scale = Math.min(viewport.width / viewBox.width, viewport.height / viewBox.height);
+  const spareWidth = viewport.width - viewBox.width * scale;
+  const spareHeight = viewport.height - viewBox.height * scale;
+  const offsetX = preserveAspectRatio.startsWith('xMax')
+    ? spareWidth
+    : preserveAspectRatio.startsWith('xMid')
+      ? spareWidth / 2
+      : 0;
+  const offsetY = preserveAspectRatio.includes('YMid') ? spareHeight / 2 : 0;
+
+  return {
+    left: bounds.left * scale + offsetX,
+    top: bounds.top * scale + offsetY,
+    right: bounds.right * scale + offsetX,
+    bottom: bounds.bottom * scale + offsetY,
+  };
+};
+
 describe('MAGI constraint-driven layout', () => {
   it('derives the approved reference geometry from semantic metrics', () => {
     expect(MAGI_NETWORK_LAYOUT.agents.map(({ id, frame }) => ({ id, frame }))).toEqual([
@@ -51,6 +75,11 @@ describe('MAGI constraint-driven layout', () => {
     expect(MAGI_NETWORK_LAYOUT.hub).toEqual([
       [280, 570], [420, 570], [465, 625], [370, 710],
       [370, 730], [330, 730], [330, 710], [235, 625],
+    ]);
+    expect(MAGI_NETWORK_LAYOUT.agents.map(({ id, sharedCoreBoundary }) => ({ id, sharedCoreBoundary }))).toEqual([
+      { id: 'balthasar', sharedCoreBoundary: [[280, 570], [420, 570]] },
+      { id: 'casper', sharedCoreBoundary: [[235, 625], [330, 710], [330, 730]] },
+      { id: 'melchior', sharedCoreBoundary: [[465, 625], [370, 710], [370, 730]] },
     ]);
   });
 
@@ -73,6 +102,7 @@ describe('MAGI constraint-driven layout', () => {
     });
 
     expect(shifted.agents[0].frame[0][0] - MAGI_NETWORK_LAYOUT.agents[0].frame[0][0]).toBe(shift);
+    expect(shifted.agents[0].sharedCoreBoundary[1][0] - MAGI_NETWORK_LAYOUT.agents[0].sharedCoreBoundary[1][0]).toBe(shift);
     expect(shifted.agents[1].voteBox.x - MAGI_NETWORK_LAYOUT.agents[1].voteBox.x).toBe(shift);
     expect(shifted.agents[2].namePlacement.anchor[0] - MAGI_NETWORK_LAYOUT.agents[2].namePlacement.anchor[0]).toBe(shift);
     expect(shifted.hub[0][0] - MAGI_NETWORK_LAYOUT.hub[0][0]).toBe(shift);
@@ -102,7 +132,13 @@ describe('MAGI constraint-driven layout', () => {
     const landscape = DIRECT_LINK_LAYOUT_PRESETS.landscape.information;
 
     expect(portrait.preserveAspectRatio).toBe('xMinYMin meet');
+    expect(portrait.connectionPreserveAspectRatio).toBe('xMaxYMin meet');
+    expect(portrait.leftCalibrationPreserveAspectRatio).toBe('xMinYMin meet');
+    expect(portrait.rightCalibrationPreserveAspectRatio).toBe('xMaxYMin meet');
     expect(landscape.preserveAspectRatio).toBe('xMidYMid meet');
+    expect(landscape.connectionPreserveAspectRatio).toBe('xMidYMid meet');
+    expect(landscape.leftCalibrationPreserveAspectRatio).toBe('xMinYMid meet');
+    expect(landscape.rightCalibrationPreserveAspectRatio).toBe('xMaxYMid meet');
     expect(TERMINAL_MODULE_LAYOUT.header.radius).toBe(10);
     expect(TERMINAL_MODULE_LAYOUT.motion.railRadius).toBe(0);
 
@@ -129,6 +165,47 @@ describe('MAGI constraint-driven layout', () => {
     expect(rightMargin).toBe(leftMargin);
     expect(landscape.systemData.origin[1] - landscape.header.origin[1] - landscape.header.height).toBeGreaterThanOrEqual(30);
     expect(landscape.connectionData.origin[1] - landscape.systemData.origin[1]).toBeGreaterThanOrEqual(20);
+    expect(DIRECT_LINK_LAYOUT_PRESETS['portrait-wide'].information.connectionData).toBe(portrait.connectionData);
+  });
+
+  it('maps the independently aligned connection panel clear of the network at critical terminal sizes', () => {
+    const samples = [
+      { mode: 'portrait', width: 320, height: 399 },
+      { mode: 'portrait', width: 390, height: 675 },
+      { mode: 'portrait', width: 430, height: 763 },
+      { mode: 'portrait', width: 540, height: 551 },
+      { mode: 'portrait', width: 600, height: 531 },
+      { mode: 'portrait', width: 600, height: 631 },
+      { mode: 'portrait', width: 719, height: 791 },
+      { mode: 'portrait-wide', width: 720, height: 856 },
+      { mode: 'portrait-wide', width: 768, height: 920 },
+      { mode: 'landscape', width: 1024, height: 664 },
+    ] as const;
+
+    samples.forEach(({ mode, width, height }) => {
+      const preset = DIRECT_LINK_LAYOUT_PRESETS[mode];
+      const connection = preset.information.connectionData;
+      const connectionBounds = mapMeetBoundsToViewport({
+        left: connection.origin[0],
+        top: connection.origin[1],
+        right: connection.origin[0] + connection.width,
+        bottom: connection.origin[1] + connection.height,
+      }, { width, height }, preset.viewBox, preset.information.connectionPreserveAspectRatio);
+
+      expect(connectionBounds.right).toBeLessThanOrEqual(width);
+
+      (['compose', 'active'] as const).forEach((state) => {
+        MAGI_NETWORK_LAYOUT.agents.forEach((agent) => {
+          const agentBounds = mapMeetBoundsToViewport(
+            transformBounds(agent.frame, preset.network, state),
+            { width, height },
+            preset.viewBox,
+            'xMidYMid meet',
+          );
+          expect(intersects(connectionBounds, agentBounds)).toBe(false);
+        });
+      });
+    });
   });
 
   it('keeps connection data outside every node in compose and active layouts', () => {

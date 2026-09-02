@@ -4,11 +4,11 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { useEffect, useRef, useState } from 'react';
-import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../../domain/decision';
-import { createDecisionService } from '../../services/create-decision-service';
-import type { DecisionService } from '../../services/decision-service';
-import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
-import { AgentNode, PanelTitle, Readout, Telemetry } from './ConsolePrimitives';
+import type { Agent, Decision, DecisionEvent, DecisionRequest, SystemStatus } from '../../src/domain/decision';
+import { createDecisionService } from '../../src/services/create-decision-service';
+import type { DecisionService } from '../../src/services/decision-service';
+import { isTerminalDecision, pollDecisionUntilTerminal } from '../../src/services/poll-decision';
+import { AgentNode, PanelTitle, Readout, Telemetry } from '../../src/features/decision-console/ConsolePrimitives';
 import {
   connectionCopy,
   defaultAgents,
@@ -17,10 +17,10 @@ import {
   sourceCopy,
   verdictCopy,
   type Scenario
-} from './console-config';
+} from '../../src/features/decision-console/console-config';
 
 const service: DecisionService = createDecisionService();
-const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
+const nervLogoUrl = new URL('../../asset/images-1.png', import.meta.url).href;
 
 export function DecisionConsole() {
   const [status, setStatus] = useState<SystemStatus | null>(null);

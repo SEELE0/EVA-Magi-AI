@@ -5,11 +5,13 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '../../app/app.css';
-import { DecisionConsole } from '../../features/decision-console/DecisionConsole';
+import { MagiBoot } from '../../src/features/magi-boot';
+import './magi-boot-page.css';
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('magi-boot-test-root')!).render(
   <StrictMode>
-    <DecisionConsole />
+    <main className="magi-boot-test-page">
+      <MagiBoot size="min(100vw, 100vh)" />
+    </main>
   </StrictMode>
 );

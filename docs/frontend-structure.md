@@ -7,22 +7,23 @@
 ```text
 frontend/
 ├── asset/                              原始图像资源
+├── design_test/                        未接入当前产品流程的页面与组件
+│   ├── bios-start/                     BIOS 自检动画组件与入口
+│   ├── decision-console/               旧完整控制台组件与入口
+│   ├── eva-waveform/                   Three.js EVA 相位示波器实验
+│   ├── magi-boot/                      MAGI 几何动画独立预览入口
+│   └── nerv-logo-anime/                NERV 标志动画组件与入口
 ├── index.html                          主应用 HTML 入口
-├── magi-boot-test.html                 MAGI 几何动画预览入口
 ├── magi-direct-link-test.html          原作风格直连页预览入口
-├── nerv-logo-anime-test.html           NERV 标志动画预览入口
 ├── src/
 │   ├── app/                              主应用组装与全局样式
 │   ├── domain/                           跨界面、跨服务领域类型与主页模式
 │   ├── features/
-│   │   ├── bios-start/                  BIOS 自检动画组件与实验入口
 │   │   ├── boot-intro/                  主页 CRT/POST 开机层
-│   │   ├── decision-console/            保留的旧控制台组件与试验田
+│   │   ├── decision-console/            主页复用的控制台原语与配置
 │   │   ├── decision-home/               当前主页、节点配置、历史与明细
-│   │   ├── magi-boot/                   MAGI 几何启动组件与预览页
+│   │   ├── magi-boot/                   开机流程复用的 MAGI 几何启动组件
 │   │   ├── magi-direct-link-test/       原作风格直连界面与预览页
-│   │   └── nerv-logo-anime/             NERV 标志组件与预览页
-│   ├── labs/                             旧控制台独立实验页入口
 │   ├── services/                         决策服务接口、Mock、HTTP 与降级适配
 │   └── vite-env.d.ts                    Vite 生成的类型声明
 ├── package.json                        前端依赖与命令
@@ -45,18 +46,21 @@ frontend/
 
 ### 独立预览页
 
-Vite 配置了六个构建入口：
+Vite 配置了七个构建入口：
 
 | 页面 | React 入口 | 用途 |
 | --- | --- | --- |
 | `index.html` | `src/app/main.tsx` | 完整应用 |
-| `decision-console-lab.html` | `src/labs/decision-console/main.tsx` | 保留旧 `DecisionConsole` 的组件实验页 |
-| `magi-boot-test.html` | `src/features/magi-boot/main.tsx` | 单独调试 MAGI 几何动画 |
+| `design_test/decision-console-lab.html` | `design_test/decision-console/main.tsx` | 保留旧 `DecisionConsole` 的组件实验页 |
+| `design_test/magi-boot-test.html` | `design_test/magi-boot/main.tsx` | 单独调试 MAGI 几何动画 |
+| `design_test/eva-waveform-test.html` | `design_test/eva-waveform/main.tsx` | Three.js 红蓝相位线束与 CRT 示波器实验 |
 | `magi-direct-link-test.html` | `src/features/magi-direct-link-test/main.tsx` | 单独预览原作风格 MAGI Direct Link 界面 |
-| `nerv-logo-anime-test.html` | `src/features/nerv-logo-anime/main.tsx` | 单独调试 NERV 标志动画 |
-| `bios-start-test.html` | `src/features/bios-start/BiosStart.tsx` | BIOS 自检动画的实验入口 |
+| `design_test/nerv-logo-anime-test.html` | `design_test/nerv-logo-anime/main.tsx` | 单独调试 NERV 标志动画 |
+| `design_test/bios-start-test.html` | `design_test/bios-start/main.tsx` | BIOS 自检动画的实验入口 |
 
-预览页用于组件级视觉验证，不参与主应用的业务路由。`bios-start-test.html` 通过 `src/features/bios-start/main.tsx` 独立渲染，仍属于实验性入口；它与其他预览页一样拥有自己的 React `createRoot` 入口。
+`design_test/` 中的预览页用于组件级视觉验证，不参与主应用的业务路由；它们各自拥有独立的 React `createRoot` 入口。`magi-direct-link-test.html` 仍留在前端根目录，因为同一实现也是当前 `original` 主页模式。
+
+`eva-waveform/` 只由独立实验入口加载。它使用 Three.js 正交相机、GPU 实例化镂空圆柱笼（两端圆环与纵向骨架）、顶点着色器、加法混色和低强度 Bloom 构造红蓝相位线束；刻度、时间码、扫描线、噪点和暗角由 HTML/CSS 覆盖层负责。该依赖不会进入当前主页入口。
 
 ## 分层与依赖方向
 
@@ -129,17 +133,17 @@ VITE_API_BASE_URL=http://localhost:8000
 
 `DecisionSimulator.tsx` 直接复用 `decision-console/ConsolePrimitives.tsx` 的 `AgentNode`、旧 `magi-network` 几何、连线坐标和 `is-scanning` 动画。不要在主页复制或重写绿色三模块。
 
-`decision-console/` 保持原实现，作为组件库试验田由 `/decision-console-lab.html` 单独打开。`ConsolePrimitives.tsx` 和 `console-config.ts` 同时是主页的复用来源。
+`src/features/decision-console/` 只保留当前主页仍在复用的 `ConsolePrimitives.tsx` 和 `console-config.ts`。旧完整控制台移至 `design_test/decision-console/`，由 `/design_test/decision-console-lab.html` 单独打开。
 
 ## 动画组件
 
 ### `BiosStart`
 
-显示橙色 CRT BIOS 硬件自检、三个 MAGI 节点上线与终端交接动画。组件已由 `features/bios-start/index.ts` 导出，但主应用并未挂载它，当前启动层使用 `BootIntro`。
+显示橙色 CRT BIOS 硬件自检、三个 MAGI 节点上线与终端交接动画。主应用并未挂载它，当前启动层使用 `BootIntro`，因此组件与入口统一保存在 `design_test/bios-start/`。
 
 ### `NervLogoAnime`
 
-通过 `size`、`fadeOut`、`className` 和 `style` 调整展示，默认在进场与停留后淡出。`index.ts` 是对外导出入口。
+通过 `size`、`fadeOut`、`className` 和 `style` 调整展示，默认在进场与停留后淡出。当前没有产品入口引用它，组件与预览页统一保存在 `design_test/nerv-logo-anime/`。
 
 ### `MagiBootTest` / `MagiBoot`
 

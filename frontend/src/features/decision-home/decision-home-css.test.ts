@@ -52,6 +52,28 @@ describe('DecisionHome narrow viewport CSS', () => {
     expect(css).toMatch(/\.agent-node\.vote-reject\s*\{\s*--node-outline:\s*#ff6258;/);
   });
 
+  it('renders standby pending votes as inactive neutral states', () => {
+    expect(css).toMatch(
+      /\.magi-home__simulator\[data-phase="standby"\][^{]*\.agent-node\.vote-pending \.vote-state\s*\{[^}]*border-color:\s*#69716d;[^}]*color:\s*#8a918d;[^}]*text-shadow:\s*none;[^}]*box-shadow:\s*none;/
+    );
+  });
+
+  it('keeps the head node taller without changing network positions', () => {
+    expect(css).toMatch(
+      /\.magi-home__decision-stage \.agent-node\.top\s*\{[^}]*top:\s*2\.38%;[^}]*height:\s*42%;/
+    );
+  });
+
+  it('maps each invisible config hotspot hover and keyboard focus to its visible node', () => {
+    for (const position of ['top', 'left', 'right']) {
+      expect(css).toContain(
+        `.magi-home__node-hotspot.is-${position} button:not(:disabled):is(:hover, :focus-visible)) .agent-node.${position}`
+      );
+    }
+    expect(css).toMatch(/\.agent-node\.right\s*\{[\s\S]*?drop-shadow\(0 0 14px/);
+    expect(css).toMatch(/\.agent-node\.right::before\s*\{[\s\S]*?drop-shadow\(1px 0 0 var\(--node-outline\)\)/);
+  });
+
   it('allows mobile content to expose layout errors instead of clipping them', () => {
     expect(css).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.magi-home\s*\{[^}]*overflow:\s*visible;/);
     expect(css).toMatch(/@media \(max-width: 480px\)[\s\S]*?grid-template-areas:[\s\S]*?"subject"[\s\S]*?"execute"[\s\S]*?"error"/);

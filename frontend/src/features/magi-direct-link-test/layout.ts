@@ -24,6 +24,7 @@ export interface AgentModuleLayout {
   readonly agentId: AgentId;
   readonly name: string;
   readonly frame: readonly SvgPoint[];
+  readonly sharedCoreBoundary: readonly SvgPoint[];
   readonly namePlacement: TextPlacement;
   readonly voteBox: SvgBox;
   readonly votePlacement: TextPlacement;
@@ -73,6 +74,9 @@ export interface DirectLinkPanelPlacement {
 
 export interface DirectLinkInformationLayout {
   readonly preserveAspectRatio: 'xMinYMin meet' | 'xMidYMid meet';
+  readonly connectionPreserveAspectRatio: 'xMaxYMin meet' | 'xMidYMid meet';
+  readonly leftCalibrationPreserveAspectRatio: 'xMinYMin meet' | 'xMinYMid meet';
+  readonly rightCalibrationPreserveAspectRatio: 'xMaxYMin meet' | 'xMaxYMid meet';
   readonly header: DirectLinkPanelPlacement;
   readonly motion: DirectLinkPanelPlacement;
   readonly systemData: DirectLinkPanelPlacement;
@@ -112,6 +116,12 @@ const PORTRAIT_NETWORK_POSITION: MagiNetworkPosition = {
   activeYOffset: -56,
 };
 
+const PORTRAIT_CONNECTION_DATA: DirectLinkPanelPlacement = {
+  origin: [TERMINAL_VIEWBOX.width - 24 - 153, 290],
+  width: 153,
+  height: 230,
+};
+
 export function resolveMagiNetworkPosition(
   position: MagiNetworkPosition,
   state: MagiNetworkState,
@@ -133,10 +143,13 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
     network: PORTRAIT_NETWORK_POSITION,
     information: {
       preserveAspectRatio: 'xMinYMin meet',
+      connectionPreserveAspectRatio: 'xMaxYMin meet',
+      leftCalibrationPreserveAspectRatio: 'xMinYMin meet',
+      rightCalibrationPreserveAspectRatio: 'xMaxYMin meet',
       header: { origin: [22, 30], width: 326, height: 71 },
       motion: { origin: [22, 111], width: 387, height: 83 },
       systemData: { origin: [22, 225], width: 150, height: 234 },
-      connectionData: { origin: [548, 240], width: 153, height: 230 },
+      connectionData: PORTRAIT_CONNECTION_DATA,
     },
   },
   'portrait-wide': {
@@ -144,10 +157,13 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
     network: PORTRAIT_NETWORK_POSITION,
     information: {
       preserveAspectRatio: 'xMinYMin meet',
+      connectionPreserveAspectRatio: 'xMaxYMin meet',
+      leftCalibrationPreserveAspectRatio: 'xMinYMin meet',
+      rightCalibrationPreserveAspectRatio: 'xMaxYMin meet',
       header: { origin: [22, 30], width: 326, height: 71 },
       motion: { origin: [22, 111], width: 387, height: 83 },
       systemData: { origin: [22, 225], width: 150, height: 234 },
-      connectionData: { origin: [598, 240], width: 153, height: 230 },
+      connectionData: PORTRAIT_CONNECTION_DATA,
     },
   },
   landscape: {
@@ -160,10 +176,13 @@ export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLink
     },
     information: {
       preserveAspectRatio: 'xMidYMid meet',
+      connectionPreserveAspectRatio: 'xMidYMid meet',
+      leftCalibrationPreserveAspectRatio: 'xMinYMid meet',
+      rightCalibrationPreserveAspectRatio: 'xMaxYMid meet',
       header: { origin: [28, 24], width: 326, height: 71 },
       motion: { origin: [1025, 24], width: 387, height: 83 },
       systemData: { origin: [28, 131], width: 150, height: 234 },
-      connectionData: { origin: [1100, 151], width: 153, height: 230 },
+      connectionData: { origin: [1100, 400], width: 153, height: 230 },
     },
   },
 };
@@ -357,6 +376,7 @@ export const createMagiNetworkLayout = (
         agentId: 'BALTHASAR-2',
         name: 'BALTHASAR:2',
         frame: upperFrame,
+        sharedCoreBoundary: [hubTopLeft, hubTopRight],
         namePlacement: {
           anchor: point(centerX, metrics.top + 84),
           length: 302,
@@ -377,6 +397,7 @@ export const createMagiNetworkLayout = (
         agentId: 'CASPER-3',
         name: 'CASPER:3',
         frame: leftFrame,
+        sharedCoreBoundary: [hubShoulderLeft, hubNeckTopLeft, hubNeckBottomLeft],
         namePlacement: {
           anchor: point(centerX - 169, hubShoulderY + 239),
           length: 268,
@@ -397,6 +418,7 @@ export const createMagiNetworkLayout = (
         agentId: 'MELCHIOR-1',
         name: 'MELCHIOR:1',
         frame: rightFrame,
+        sharedCoreBoundary: [hubShoulderRight, hubNeckTopRight, hubNeckBottomRight],
         namePlacement: {
           anchor: point(centerX + 169, hubShoulderY + 245),
           length: 268,

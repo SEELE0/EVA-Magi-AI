@@ -141,17 +141,41 @@ describe('MagiDirectLinkTest', () => {
 
   it('renders the three nodes, connectors, and core inside one positioned network component', () => {
     const { container } = renderOrigin(serviceStub());
+    const leftCalibration = container.querySelector<SVGSVGElement>('.terminal-calibration-layer--left');
+    const rightCalibration = container.querySelector<SVGSVGElement>('.terminal-calibration-layer--right');
     const information = container.querySelector<SVGSVGElement>('.terminal-information-layer');
+    const connection = container.querySelector<SVGSVGElement>('.terminal-connection-layer');
     const network = container.querySelector<SVGSVGElement>('.terminal-network-layer');
     const networkComponent = container.querySelector<SVGGElement>('[data-magi-network]');
 
+    expect(leftCalibration?.getAttribute('preserveAspectRatio')).toBe('xMinYMin meet');
+    expect(rightCalibration?.getAttribute('preserveAspectRatio')).toBe('xMaxYMin meet');
     expect(information?.getAttribute('preserveAspectRatio')).toBe('xMinYMin meet');
+    expect(connection?.getAttribute('preserveAspectRatio')).toBe('xMaxYMin meet');
     expect(network?.getAttribute('preserveAspectRatio')).toBe('xMidYMid meet');
+    expect(leftCalibration?.querySelector('[data-calibration-side="left"]')).not.toBeNull();
+    expect(rightCalibration?.querySelector('[data-calibration-side="right"]')).not.toBeNull();
+    expect(information?.querySelector('.terminal-calibration')).toBeNull();
     expect(information?.contains(container.querySelector('.terminal-header'))).toBe(true);
+    expect(information?.contains(container.querySelector('.connection-data'))).toBe(false);
+    expect(connection?.contains(container.querySelector('.connection-data'))).toBe(true);
     expect(network?.contains(networkComponent)).toBe(true);
     expect(networkComponent?.querySelectorAll('.agent-module')).toHaveLength(3);
+    expect(networkComponent?.querySelectorAll('[data-agent-shared-edge]')).toHaveLength(3);
+    networkComponent?.querySelectorAll('.agent-module').forEach((agent) => {
+      expect(agent.querySelectorAll('[data-agent-shared-edge]')).toHaveLength(1);
+    });
     expect(networkComponent?.querySelectorAll('[data-connector]')).toHaveLength(3);
-    expect(networkComponent?.querySelector('.magi-core')).not.toBeNull();
+    const core = networkComponent?.querySelector('.magi-core');
+    const firstSharedEdge = networkComponent?.querySelector('[data-agent-shared-edge]');
+    expect(core).not.toBeNull();
+    expect(firstSharedEdge).not.toBeNull();
+    if (!core || !firstSharedEdge) throw new Error('MAGI shared-edge layering was not rendered.');
+    expect(core.compareDocumentPosition(firstSharedEdge) & 4).toBe(4);
+    const physicalStatus = [...(connection?.querySelectorAll('text') ?? [])]
+      .find((node) => node.textContent === 'L401 - BASIC READY');
+    expect(physicalStatus?.getAttribute('textLength')).toBe('145');
+    expect(physicalStatus?.getAttribute('lengthAdjust')).toBe('spacingAndGlyphs');
     expect(networkComponent?.dataset.positionX).toBe('0');
     expect(networkComponent?.dataset.positionY).toBe('-25');
     expect(networkComponent?.dataset.scale).toBe('1');

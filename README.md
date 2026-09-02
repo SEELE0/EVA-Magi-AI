@@ -55,13 +55,14 @@ VITE_API_BASE_URL=http://localhost:8000
 
 按 Esc 或点击底部 `BYPASS AUTO-IPL` 只会快进到模式选择，不会直接进入主页。确认后才会进行显示驱动交接、短促黑场和主页显示。启动完成状态与所选主页模式都保存在当前标签页的 `sessionStorage` 中；URL 加 `?boot=replay` 可强制重播。当系统启用“减少动态效果”时，会直接进入模式选择。
 
-NERV 标志动画与 MAGI 几何启动动画已拆分为可复用组件，可通过以下独立页面预览：
+未接入当前产品流程的页面与组件集中在 `frontend/design_test/`。其中 MAGI 几何启动组件仍由开机流程复用，只有它的独立预览入口位于该目录：
 
-- `http://localhost:5173/nerv-logo-anime-test.html`
-- `http://localhost:5173/magi-boot-test.html`（支持点击、Enter 或空格键重播）
+- `http://localhost:5173/design_test/nerv-logo-anime-test.html`
+- `http://localhost:5173/design_test/magi-boot-test.html`（支持点击、Enter 或空格键重播）
+- `http://localhost:5173/design_test/eva-waveform-test.html`（Three.js 实例化镂空圆柱线框束与 CRT 余辉）
 - `http://localhost:5173/magi-direct-link-test.html`（原作风格直连页独立预览）
 
-旧版 `DecisionConsole` 不再作为主页，保留在 `http://localhost:5173/decision-console-lab.html`，用于组件与视觉实验。
+旧版 `DecisionConsole` 不再作为主页，保留在 `http://localhost:5173/design_test/decision-console-lab.html`，用于组件与视觉实验。BIOS 旧启动页位于 `http://localhost:5173/design_test/bios-start-test.html`。
 
 ## 当前网页产品流
 
@@ -85,16 +86,15 @@ NERV 标志动画与 MAGI 几何启动动画已拆分为可复用组件，可通
 backend/                       后端预留工作区与框架无关端口骨架
 docs/                          API 规范、接口说明与设计验证记录
 frontend/                      React/Vite 前端应用
+frontend/design_test/          未接入当前产品流程的页面、组件与独立预览入口
 frontend/src/app/              前端入口、根组件与全局样式
 frontend/src/domain/           前端领域模型与 API 数据类型
 frontend/src/domain/home-mode.ts       两套主页模式与会话级保存
-frontend/src/features/         开机动画、决策控制台和 MAGI 几何测试页
+frontend/src/features/         当前产品功能与仍被运行时复用的组件
 frontend/src/features/decision-home/   当前主页、节点配置、hash 路由和前端模拟历史
-frontend/src/features/decision-console/  旧三节点原语与独立实验页组件
+frontend/src/features/decision-console/  当前主页复用的三节点原语与配置
 frontend/src/features/magi-direct-link-test/  原作风格直连主页与独立预览入口
-frontend/src/features/nerv-logo-anime/  可复用的 NERV 标志进场动画与独立测试入口
-frontend/src/features/magi-boot/        可复用的 MAGI 几何启动动画与独立测试入口
-frontend/src/labs/             独立组件实验页入口
+frontend/src/features/magi-boot/        开机流程复用的 MAGI 几何启动组件
 frontend/src/services/         Mock、HTTP 与故障降级适配层
 package.json                   根工作区脚本与项目级工具
 ```

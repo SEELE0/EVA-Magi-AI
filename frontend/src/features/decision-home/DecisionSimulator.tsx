@@ -171,15 +171,15 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
 }
 
 function NodeConfigHotspots({ disabled, onOpen }: { disabled: boolean; onOpen: (agentId: AgentId) => void }) {
-  const hotspots: Array<{ agentId: AgentId; code: string; position: 'top' | 'left' | 'right' }> = [
-    { agentId: 'BALTHASAR-2', code: 'CFG-01', position: 'top' },
-    { agentId: 'CASPER-3', code: 'CFG-02', position: 'left' },
-    { agentId: 'MELCHIOR-1', code: 'CFG-03', position: 'right' }
+  const hotspots: Array<{ agentId: AgentId; position: 'top' | 'left' | 'right' }> = [
+    { agentId: 'BALTHASAR-2', position: 'top' },
+    { agentId: 'CASPER-3', position: 'left' },
+    { agentId: 'MELCHIOR-1', position: 'right' }
   ];
 
   return (
     <div className="magi-home__node-hotspots" aria-label="人格ノード設定">
-      {hotspots.map(({ agentId, code, position }) => (
+      {hotspots.map(({ agentId, position }) => (
         <div key={agentId} className={`magi-home__node-hotspot is-${position}`}>
           <button
             type="button"
@@ -187,7 +187,6 @@ function NodeConfigHotspots({ disabled, onOpen }: { disabled: boolean; onOpen: (
             disabled={disabled}
             aria-label={`${agentId} の設定を開く`}
           />
-          <span aria-hidden="true">{code}</span>
         </div>
       ))}
     </div>
@@ -333,8 +332,8 @@ export function DecisionSimulator({
           <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`}>
             <svg className="network-links" viewBox="0 0 600 420" preserveAspectRatio="none" aria-hidden="true">
               <g className="network-connectors">
-                <line x1="259.2" y1="180" x2="193.2" y2="208" vectorEffect="non-scaling-stroke" />
-                <line x1="340.8" y1="180" x2="406.8" y2="208" vectorEffect="non-scaling-stroke" />
+                <line x1="259.2" y1="186.4" x2="193.2" y2="208" vectorEffect="non-scaling-stroke" />
+                <line x1="340.8" y1="186.4" x2="406.8" y2="208" vectorEffect="non-scaling-stroke" />
                 <line x1="276" y1="333.8" x2="324" y2="333.8" vectorEffect="non-scaling-stroke" />
               </g>
             </svg>

@@ -23,7 +23,7 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('class="header-readout"');
     expect(markup).toContain('class="magi-home__scanlines"');
     expect(markup).toContain('class="network-connectors"');
-    expect(markup).toContain('x1="259.2" y1="180" x2="193.2" y2="208"');
+    expect(markup).toContain('x1="259.2" y1="186.4" x2="193.2" y2="208"');
     expect(markup).toContain('x1="276" y1="333.8" x2="324" y2="333.8"');
     expect(markup).not.toContain('x1="264" y1="333.8" x2="336"');
     expect(markup).toContain('MELCHIOR-1');
@@ -39,6 +39,9 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('class="network-links"');
     expect(markup).toContain('viewBox="0 0 600 420"');
     expect(markup).toContain('MELCHIOR-1 の設定を開く');
+    expect(markup).not.toContain('CFG-01');
+    expect(markup).not.toContain('CFG-02');
+    expect(markup).not.toContain('CFG-03');
     expect(markup).not.toContain('事象記録');
     expect(markup).not.toContain('EVENT LOG');
     expect(markup).not.toContain('magi-home__events');

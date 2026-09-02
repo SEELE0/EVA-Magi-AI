@@ -31,7 +31,17 @@ const votePresentation: Record<Vote, { label: string; className: string }> = {
 };
 
 function AgentFrame({ agent }: { readonly agent: AgentModuleLayout }) {
-  return <polyline className="magi-outline" data-agent-frame={agent.id} points={toSvgPoints(agent.frame)} />;
+  return (
+    <>
+      <polyline className="magi-outline" data-agent-frame={agent.id} points={toSvgPoints(agent.frame)} />
+      <polyline
+        aria-hidden="true"
+        className="magi-outline magi-outline--shared"
+        data-agent-shared-edge={agent.id}
+        points={toSvgPoints(agent.sharedCoreBoundary)}
+      />
+    </>
+  );
 }
 
 function AgentContent({ agent, vote }: { readonly agent: AgentModuleLayout; readonly vote: Vote }) {
@@ -77,6 +87,7 @@ export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpe
     >
       {layout.diagonalConnectors.map((connector) => <polygon key={connector.id} className="magi-connector-band" data-connector={connector.id} points={toSvgPoints(connector.points)} />)}
       <path className="magi-connector--lower" data-connector="lower" d={`M${lowerStartX} ${lowerStartY}H${lowerEndX}`} strokeWidth={layout.lowerConnector.width} />
+      <polygon className="magi-core" points={toSvgPoints(layout.hub)} />
       {layout.agents.map((agent) => {
         const vote = votes[agent.agentId];
         return (
@@ -96,7 +107,6 @@ export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpe
           </g>
         );
       })}
-      <polygon className="magi-core" points={toSvgPoints(layout.hub)} />
       <text x={labelX} y={labelY} textLength={layout.label.length} lengthAdjust="spacingAndGlyphs" className="magi-label">MAGI</text>
     </g>
   );

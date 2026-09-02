@@ -17,7 +17,7 @@ state: BIOS POST complete, message box visible, DOS prompt visible, before autom
 
 ## Comparison history
 
-1. Initial render: P2 image-fidelity issue — the reused `images-1.png` showed a white square because its checkerboard was baked into the PNG. Fixed by generating `frontend/src/features/bios-start/assets/nerv-logo-transparent.png` from the red logo pixels and using it only in the new module.
+1. Initial render: P2 image-fidelity issue — the reused `images-1.png` showed a white square because its checkerboard was baked into the PNG. Fixed by generating `frontend/design_test/bios-start/assets/nerv-logo-transparent.png` from the red logo pixels and using it only in the archived design-test module.
 2. Post-fix render: no actionable P0/P1/P2 findings. Desktop screenshot was recaptured at 1920 x 1200; mobile was checked at 390 x 844 with `scrollWidth === innerWidth`.
 
 ## Interaction and runtime checks
@@ -278,6 +278,58 @@ comparison path: `/private/tmp/magi-orange-regular-comparison.jpg`
 - No framework error overlay appeared after reload.
 - `npm run build` passed.
 - `npm test` passed 17 files / 66 tests.
+
+final result: passed
+
+---
+
+# EVA phase waveform scope visual QA
+
+source visual truth path: `/var/folders/nj/1r9ns1312jv6p28y151bxydm0000gn/T/codex-clipboard-648d98f3-78d8-4b85-ac63-ff1c25f85958.png`
+desktop screenshot path: `/tmp/eva-waveform-fidelity/20-final-wire-cylinder-desktop.png`
+mobile screenshot path: `/tmp/eva-waveform-fidelity/21-final-wire-cylinder-mobile.png`
+viewport: 1280 x 800 and 390 x 844 CSS px; browser device scale factor 1
+source and implementation pixel dimensions: source 746 x 496; desktop 1280 x 800; mobile 390 x 844
+density normalization: source and desktop implementation were reviewed together at their native 3:2 instrument ratio; no crop or aspect-ratio conversion was applied to the signal field.
+state: continuously looping red/blue phase trace with the renderer online.
+
+## Findings
+
+- No actionable P0/P1/P2 mismatch remains for the requested correction: every trace is now assembled from hollow wireframe cylinder cages, not filled rods or center-line strokes.
+- P3 difference: the source is a low-resolution animation frame with heavier analog smear. The implementation keeps the end rings and longitudinal cage rails slightly clearer so the hollow construction remains visible.
+
+## Evidence
+
+- Full view: both source and implementation contain two phase-shifted red/blue bundles, magenta additive overlap, top/bottom ivory rails, an internal vertical scale, repeated crosshair marks, bottom `-5…+5` calibration, black CRT field, timecode, vignette, scanlines, noise and restrained bloom.
+- Geometry: each color uses 700 GPU-instanced cylinder cages (20 historical traces x 35 segments). Every cage is explicit line topology with two decagonal end rings and ten longitudinal rails; it has no surface indices or filled triangles. A vertex shader aligns the cage between adjacent waveform samples and adds a restrained Z-axis tilt so the end rings project as ellipses.
+- CRT treatment: the WebGL render target is capped at 1.25 DPR, passed through Afterimage and restrained Bloom, then softened by a 0.45 px canvas blur plus scanline, noise and vignette overlays.
+- Fonts and typography: ivory numeric copy uses the existing condensed technical fallback stack with tabular numerals. The experiment adds only small machine labels and does not claim an unavailable production EVA font.
+- Spacing and layout: the 3:2 scope measures 1100 x 733.33 at 1280 x 800 and approximately 374 x 249 at 390 x 844. Both viewports have `scrollWidth === innerWidth`; no horizontal overflow occurs.
+- Colors and tokens: signal colors are the approved `#ff3147` and `#536dff`; additive blending produces the magenta intersection instead of drawing a separate purple layer.
+- Image quality: the supplied image is used only as comparison evidence. The runtime waveform, cylinders and CRT effects are generated procedurally by Three.js and CSS.
+- Copy: the timecode and `-5…+5` axis values remain subordinate to the signal field, matching the sparse reference composition.
+- Source and final desktop screenshots were reviewed together; the final pass preserves the reference's dense red/blue mesh while exposing the hollow ring-and-rail construction at native desktop size.
+
+## Comparison history
+
+1. P2 — the first implementation used thin center lines and did not represent the segment volume.
+2. P2 — the next corrections used filled cylinder/capsule surfaces, which projected as solid rectangles or pills and contradicted the required hollow-frame construction.
+3. Final correction: replaced all filled surfaces with explicit two-ring-plus-ten-rail cylinder cages, reduced additive overexposure, and retained restrained CRT persistence. The red/blue bundles remain separate and merge to magenta only through blending.
+
+## Runtime checks
+
+- The in-app browser loaded `/design_test/eva-waveform-test.html` with the expected title, one online WebGL canvas, an advancing timecode and no framework error overlay.
+- 1280 x 800 and 390 x 844 have no horizontal overflow. Resizing rebuilds the render target without rebuilding the React component.
+- Page visibility, intersection state and the `paused` prop stop the animation loop; reduced-motion renders the configured stable frame. Cleanup removes listeners, cancels animation and disposes composer, renderer, geometry and materials.
+
+## Implementation checklist
+
+- [x] Use Three.js rather than Anime.js for the signal renderer.
+- [x] Build both phase bundles from instanced hollow cylinder cages with no filled surfaces.
+- [x] Add additive red/blue mixing and CRT persistence.
+- [x] Add responsive calibration UI and WebGL failure state.
+- [x] Verify desktop and mobile rendering, aspect ratio, online renderer, animation and horizontal overflow.
+- [x] Add focused geometry/component tests and production build coverage; the full suite passes 24 files / 103 tests.
 
 final result: passed
 

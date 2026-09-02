@@ -226,7 +226,12 @@ function ConnectionData({ decision, phase, placement }: Pick<MagiTerminalGraphic
         : phase === 'final'
           ? 'L401 - RESULT LOCKED'
           : 'L401 - BASIC READY';
-  const lines = [
+  const lines: readonly {
+    readonly text: string;
+    readonly baseline: number;
+    readonly small?: boolean;
+    readonly fit?: boolean;
+  }[] = [
     { text: 'Layer 3:', baseline: 0 },
     { text: 'Connection Control:', baseline: 26, small: true },
     { text: systemMode(phase), baseline: 52 },
@@ -235,37 +240,54 @@ function ConnectionData({ decision, phase, placement }: Pick<MagiTerminalGraphic
     { text: decision ? `DL-${shortDecisionCode(decision.id)}` : 'NO CARRIER', baseline: 141 },
     { text: 'Layer 1:', baseline: 178 },
     { text: 'Physical Interface:', baseline: 204, small: true },
-    { text: physicalStatus, baseline: 230, small: true },
+    { text: physicalStatus, baseline: 230, small: true, fit: true },
   ];
+  const fittedTextLength = placement.width - 8;
 
   return (
     <g className="terminal-orange connection-data" transform={toSvgTranslate(placement.origin)}>
       {lines.map((line, index) => (
-        <text key={`${index}-${line.text}`} y={line.baseline} className={'small' in line ? 'connection-data__small' : undefined}>{line.text}</text>
+        <text
+          key={`${index}-${line.text}`}
+          y={line.baseline}
+          className={line.small ? 'connection-data__small' : undefined}
+          textLength={line.fit ? fittedTextLength : undefined}
+          lengthAdjust={line.fit ? 'spacingAndGlyphs' : undefined}
+        >
+          {line.text}
+        </text>
       ))}
     </g>
   );
 }
 
-function TerminalCalibration({ height, width }: { height: number; width: number }) {
+function TerminalCalibration({ height, side, width }: { height: number; side: 'left' | 'right'; width: number }) {
   const ticks = Array.from({ length: 12 }, (_, index) => 72 + (index * (height - 144)) / 11);
+  const isLeft = side === 'left';
+  const cornerPath = isLeft
+    ? `M14 52V14H52 M14 ${height - 52}V${height - 14}H52`
+    : `M${width - 52} 14H${width - 14}V52 M${width - 52} ${height - 14}H${width - 14}V${height - 52}`;
 
   return (
-    <g className="terminal-calibration">
-      <path d={`M14 52V14H52 M${width - 52} 14H${width - 14}V52 M14 ${height - 52}V${height - 14}H52 M${width - 52} ${height - 14}H${width - 14}V${height - 52}`} />
+    <g className="terminal-calibration" data-calibration-side={side}>
+      <path d={cornerPath} />
       {ticks.map((tick, index) => (
-        <g key={tick}>
-          <line className={index % 3 === 0 ? 'is-major' : undefined} x1="10" y1={tick} x2={index % 3 === 0 ? 34 : 24} y2={tick} />
-          <line className={index % 3 === 0 ? 'is-major' : undefined} x1={width - 10} y1={tick} x2={width - (index % 3 === 0 ? 34 : 24)} y2={tick} />
-        </g>
+        <line
+          className={index % 3 === 0 ? 'is-major' : undefined}
+          key={tick}
+          x1={isLeft ? 10 : width - 10}
+          y1={tick}
+          x2={isLeft ? (index % 3 === 0 ? 34 : 24) : width - (index % 3 === 0 ? 34 : 24)}
+          y2={tick}
+        />
       ))}
     </g>
   );
 }
 
-function OrangeGlowFilter() {
+function OrangeGlowFilter({ id }: { readonly id: string }) {
   return (
-    <filter id="orange-glow" x="-60%" y="-60%" width="220%" height="220%" colorInterpolationFilters="sRGB">
+    <filter id={id} x="-60%" y="-60%" width="220%" height="220%" colorInterpolationFilters="sRGB">
       <feFlood floodColor="#ff4518" floodOpacity="0.94" result="orange-color" />
       <feComposite in="orange-color" in2="SourceAlpha" operator="in" result="orange-source" />
       <feFlood floodColor="#ffad61" floodOpacity="0.18" result="orange-core-color" />
@@ -282,11 +304,15 @@ function OrangeGlowFilter() {
 }
 
 function NetworkGlowFilters() {
+  // Flat polylines (e.g. BALTHASAR's horizontal shared edge) have a zero-height
+  // bounding box, which collapses an objectBoundingBox filter region to nothing
+  // and clips the whole stroke away. Pin the region in user units instead; it
+  // must cover both layout viewBoxes (720x960 portrait, 1440x720 landscape).
   return (
     <>
-      <filter id="green-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.7" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-      <filter id="red-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.1" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-      <filter id="amber-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      <filter id="green-glow" filterUnits="userSpaceOnUse" x="-200" y="-250" width="2000" height="1600"><feGaussianBlur stdDeviation="1.7" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      <filter id="red-glow" filterUnits="userSpaceOnUse" x="-200" y="-250" width="2000" height="1600"><feGaussianBlur stdDeviation="2.1" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      <filter id="amber-glow" filterUnits="userSpaceOnUse" x="-200" y="-250" width="2000" height="1600"><feGaussianBlur stdDeviation="1.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
     </>
   );
 }
@@ -301,15 +327,25 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
 
   return (
     <div className="terminal-graphic" data-layout={props.layoutMode}>
+      <svg aria-hidden="true" className="terminal-calibration-layer terminal-calibration-layer--left" viewBox={viewBox} preserveAspectRatio={preset.information.leftCalibrationPreserveAspectRatio}>
+        <TerminalCalibration height={preset.viewBox.height} side="left" width={preset.viewBox.width} />
+      </svg>
+      <svg aria-hidden="true" className="terminal-calibration-layer terminal-calibration-layer--right" viewBox={viewBox} preserveAspectRatio={preset.information.rightCalibrationPreserveAspectRatio}>
+        <TerminalCalibration height={preset.viewBox.height} side="right" width={preset.viewBox.width} />
+      </svg>
       <svg aria-hidden="true" className="terminal-information-layer" viewBox={viewBox} preserveAspectRatio={preset.information.preserveAspectRatio}>
-        <defs><OrangeGlowFilter /></defs>
-        <TerminalCalibration height={preset.viewBox.height} width={preset.viewBox.width} />
+        <defs><OrangeGlowFilter id="orange-glow" /></defs>
         <g className="terminal-chrome">
           <TerminalHeader placement={preset.information.header} />
           <SystemData decision={props.decision} phase={props.phase} placement={preset.information.systemData} subject={props.subject} />
-          <ConnectionData decision={props.decision} phase={props.phase} placement={preset.information.connectionData} />
         </g>
         <MotionResult decision={props.decision} phase={props.phase} placement={preset.information.motion} subject={props.subject} />
+      </svg>
+      <svg aria-hidden="true" className="terminal-connection-layer" viewBox={viewBox} preserveAspectRatio={preset.information.connectionPreserveAspectRatio}>
+        <defs><OrangeGlowFilter id="orange-glow-connection" /></defs>
+        <g className="terminal-chrome">
+          <ConnectionData decision={props.decision} phase={props.phase} placement={preset.information.connectionData} />
+        </g>
       </svg>
       <svg className="terminal-network-layer" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="group" aria-label={`MAGI direct link deliberation terminal. Motion: ${accessibleSubject}`}>
         <defs><NetworkGlowFilters /></defs>
