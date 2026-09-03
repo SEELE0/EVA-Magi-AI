@@ -23,8 +23,8 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('class="header-readout"');
     expect(markup).toContain('class="magi-home__scanlines"');
     expect(markup).toContain('class="network-connectors"');
-    expect(markup).toContain('x1="259.2" y1="186.4" x2="193.2" y2="208"');
-    expect(markup).toContain('x1="276" y1="333.8" x2="324" y2="333.8"');
+    expect(markup).toContain('x1="262" y1="188" x2="190" y2="209"');
+    expect(markup).toContain('x1="274" y1="333.8" x2="326" y2="333.8"');
     expect(markup).not.toContain('x1="264" y1="333.8" x2="336"');
     expect(markup).toContain('MELCHIOR-1');
     expect(markup).toContain('BALTHASAR-2');

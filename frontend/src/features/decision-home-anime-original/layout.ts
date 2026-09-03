@@ -64,23 +64,23 @@ export interface MagiNetworkLayout {
   readonly label: TextPlacement;
 }
 
-export type DirectLinkLayoutMode = 'portrait' | 'portrait-wide' | 'landscape';
+export type AnimeOriginalLayoutMode = 'portrait' | 'portrait-wide' | 'landscape';
 
-export interface DirectLinkPanelPlacement {
+export interface AnimeOriginalPanelPlacement {
   readonly origin: SvgPoint;
   readonly width: number;
   readonly height: number;
 }
 
-export interface DirectLinkInformationLayout {
+export interface AnimeOriginalInformationLayout {
   readonly preserveAspectRatio: 'xMinYMin meet' | 'xMidYMid meet';
   readonly connectionPreserveAspectRatio: 'xMaxYMin meet' | 'xMidYMid meet';
   readonly leftCalibrationPreserveAspectRatio: 'xMinYMin meet' | 'xMinYMid meet';
   readonly rightCalibrationPreserveAspectRatio: 'xMaxYMin meet' | 'xMaxYMid meet';
-  readonly header: DirectLinkPanelPlacement;
-  readonly motion: DirectLinkPanelPlacement;
-  readonly systemData: DirectLinkPanelPlacement;
-  readonly connectionData: DirectLinkPanelPlacement;
+  readonly header: AnimeOriginalPanelPlacement;
+  readonly motion: AnimeOriginalPanelPlacement;
+  readonly systemData: AnimeOriginalPanelPlacement;
+  readonly connectionData: AnimeOriginalPanelPlacement;
 }
 
 export type MagiNetworkState = 'compose' | 'active';
@@ -95,13 +95,13 @@ export interface MagiNetworkPosition extends MagiNetworkTransform {
   readonly activeYOffset: number;
 }
 
-export interface DirectLinkLayoutPreset {
+export interface AnimeOriginalLayoutPreset {
   readonly viewBox: {
     readonly width: number;
     readonly height: number;
   };
   readonly network: MagiNetworkPosition;
-  readonly information: DirectLinkInformationLayout;
+  readonly information: AnimeOriginalInformationLayout;
 }
 
 export const TERMINAL_VIEWBOX = {
@@ -116,7 +116,7 @@ const PORTRAIT_NETWORK_POSITION: MagiNetworkPosition = {
   activeYOffset: -56,
 };
 
-const PORTRAIT_CONNECTION_DATA: DirectLinkPanelPlacement = {
+const PORTRAIT_CONNECTION_DATA: AnimeOriginalPanelPlacement = {
   origin: [TERMINAL_VIEWBOX.width - 24 - 153, 290],
   width: 153,
   height: 230,
@@ -137,7 +137,7 @@ export function toMagiNetworkTransform(transform: MagiNetworkTransform) {
   return `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`;
 }
 
-export const DIRECT_LINK_LAYOUT_PRESETS: Record<DirectLinkLayoutMode, DirectLinkLayoutPreset> = {
+export const ANIME_ORIGINAL_LAYOUT_PRESETS: Record<AnimeOriginalLayoutMode, AnimeOriginalLayoutPreset> = {
   portrait: {
     viewBox: TERMINAL_VIEWBOX,
     network: PORTRAIT_NETWORK_POSITION,

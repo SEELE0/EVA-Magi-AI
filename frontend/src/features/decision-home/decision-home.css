@@ -581,10 +581,15 @@
   filter: drop-shadow(0 0 18px rgba(72, 245, 154, 0.2));
 }
 
+.magi-home__decision-stage .network-links {
+  z-index: 1;
+}
+
 .magi-home__decision-stage .network-connectors line {
   stroke: #69dca0;
-  stroke-width: 3;
-  filter: drop-shadow(0 0 3px rgba(105, 220, 160, 0.55));
+  stroke-width: 2;
+  stroke-linecap: butt;
+  filter: none;
 }
 
 .magi-home__decision-stage .agent-node {
@@ -618,8 +623,8 @@
 /* Keep the network positions and connector anchors unchanged while giving the
    head node enough vertical room for its stacked telemetry. */
 .magi-home__decision-stage .agent-node.top {
-  top: 2.38%;
-  height: 42%;
+  top: -1%;
+  height: 46%;
 }
 
 .magi-home__decision-stage .agent-node.left::before {
@@ -684,10 +689,10 @@
 }
 
 .magi-home__node-hotspot.is-top {
-  top: 2.38%;
+  top: -1%;
   left: 30%;
   width: 40%;
-  height: 42%;
+  height: 46%;
 }
 
 .magi-home__node-hotspot.is-left {

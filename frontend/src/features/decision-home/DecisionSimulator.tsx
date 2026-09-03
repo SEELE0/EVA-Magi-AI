@@ -332,9 +332,9 @@ export function DecisionSimulator({
           <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`}>
             <svg className="network-links" viewBox="0 0 600 420" preserveAspectRatio="none" aria-hidden="true">
               <g className="network-connectors">
-                <line x1="259.2" y1="186.4" x2="193.2" y2="208" vectorEffect="non-scaling-stroke" />
-                <line x1="340.8" y1="186.4" x2="406.8" y2="208" vectorEffect="non-scaling-stroke" />
-                <line x1="276" y1="333.8" x2="324" y2="333.8" vectorEffect="non-scaling-stroke" />
+                <line x1="262" y1="188" x2="190" y2="209" vectorEffect="non-scaling-stroke" />
+                <line x1="338" y1="188" x2="410" y2="209" vectorEffect="non-scaling-stroke" />
+                <line x1="274" y1="333.8" x2="326" y2="333.8" vectorEffect="non-scaling-stroke" />
               </g>
             </svg>
             <div className="core-node">

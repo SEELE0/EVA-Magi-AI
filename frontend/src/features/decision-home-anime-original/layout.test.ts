@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MAGI_NETWORK_METRICS,
-  DIRECT_LINK_LAYOUT_PRESETS,
+  ANIME_ORIGINAL_LAYOUT_PRESETS,
   MAGI_NETWORK_LAYOUT,
   TERMINAL_MODULE_LAYOUT,
   createMagiNetworkLayout,
@@ -111,15 +111,15 @@ describe('MAGI constraint-driven layout', () => {
   });
 
   it('keeps one shared vertical position for the complete network in each responsive mode', () => {
-    expect(DIRECT_LINK_LAYOUT_PRESETS.portrait.viewBox).toEqual({ width: 720, height: 960 });
-    expect(DIRECT_LINK_LAYOUT_PRESETS.landscape.viewBox).toEqual({ width: 1440, height: 720 });
-    expect(DIRECT_LINK_LAYOUT_PRESETS.portrait.network).toBe(DIRECT_LINK_LAYOUT_PRESETS['portrait-wide'].network);
-    expect(DIRECT_LINK_LAYOUT_PRESETS.portrait.network).toEqual({ x: 0, y: -25, scale: 1, activeYOffset: -56 });
-    expect(DIRECT_LINK_LAYOUT_PRESETS.landscape.network).toEqual({ x: 370, y: -191, scale: 1, activeYOffset: -51 });
-    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.portrait.network, 'compose'))).toBe('translate(0px, -25px) scale(1)');
-    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.portrait.network, 'active'))).toBe('translate(0px, -81px) scale(1)');
-    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.landscape.network, 'compose'))).toBe('translate(370px, -191px) scale(1)');
-    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(DIRECT_LINK_LAYOUT_PRESETS.landscape.network, 'active'))).toBe('translate(370px, -242px) scale(1)');
+    expect(ANIME_ORIGINAL_LAYOUT_PRESETS.portrait.viewBox).toEqual({ width: 720, height: 960 });
+    expect(ANIME_ORIGINAL_LAYOUT_PRESETS.landscape.viewBox).toEqual({ width: 1440, height: 720 });
+    expect(ANIME_ORIGINAL_LAYOUT_PRESETS.portrait.network).toBe(ANIME_ORIGINAL_LAYOUT_PRESETS['portrait-wide'].network);
+    expect(ANIME_ORIGINAL_LAYOUT_PRESETS.portrait.network).toEqual({ x: 0, y: -25, scale: 1, activeYOffset: -56 });
+    expect(ANIME_ORIGINAL_LAYOUT_PRESETS.landscape.network).toEqual({ x: 370, y: -191, scale: 1, activeYOffset: -51 });
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(ANIME_ORIGINAL_LAYOUT_PRESETS.portrait.network, 'compose'))).toBe('translate(0px, -25px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(ANIME_ORIGINAL_LAYOUT_PRESETS.portrait.network, 'active'))).toBe('translate(0px, -81px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(ANIME_ORIGINAL_LAYOUT_PRESETS.landscape.network, 'compose'))).toBe('translate(370px, -191px) scale(1)');
+    expect(toMagiNetworkTransform(resolveMagiNetworkPosition(ANIME_ORIGINAL_LAYOUT_PRESETS.landscape.network, 'active'))).toBe('translate(370px, -242px) scale(1)');
     expect(MAGI_NETWORK_LAYOUT.agents.map((agent) => agent.agentId)).toEqual([
       'BALTHASAR-2',
       'CASPER-3',
@@ -128,8 +128,8 @@ describe('MAGI constraint-driven layout', () => {
   });
 
   it('stacks portrait information at the left edge and mirrors landscape headers', () => {
-    const portrait = DIRECT_LINK_LAYOUT_PRESETS.portrait.information;
-    const landscape = DIRECT_LINK_LAYOUT_PRESETS.landscape.information;
+    const portrait = ANIME_ORIGINAL_LAYOUT_PRESETS.portrait.information;
+    const landscape = ANIME_ORIGINAL_LAYOUT_PRESETS.landscape.information;
 
     expect(portrait.preserveAspectRatio).toBe('xMinYMin meet');
     expect(portrait.connectionPreserveAspectRatio).toBe('xMaxYMin meet');
@@ -156,7 +156,7 @@ describe('MAGI constraint-driven layout', () => {
     expect(portrait.connectionData.origin[1] - portrait.systemData.origin[1]).toBeGreaterThanOrEqual(15);
 
     const leftMargin = landscape.header.origin[0];
-    const rightMargin = DIRECT_LINK_LAYOUT_PRESETS.landscape.viewBox.width
+    const rightMargin = ANIME_ORIGINAL_LAYOUT_PRESETS.landscape.viewBox.width
       - landscape.motion.origin[0]
       - landscape.motion.width;
     expect(landscape.header.width).toBe(TERMINAL_MODULE_LAYOUT.header.width);
@@ -165,7 +165,7 @@ describe('MAGI constraint-driven layout', () => {
     expect(rightMargin).toBe(leftMargin);
     expect(landscape.systemData.origin[1] - landscape.header.origin[1] - landscape.header.height).toBeGreaterThanOrEqual(30);
     expect(landscape.connectionData.origin[1] - landscape.systemData.origin[1]).toBeGreaterThanOrEqual(20);
-    expect(DIRECT_LINK_LAYOUT_PRESETS['portrait-wide'].information.connectionData).toBe(portrait.connectionData);
+    expect(ANIME_ORIGINAL_LAYOUT_PRESETS['portrait-wide'].information.connectionData).toBe(portrait.connectionData);
   });
 
   it('maps the independently aligned connection panel clear of the network at critical terminal sizes', () => {
@@ -183,7 +183,7 @@ describe('MAGI constraint-driven layout', () => {
     ] as const;
 
     samples.forEach(({ mode, width, height }) => {
-      const preset = DIRECT_LINK_LAYOUT_PRESETS[mode];
+      const preset = ANIME_ORIGINAL_LAYOUT_PRESETS[mode];
       const connection = preset.information.connectionData;
       const connectionBounds = mapMeetBoundsToViewport({
         left: connection.origin[0],
@@ -209,8 +209,8 @@ describe('MAGI constraint-driven layout', () => {
   });
 
   it('keeps connection data outside every node in compose and active layouts', () => {
-    (Object.keys(DIRECT_LINK_LAYOUT_PRESETS) as Array<keyof typeof DIRECT_LINK_LAYOUT_PRESETS>).forEach((mode) => {
-      const preset = DIRECT_LINK_LAYOUT_PRESETS[mode];
+    (Object.keys(ANIME_ORIGINAL_LAYOUT_PRESETS) as Array<keyof typeof ANIME_ORIGINAL_LAYOUT_PRESETS>).forEach((mode) => {
+      const preset = ANIME_ORIGINAL_LAYOUT_PRESETS[mode];
       const connection = preset.information.connectionData;
       const connectionBounds = {
         left: connection.origin[0],
@@ -228,8 +228,8 @@ describe('MAGI constraint-driven layout', () => {
   });
 
   it('keeps every information panel outside the enlarged compose network', () => {
-    (Object.keys(DIRECT_LINK_LAYOUT_PRESETS) as Array<keyof typeof DIRECT_LINK_LAYOUT_PRESETS>).forEach((mode) => {
-      const preset = DIRECT_LINK_LAYOUT_PRESETS[mode];
+    (Object.keys(ANIME_ORIGINAL_LAYOUT_PRESETS) as Array<keyof typeof ANIME_ORIGINAL_LAYOUT_PRESETS>).forEach((mode) => {
+      const preset = ANIME_ORIGINAL_LAYOUT_PRESETS[mode];
       const panels = Object.values(preset.information).filter(
         (placement): placement is { origin: readonly [number, number]; width: number; height: number } => typeof placement !== 'string',
       );

@@ -20,26 +20,26 @@ import { verdictCopy } from '../decision-console/console-config';
 import { cloneAgentConfigs } from '../decision-home/simulator-config';
 import type { AgentConfigMap, AgentRuntimeConfig } from '../decision-home/simulator-types';
 import {
-  DIRECT_LINK_LAYOUT_PRESETS,
+  ANIME_ORIGINAL_LAYOUT_PRESETS,
   TERMINAL_MODULE_LAYOUT,
   resolveMagiNetworkPosition,
   toSvgTranslate,
-  type DirectLinkPanelPlacement,
-  type DirectLinkLayoutMode,
+  type AnimeOriginalPanelPlacement,
+  type AnimeOriginalLayoutMode,
 } from './layout';
 import { MagiNetwork } from './MagiNetwork';
-import './magi-direct-link-test.css';
+import './decision-home-anime-original.css';
 
-export type DirectLinkPhase = 'compose' | 'transitioning' | 'deliberation' | 'final' | 'error';
+export type AnimeOriginalPhase = 'compose' | 'transitioning' | 'deliberation' | 'final' | 'error';
 
-interface MagiDirectLinkTestProps {
+interface DecisionHomeAnimeOriginalProps {
   service?: DecisionService;
 }
 
 interface MagiTerminalGraphicProps {
   decision: Decision | null;
-  layoutMode: DirectLinkLayoutMode;
-  phase: DirectLinkPhase;
+  layoutMode: AnimeOriginalLayoutMode;
+  phase: AnimeOriginalPhase;
   subject: string;
   onOpenConfig: (agentId: AgentId) => void;
 }
@@ -63,7 +63,7 @@ function priorityCode(priority?: DecisionRequest['priority']) {
   return priority === 'critical' ? 'AAA' : priority === 'low' ? 'A' : 'AA';
 }
 
-function systemMode(phase: DirectLinkPhase) {
+function systemMode(phase: AnimeOriginalPhase) {
   if (phase === 'transitioning') return 'SYNC';
   if (phase === 'deliberation') return 'EXEC';
   if (phase === 'final') return 'HOLD';
@@ -79,7 +79,7 @@ function consensusLabel(decision: Decision | null) {
   return `${String(count).padStart(2, '0')} / 03`;
 }
 
-function directLinkStatus(phase: DirectLinkPhase, decision: Decision | null, error: string | null) {
+function animeOriginalStatus(phase: AnimeOriginalPhase, decision: Decision | null, error: string | null) {
   if (phase === 'error') return `SIGNAL FAILURE. ${error ?? '判定回線に障害が発生しました。'}`;
   if (phase === 'transitioning') return 'DIRECT LINK TRANSITIONING.';
   if (phase === 'deliberation') return 'DELIBERATION IN PROGRESS. 三人格の投票を受信中。';
@@ -96,13 +96,13 @@ function subscribeToLayout(callback: () => void) {
   return () => queries.forEach((query) => query.removeEventListener('change', callback));
 }
 
-function currentLayoutMode(): DirectLinkLayoutMode {
+function currentLayoutMode(): AnimeOriginalLayoutMode {
   if (typeof window === 'undefined' || !window.matchMedia) return 'portrait';
   if (window.matchMedia(ORIENTATION_QUERY).matches) return 'landscape';
   return window.matchMedia(WIDE_PORTRAIT_QUERY).matches ? 'portrait-wide' : 'portrait';
 }
 
-function useDirectLinkLayoutMode(): DirectLinkLayoutMode {
+function useAnimeOriginalLayoutMode(): AnimeOriginalLayoutMode {
   return useSyncExternalStore(subscribeToLayout, currentLayoutMode, () => 'portrait');
 }
 
@@ -149,7 +149,7 @@ function motionLines(subject: string) {
   return [`MOTION : ${first}`, second];
 }
 
-function TerminalHeader({ placement }: { readonly placement: DirectLinkPanelPlacement }) {
+function TerminalHeader({ placement }: { readonly placement: AnimeOriginalPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.header;
 
   return (
@@ -163,7 +163,7 @@ function TerminalHeader({ placement }: { readonly placement: DirectLinkPanelPlac
   );
 }
 
-function MotionResult({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: DirectLinkPanelPlacement }) {
+function MotionResult({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: AnimeOriginalPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.motion;
   const secondRailX = layout.railWidth + layout.railGap;
   const rightRailX = placement.width - layout.railWidth;
@@ -195,7 +195,7 @@ function MotionResult({ decision, phase, placement, subject }: Pick<MagiTerminal
   );
 }
 
-function SystemData({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: DirectLinkPanelPlacement }) {
+function SystemData({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: AnimeOriginalPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.systemData;
   const lines = [
     `CODE : ${shortDecisionCode(decision?.id)}`,
@@ -216,7 +216,7 @@ function SystemData({ decision, phase, placement, subject }: Pick<MagiTerminalGr
   );
 }
 
-function ConnectionData({ decision, phase, placement }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase'> & { readonly placement: DirectLinkPanelPlacement }) {
+function ConnectionData({ decision, phase, placement }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase'> & { readonly placement: AnimeOriginalPanelPlacement }) {
   const physicalStatus = phase === 'error'
     ? 'L401 - LINK FAULT'
     : phase === 'transitioning'
@@ -318,7 +318,7 @@ function NetworkGlowFilters() {
 }
 
 function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
-  const preset = DIRECT_LINK_LAYOUT_PRESETS[props.layoutMode];
+  const preset = ANIME_ORIGINAL_LAYOUT_PRESETS[props.layoutMode];
   const isRunning = props.phase === 'transitioning' || props.phase === 'deliberation';
   const networkState = isRunning || props.phase === 'final' ? 'active' : 'compose';
   const networkTransform = resolveMagiNetworkPosition(preset.network, networkState);
@@ -389,9 +389,9 @@ function MotionComposer({ collapsed, error, isExecuting, subject, onChange, onSu
   );
 }
 
-export function MagiDirectLinkTest({ service = defaultService }: MagiDirectLinkTestProps = {}) {
-  const layoutMode = useDirectLinkLayoutMode();
-  const [phase, setPhase] = useState<DirectLinkPhase>('compose');
+export function DecisionHomeAnimeOriginal({ service = defaultService }: DecisionHomeAnimeOriginalProps = {}) {
+  const layoutMode = useAnimeOriginalLayoutMode();
+  const [phase, setPhase] = useState<AnimeOriginalPhase>('compose');
   const [subject, setSubject] = useState('');
   const [decision, setDecision] = useState<Decision | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -486,7 +486,7 @@ export function MagiDirectLinkTest({ service = defaultService }: MagiDirectLinkT
   return (
     <main className={`direct-link-page phase-${phase}`} data-layout={layoutMode} data-phase={phase}>
       <p className="direct-link-live-status" aria-live={phase === 'error' ? 'assertive' : 'polite'}>
-        {directLinkStatus(phase, decision, error)}
+        {animeOriginalStatus(phase, decision, error)}
       </p>
       <div className="direct-link-workspace">
         <section className="terminal-screen" aria-label="MAGI direct link terminal screen">
@@ -514,11 +514,11 @@ export function MagiDirectLinkTest({ service = defaultService }: MagiDirectLinkT
   );
 }
 
-const hotGlobal = globalThis as typeof globalThis & { __magiDirectLinkRoot?: ReturnType<typeof createRoot> };
-const standaloneRoot = typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('[data-magi-direct-link-root]');
+const hotGlobal = globalThis as typeof globalThis & { __decisionHomeAnimeOriginalRoot?: ReturnType<typeof createRoot> };
+const standaloneRoot = typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('[data-anime-original-root]');
 
 if (standaloneRoot) {
-  const root = hotGlobal.__magiDirectLinkRoot ?? createRoot(standaloneRoot);
-  hotGlobal.__magiDirectLinkRoot = root;
-  root.render(<MagiDirectLinkTest />);
+  const root = hotGlobal.__decisionHomeAnimeOriginalRoot ?? createRoot(standaloneRoot);
+  hotGlobal.__decisionHomeAnimeOriginalRoot = root;
+  root.render(<DecisionHomeAnimeOriginal />);
 }

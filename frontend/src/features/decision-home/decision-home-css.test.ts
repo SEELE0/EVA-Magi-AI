@@ -60,7 +60,16 @@ describe('DecisionHome narrow viewport CSS', () => {
 
   it('keeps the head node taller without changing network positions', () => {
     expect(css).toMatch(
-      /\.magi-home__decision-stage \.agent-node\.top\s*\{[^}]*top:\s*2\.38%;[^}]*height:\s*42%;/
+      /\.magi-home__decision-stage \.agent-node\.top\s*\{[^}]*top:\s*-1%;[^}]*height:\s*46%;/
+    );
+  });
+
+  it('hides connector overlap beneath node borders', () => {
+    expect(css).toMatch(
+      /\.magi-home__decision-stage \.network-links\s*\{[^}]*z-index:\s*1;/
+    );
+    expect(css).toMatch(
+      /\.magi-home__decision-stage \.network-connectors line\s*\{[^}]*stroke-width:\s*2;[^}]*stroke-linecap:\s*butt;[^}]*filter:\s*none;/
     );
   });
 

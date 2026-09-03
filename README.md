@@ -60,7 +60,7 @@ VITE_API_BASE_URL=http://localhost:8000
 - `http://localhost:5173/design_test/nerv-logo-anime-test.html`
 - `http://localhost:5173/design_test/magi-boot-test.html`（支持点击、Enter 或空格键重播）
 - `http://localhost:5173/design_test/eva-waveform-test.html`（Three.js 实例化镂空圆柱线框束与 CRT 余辉）
-- `http://localhost:5173/magi-direct-link-test.html`（原作风格直连页独立预览）
+- `http://localhost:5173/decision-home-anime-original.html`（原作风格直连页独立预览）
 
 旧版 `DecisionConsole` 不再作为主页，保留在 `http://localhost:5173/design_test/decision-console-lab.html`，用于组件与视觉实验。BIOS 旧启动页位于 `http://localhost:5173/design_test/bios-start-test.html`。
 
@@ -93,7 +93,7 @@ frontend/src/domain/home-mode.ts       两套主页模式与会话级保存
 frontend/src/features/         当前产品功能与仍被运行时复用的组件
 frontend/src/features/decision-home/   当前主页、节点配置、hash 路由和前端模拟历史
 frontend/src/features/decision-console/  当前主页复用的三节点原语与配置
-frontend/src/features/magi-direct-link-test/  原作风格直连主页与独立预览入口
+frontend/src/features/decision-home-anime-original/  原作风格直连主页与独立预览入口
 frontend/src/features/magi-boot/        开机流程复用的 MAGI 几何启动组件
 frontend/src/services/         Mock、HTTP 与故障降级适配层
 package.json                   根工作区脚本与项目级工具

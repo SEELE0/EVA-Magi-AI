@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { BootIntro, shouldShowBootIntro } from '../features/boot-intro/BootIntro';
 import { DecisionHome } from '../features/decision-home';
-import { MagiDirectLinkTest } from '../features/magi-direct-link-test/main';
+import { DecisionHomeAnimeOriginal } from '../features/decision-home-anime-original/main';
 import { readHomeMode, saveHomeMode, type HomeMode } from '../domain/home-mode';
 
 export default function App() {
@@ -27,7 +27,7 @@ export default function App() {
       />
       {/* inert keeps keyboard focus out of the console while the boot overlay is up. */}
       <div inert={introActive}>
-        {homeMode === 'original' ? <MagiDirectLinkTest /> : <DecisionHome />}
+        {homeMode === 'original' ? <DecisionHomeAnimeOriginal /> : <DecisionHome />}
       </div>
     </>
   );

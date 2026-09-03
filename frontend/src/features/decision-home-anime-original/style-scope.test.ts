@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 // @ts-expect-error The test runs in Node; the app intentionally does not ship Node typings.
 import { readFileSync } from 'node:fs';
 
-const css = readFileSync(new URL('./magi-direct-link-test.css', import.meta.url), 'utf8');
+const css = readFileSync(new URL('./decision-home-anime-original.css', import.meta.url), 'utf8');
 
 describe('direct-link stylesheet isolation', () => {
   it('does not leak shared MAGI or terminal class names into the boot screen', () => {

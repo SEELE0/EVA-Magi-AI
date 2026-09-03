@@ -9,7 +9,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Decision } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
-import { MagiDirectLinkTest } from './main';
+import { DecisionHomeAnimeOriginal } from './main';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -73,7 +73,7 @@ function renderOrigin(service: DecisionService): RenderHandle {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  act(() => root.render(<MagiDirectLinkTest service={service} />));
+  act(() => root.render(<DecisionHomeAnimeOriginal service={service} />));
   const handle = { container, root };
   handles.push(handle);
   return handle;
@@ -103,7 +103,7 @@ function phase(container: HTMLElement) {
   return container.querySelector('.direct-link-page')?.getAttribute('data-phase');
 }
 
-describe('MagiDirectLinkTest', () => {
+describe('DecisionHomeAnimeOriginal', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     installMatchMedia();

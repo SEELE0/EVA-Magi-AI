@@ -12,7 +12,7 @@ export default defineConfig({
         nervLogoAnimeTest: 'design_test/nerv-logo-anime-test.html',
         biosStartTest: 'design_test/bios-start-test.html',
         evaWaveformTest: 'design_test/eva-waveform-test.html',
-        magiDirectLinkTest: 'magi-direct-link-test.html'
+        decisionHomeAnimeOriginal: 'decision-home-anime-original.html'
       }
     }
   },

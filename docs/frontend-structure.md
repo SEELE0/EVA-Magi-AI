@@ -14,7 +14,7 @@ frontend/
 │   ├── magi-boot/                      MAGI 几何动画独立预览入口
 │   └── nerv-logo-anime/                NERV 标志动画组件与入口
 ├── index.html                          主应用 HTML 入口
-├── magi-direct-link-test.html          原作风格直连页预览入口
+├── decision-home-anime-original.html          原作风格直连页预览入口
 ├── src/
 │   ├── app/                              主应用组装与全局样式
 │   ├── domain/                           跨界面、跨服务领域类型与主页模式
@@ -23,7 +23,7 @@ frontend/
 │   │   ├── decision-console/            主页复用的控制台原语与配置
 │   │   ├── decision-home/               当前主页、节点配置、历史与明细
 │   │   ├── magi-boot/                   开机流程复用的 MAGI 几何启动组件
-│   │   ├── magi-direct-link-test/       原作风格直连界面与预览页
+│   │   ├── decision-home-anime-original/       原作风格直连界面与预览页
 │   ├── services/                         决策服务接口、Mock、HTTP 与降级适配
 │   └── vite-env.d.ts                    Vite 生成的类型声明
 ├── package.json                        前端依赖与命令
@@ -40,7 +40,7 @@ frontend/
 `index.html` 加载 `src/app/main.tsx`，由 React 渲染 `App.tsx`。`App` 按以下顺序组装页面：
 
 1. `BootIntro`：显示 CRT 电源开机、POST 自检、MAGI 几何加载与终端交接动画。主流程是 `power-on → post-header → magi → post-stream → mode-select → exit → resync → reveal`。Esc 与 BYPASS AUTO-IPL 只快进到 `mode-select`，不完成启动；用户确认 `original` 或 `modern` 后才写入 `sessionStorage`、执行显示驱动交接并露出主页。桌面端保留方向键/Enter；`(hover: none) and (pointer: coarse)` 输入设备显示两步触控确认。`?boot=replay` 可强制重播。排期常量集中导出为 `BOOT_SCHEDULE_MS`，阶段状态挂在 `data-boot-phase` 上，舞台按 `BOOT_STAGE_PRESETS` 等比缩放并记录在 `data-boot-layout`。
-2. `App`：通过 `domain/home-mode.ts` 读写当前标签页的主页模式。`original` 渲染 `MagiDirectLinkTest`，`modern` 渲染 `DecisionHome`。开机层消失前，背景容器保持 `inert`，键盘焦点不会落入背景界面。
+2. `App`：通过 `domain/home-mode.ts` 读写当前标签页的主页模式。`original` 渲染 `DecisionHomeAnimeOriginal`，`modern` 渲染 `DecisionHome`。开机层消失前，背景容器保持 `inert`，键盘焦点不会落入背景界面。
 
 `BootIntro` 检测到 `prefers-reduced-motion: reduce` 时会直接进入模式选择，不会跳过选择进入主页。
 
@@ -54,11 +54,11 @@ Vite 配置了七个构建入口：
 | `design_test/decision-console-lab.html` | `design_test/decision-console/main.tsx` | 保留旧 `DecisionConsole` 的组件实验页 |
 | `design_test/magi-boot-test.html` | `design_test/magi-boot/main.tsx` | 单独调试 MAGI 几何动画 |
 | `design_test/eva-waveform-test.html` | `design_test/eva-waveform/main.tsx` | Three.js 红蓝相位线束与 CRT 示波器实验 |
-| `magi-direct-link-test.html` | `src/features/magi-direct-link-test/main.tsx` | 单独预览原作风格 MAGI Direct Link 界面 |
+| `decision-home-anime-original.html` | `src/features/decision-home-anime-original/main.tsx` | 单独预览原作风格 MAGI Direct Link 界面 |
 | `design_test/nerv-logo-anime-test.html` | `design_test/nerv-logo-anime/main.tsx` | 单独调试 NERV 标志动画 |
 | `design_test/bios-start-test.html` | `design_test/bios-start/main.tsx` | BIOS 自检动画的实验入口 |
 
-`design_test/` 中的预览页用于组件级视觉验证，不参与主应用的业务路由；它们各自拥有独立的 React `createRoot` 入口。`magi-direct-link-test.html` 仍留在前端根目录，因为同一实现也是当前 `original` 主页模式。
+`design_test/` 中的预览页用于组件级视觉验证，不参与主应用的业务路由；它们各自拥有独立的 React `createRoot` 入口。`decision-home-anime-original.html` 仍留在前端根目录，因为同一实现也是当前 `original` 主页模式。
 
 `eva-waveform/` 只由独立实验入口加载。它使用 Three.js 正交相机、GPU 实例化镂空圆柱笼（两端圆环与纵向骨架）、顶点着色器、加法混色和低强度 Bloom 构造红蓝相位线束；刻度、时间码、扫描线、噪点和暗角由 HTML/CSS 覆盖层负责。该依赖不会进入当前主页入口。
 
