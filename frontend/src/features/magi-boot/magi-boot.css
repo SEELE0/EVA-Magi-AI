@@ -1,7 +1,7 @@
 .magi-boot {
   color: #d88949;
   background: var(--magi-boot-background);
-  --font-eva: "Matisse EB", "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Noto Sans JP", "Hiragino Mincho ProN", serif;
+  --font-eva: var(--font-eva-ui);
   --magi-orange: #ff6a02;
   --magi-orange-hot: #ff8302;
   --magi-orange-deep: #ff5102;

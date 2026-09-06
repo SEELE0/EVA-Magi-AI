@@ -78,10 +78,16 @@
 }
 
 .magi-home .brand-block h1,
+.magi-home__motion-banner h2,
 .magi-home__motion-result strong,
 .magi-home__page-heading h2,
-.magi-home__detail-heading h2 {
+.magi-home__detail-heading h2,
+.magi-home__history-subject,
+.magi-home__empty-state strong {
   font-family: var(--font-eva-display);
+  font-feature-settings: "palt" 1;
+  font-weight: 900;
+  text-rendering: optimizeLegibility;
 }
 
 .magi-home .readout,
@@ -235,7 +241,7 @@
 
 .magi-home__motion-banner > p {
   color: #e46d27;
-  font: 10px/1.2 SFMono-Regular, Consolas, monospace;
+  font: 10px/1.2 var(--font-eva-data);
   letter-spacing: 0.14em;
 }
 
@@ -245,6 +251,7 @@
   color: #ff9d3f;
   font-size: clamp(17px, 2vw, 25px);
   line-height: 1.25;
+  letter-spacing: 0.015em;
   text-shadow: 0 0 9px rgba(255, 128, 23, 0.34);
 }
 
@@ -368,7 +375,7 @@
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(130, 80, 17, 0.56);
   color: #c17b2e;
-  font: 10px/1.2 SFMono-Regular, Consolas, monospace;
+  font: 10px/1.2 var(--font-eva-data);
   letter-spacing: 0.1em;
 }
 
@@ -585,11 +592,42 @@
   z-index: 1;
 }
 
-.magi-home__decision-stage .network-connectors line {
+.magi-home__decision-stage .network-topology,
+.magi-home__decision-stage .network-node-frame {
+  fill: none;
   stroke: #69dca0;
   stroke-width: 2;
   stroke-linecap: butt;
-  filter: none;
+  stroke-linejoin: miter;
+  shape-rendering: geometricPrecision;
+}
+
+.magi-home__decision-stage .network-node-frame {
+  color: #69dca0;
+  opacity: 0;
+  transition: opacity 120ms linear, stroke-width 120ms linear, filter 120ms linear;
+}
+
+.magi-home__decision-stage .network-node-frame.vote-approve {
+  color: #8cff72;
+  opacity: 1;
+  stroke: #8cff72;
+}
+
+.magi-home__decision-stage .network-node-frame.vote-reject {
+  color: #ff6258;
+  opacity: 1;
+  stroke: #ff6258;
+}
+
+.magi-home__decision-stage .network-node-frame.vote-abstain {
+  color: #f1d35c;
+  opacity: 1;
+  stroke: #f1d35c;
+}
+
+.magi-home__decision-stage .magi-network.is-scanning .network-topology {
+  animation: link-pulse 740ms steps(3) infinite;
 }
 
 .magi-home__decision-stage .agent-node {
@@ -597,44 +635,51 @@
   color: #b7f4d0;
   background: transparent;
   box-shadow: none;
+  clip-path: none;
+  overflow: visible;
   filter: drop-shadow(0 0 5px rgba(90, 225, 151, 0.2));
   transition: filter 120ms linear;
 }
 
 .magi-home__decision-stage .agent-node::before {
-  inset: 0;
-  padding: 0;
-  clip-path: none;
-  background: var(--node-outline);
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: 100% 100%;
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
-  transition: filter 120ms linear;
+  content: none;
 }
 
-.magi-home__decision-stage .agent-node.top::before {
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H100V72L67 100H33L0 72ZM1.5 1.5V71.2L33.6 98.5H66.4L98.5 71.2V1.5Z'/%3E%3C/svg%3E");
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H100V72L67 100H33L0 72ZM1.5 1.5V71.2L33.6 98.5H66.4L98.5 71.2V1.5Z'/%3E%3C/svg%3E");
+.magi-home__decision-stage .core-node {
+  top: var(--decision-core-y);
+  left: var(--decision-core-x);
 }
 
-/* Keep the network positions and connector anchors unchanged while giving the
-   head node enough vertical room for its stacked telemetry. */
-.magi-home__decision-stage .agent-node.top {
-  top: -1%;
-  height: 46%;
+.magi-home__decision-stage .agent-node.top,
+.magi-home__node-hotspot.is-top {
+  top: var(--decision-node-top-y);
+  right: auto;
+  left: var(--decision-node-top-x);
+  width: var(--decision-node-top-width);
+  height: var(--decision-node-top-height);
 }
 
-.magi-home__decision-stage .agent-node.left::before {
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H70L100 48V100H0ZM1.5 1.5V98.5H98.5V48.5L69.2 1.5Z'/%3E%3C/svg%3E");
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M0 0H70L100 48V100H0ZM1.5 1.5V98.5H98.5V48.5L69.2 1.5Z'/%3E%3C/svg%3E");
+.magi-home__decision-stage .agent-node.left,
+.magi-home__node-hotspot.is-left {
+  top: var(--decision-node-left-y);
+  right: auto;
+  left: var(--decision-node-left-x);
+  width: var(--decision-node-left-width);
+  height: var(--decision-node-left-height);
 }
 
-.magi-home__decision-stage .agent-node.right::before {
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M30 0H100V100H0V48ZM30.8 1.5L1.5 48.5V98.5H98.5V1.5Z'/%3E%3C/svg%3E");
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='white' fill-rule='evenodd' d='M30 0H100V100H0V48ZM30.8 1.5L1.5 48.5V98.5H98.5V1.5Z'/%3E%3C/svg%3E");
+.magi-home__decision-stage .agent-node.right,
+.magi-home__node-hotspot.is-right {
+  top: var(--decision-node-right-y);
+  right: auto;
+  left: var(--decision-node-right-x);
+  width: var(--decision-node-right-width);
+  height: var(--decision-node-right-height);
+}
+
+.magi-home__decision-stage .agent-node.right {
+  justify-items: end;
+  text-align: right;
 }
 
 .magi-home__decision-stage .agent-tag,
@@ -688,27 +733,6 @@
   pointer-events: none;
 }
 
-.magi-home__node-hotspot.is-top {
-  top: -1%;
-  left: 30%;
-  width: 40%;
-  height: 46%;
-}
-
-.magi-home__node-hotspot.is-left {
-  top: 49.52%;
-  left: 0;
-  width: 46%;
-  height: 40.48%;
-}
-
-.magi-home__node-hotspot.is-right {
-  top: 49.52%;
-  right: 0;
-  width: 46%;
-  height: 40.48%;
-}
-
 .magi-home__node-hotspot button {
   position: absolute;
   inset: 0;
@@ -722,15 +746,15 @@
 }
 
 .magi-home__node-hotspot.is-top button {
-  clip-path: polygon(0 0, 100% 0, 100% 72%, 67% 100%, 33% 100%, 0 72%);
+  clip-path: var(--decision-node-top-clip);
 }
 
 .magi-home__node-hotspot.is-left button {
-  clip-path: polygon(0 0, 70% 0, 100% 48%, 100% 100%, 0 100%);
+  clip-path: var(--decision-node-left-clip);
 }
 
 .magi-home__node-hotspot.is-right button {
-  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%, 0 48%);
+  clip-path: var(--decision-node-right-clip);
 }
 
 .magi-home__node-hotspot button:hover,
@@ -747,15 +771,14 @@
     drop-shadow(0 0 14px color-mix(in srgb, var(--node-outline) 72%, transparent));
 }
 
-.magi-home__decision-stage .magi-network:has(.magi-home__node-hotspot.is-top button:not(:disabled):is(:hover, :focus-visible)) .agent-node.top::before,
-.magi-home__decision-stage .magi-network:has(.magi-home__node-hotspot.is-left button:not(:disabled):is(:hover, :focus-visible)) .agent-node.left::before,
-.magi-home__decision-stage .magi-network:has(.magi-home__node-hotspot.is-right button:not(:disabled):is(:hover, :focus-visible)) .agent-node.right::before {
+.magi-home__decision-stage .magi-network:has(.magi-home__node-hotspot.is-top button:not(:disabled):is(:hover, :focus-visible)) .network-node-frame.is-top,
+.magi-home__decision-stage .magi-network:has(.magi-home__node-hotspot.is-left button:not(:disabled):is(:hover, :focus-visible)) .network-node-frame.is-left,
+.magi-home__decision-stage .magi-network:has(.magi-home__node-hotspot.is-right button:not(:disabled):is(:hover, :focus-visible)) .network-node-frame.is-right {
+  opacity: 1;
+  stroke-width: 4;
   filter:
-    drop-shadow(1px 0 0 var(--node-outline))
-    drop-shadow(-1px 0 0 var(--node-outline))
-    drop-shadow(0 1px 0 var(--node-outline))
-    drop-shadow(0 -1px 0 var(--node-outline))
-    drop-shadow(0 0 6px var(--node-outline));
+    drop-shadow(0 0 2px currentcolor)
+    drop-shadow(0 0 7px currentcolor);
 }
 
 .magi-home__node-hotspot button:disabled {
@@ -810,6 +833,9 @@
   min-height: 76px;
   padding: 11px 14px 22px;
   resize: vertical;
+  font-family: var(--font-eva-display);
+  font-feature-settings: "palt" 1;
+  font-weight: 700;
   line-height: 1.55;
 }
 
@@ -818,7 +844,7 @@
   right: 9px;
   bottom: 7px;
   color: #765123;
-  font: 10px SFMono-Regular, Consolas, monospace;
+  font: 10px var(--font-eva-data);
 }
 
 .magi-home__dock-field select {
@@ -840,7 +866,7 @@
 .magi-home__execute span,
 .magi-home__execute small { display: block; }
 .magi-home__execute span { font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
-.magi-home__execute small { margin-top: 5px; color: #a86a26; font: 9px SFMono-Regular, Consolas, monospace; }
+.magi-home__execute small { margin-top: 5px; color: #a86a26; font: 9px var(--font-eva-data); }
 .magi-home__execute:hover:not(:disabled) { color: #180b02; background: var(--home-sodium); box-shadow: 0 0 22px rgba(255, 173, 66, 0.38); }
 .magi-home__execute:hover:not(:disabled) small { color: #4b2807; }
 
@@ -858,7 +884,7 @@
 .magi-home__input-summary span,
 .magi-home__input-summary small {
   color: #8a622c;
-  font: 9px/1.25 SFMono-Regular, Consolas, monospace;
+  font: 9px/1.25 var(--font-eva-data);
   letter-spacing: 0.08em;
 }
 
@@ -885,7 +911,7 @@
 .magi-home__new-motion span,
 .magi-home__new-motion small { display: block; }
 .magi-home__new-motion span { font-size: 13px; font-weight: 800; }
-.magi-home__new-motion small { margin-top: 3px; color: #9d6829; font: 9px SFMono-Regular, Consolas, monospace; }
+.magi-home__new-motion small { margin-top: 3px; color: #9d6829; font: 9px var(--font-eva-data); }
 .magi-home__new-motion:hover { background: rgba(255, 173, 66, 0.08); }
 
 .magi-home__simulator.phase-deliberation .magi-home__input-summary,
@@ -942,9 +968,9 @@
 
 .magi-home__page-heading p,
 .magi-home__page-heading h2 { margin: 0; }
-.magi-home__page-heading p { color: #815621; font: 10px SFMono-Regular, Consolas, monospace; letter-spacing: 0.12em; }
-.magi-home__page-heading h2 { margin-top: 5px; color: var(--home-sodium); font-size: 22px; }
-.magi-home__page-heading > span { color: #765527; font: 10px SFMono-Regular, Consolas, monospace; }
+.magi-home__page-heading p { color: #815621; font: 10px var(--font-eva-data); letter-spacing: 0.12em; }
+.magi-home__page-heading h2 { margin-top: 5px; color: var(--home-sodium); font-size: 22px; letter-spacing: 0.02em; }
+.magi-home__page-heading > span { color: #765527; font: 10px var(--font-eva-data); }
 
 .magi-home__history-list {
   margin: 0;
@@ -967,8 +993,8 @@
 
 .magi-home__history-list a:hover,
 .magi-home__history-list a:focus-visible { background: rgba(255, 173, 66, 0.045); }
-.magi-home__history-list time { color: #8a6530; font: 11px SFMono-Regular, Consolas, monospace; }
-.magi-home__history-subject { overflow: hidden; color: #ebc981; text-overflow: ellipsis; white-space: nowrap; }
+.magi-home__history-list time { color: #8a6530; font: 11px var(--font-eva-data); }
+.magi-home__history-subject { overflow: hidden; color: #ebc981; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .magi-home__history-verdict { font-weight: 800; }
 .magi-home__history-verdict.is-approved,
 .magi-home__detail-heading .is-approved { color: var(--home-phosphor); }
@@ -1048,14 +1074,15 @@
 .magi-home__detail-heading > div { display: grid; gap: 5px; }
 .magi-home__detail-heading span { color: #8c5b24; font-size: 10px; }
 .magi-home__detail-heading time,
-.magi-home__detail-heading strong { color: #e0ad59; font: 12px SFMono-Regular, Consolas, monospace; }
+.magi-home__detail-heading strong { color: #e0ad59; font: 12px var(--font-eva-data); }
 .magi-home__detail-heading h2 {
   max-width: 100%;
   margin: 0;
   overflow-wrap: anywhere;
   color: #f3d69b;
-  font-size: 18px;
-  line-height: 1.4;
+  font-size: clamp(20px, 2vw, 30px);
+  line-height: 1.32;
+  letter-spacing: 0.01em;
 }
 
 .magi-home__agent-output { padding: 17px 0 20px; border-bottom: 1px dashed #714610; }
@@ -1073,7 +1100,7 @@
 .magi-home__agent-output dl { display: grid; margin: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .magi-home__agent-output dl div { display: grid; min-width: 0; gap: 4px; }
 .magi-home__agent-output dt { color: #715527; font-size: 9px; }
-.magi-home__agent-output dd { max-width: 100%; overflow-wrap: anywhere; margin: 0; color: #b99356; font: 10px/1.35 SFMono-Regular, Consolas, monospace; }
+.magi-home__agent-output dd { max-width: 100%; overflow-wrap: anywhere; margin: 0; color: #b99356; font: 10px/1.35 var(--font-eva-data); }
 .magi-home__response-copy { max-width: 118ch; padding: 11px 6px 0; }
 .magi-home__response-copy p {
   max-width: 100%;
@@ -1239,6 +1266,8 @@
   .magi-home__layer-stack,
   .magi-home__failure-banner,
   .magi-home__instrument-overlay,
+  .magi-home__decision-stage .network-topology,
+  .magi-home__decision-stage .network-node-frame,
   .magi-home__decision-stage .agent-node,
   .magi-home__decision-stage .agent-node::before,
   .magi-home__decision-stage > .magi-network {

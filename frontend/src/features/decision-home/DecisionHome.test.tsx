@@ -22,10 +22,10 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('class="brand-mark"');
     expect(markup).toContain('class="header-readout"');
     expect(markup).toContain('class="magi-home__scanlines"');
-    expect(markup).toContain('class="network-connectors"');
-    expect(markup).toContain('x1="262" y1="188" x2="190" y2="209"');
-    expect(markup).toContain('x1="274" y1="333.8" x2="326" y2="333.8"');
-    expect(markup).not.toContain('x1="264" y1="333.8" x2="336"');
+    expect(markup).toContain('class="network-topology"');
+    expect(markup).toContain('data-node-frame="top"');
+    expect(markup).toContain('data-node-frame="left"');
+    expect(markup).toContain('data-node-frame="right"');
     expect(markup).toContain('MELCHIOR-1');
     expect(markup).toContain('BALTHASAR-2');
     expect(markup).toContain('CASPER-3');
@@ -38,6 +38,10 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('class="magi-network "');
     expect(markup).toContain('class="network-links"');
     expect(markup).toContain('viewBox="0 0 600 420"');
+    expect(markup).toContain('preserveAspectRatio="xMidYMid meet"');
+    expect(markup).toContain('--decision-node-top-y:-4%');
+    expect(markup).toContain('--decision-node-top-height:46%');
+    expect(markup).not.toContain('preserveAspectRatio="none"');
     expect(markup).toContain('MELCHIOR-1 の設定を開く');
     expect(markup).not.toContain('CFG-01');
     expect(markup).not.toContain('CFG-02');

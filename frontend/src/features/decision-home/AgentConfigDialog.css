@@ -53,8 +53,8 @@
 .magi-home__config-header { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid #885810; }
 .magi-home__config-header p,
 .magi-home__config-header h2 { margin: 0; }
-.magi-home__config-header p { color: #8e6527; font: 9px SFMono-Regular, Consolas, monospace; letter-spacing: 0.14em; }
-.magi-home__config-header h2 { margin-top: 5px; color: var(--config-phosphor); font-size: 22px; }
+.magi-home__config-header p { color: #8e6527; font: 9px var(--font-eva-data); letter-spacing: 0.14em; }
+.magi-home__config-header h2 { margin-top: 5px; color: var(--config-phosphor); font-family: var(--font-eva-display); font-size: 22px; font-feature-settings: "palt" 1; font-weight: 900; }
 .magi-home__dialog-close { display: inline-flex; min-height: 44px; align-items: center; gap: 7px; padding: 0 10px; border: 0; color: var(--config-accent); background: transparent; }
 .magi-home__dialog-close span:first-child { font-size: 25px; font-weight: 300; }
 
@@ -77,7 +77,7 @@
 .magi-home__connection-options input { width: 18px; height: 18px; accent-color: var(--config-accent); }
 
 .magi-home__config-field { display: grid; min-width: 0; grid-template-columns: 112px minmax(0, 1fr); align-items: start; gap: 12px; }
-.magi-home__config-field > span { padding-top: 14px; color: #bc7d2e; font: 11px SFMono-Regular, Consolas, monospace; }
+.magi-home__config-field > span { padding-top: 14px; color: #bc7d2e; font: 11px var(--font-eva-data); }
 .magi-home__config-field input,
 .magi-home__config-field textarea {
   width: 100%;

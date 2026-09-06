@@ -9,10 +9,12 @@
 :root {
   color: #ffc06a;
   background: #090401;
-  --font-eva-display: "Matisse EB", "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
-  --font-eva-ui: "IBM Plex Sans Condensed", "Arial Narrow", "Noto Sans JP", sans-serif;
+  /* Matisse stays first for licensed local installs; Noto Serif JP is the
+     actually loaded, OFL-compatible web fallback for EVA-style display copy. */
+  --font-eva-display: "EVA-マティス-クラシック", "EVA-マティス-スタンダード", "Matisse EB", "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-eva-ui: "IBM Plex Sans Condensed", "Noto Sans JP", "Arial Narrow", sans-serif;
   --font-eva-data: SFMono-Regular, Consolas, "Liberation Mono", ui-monospace, monospace;
-  --font-eva: var(--font-eva-display);
+  --font-eva: var(--font-eva-ui);
   font-family: var(--font-eva);
   font-synthesis: none;
 }
@@ -32,17 +34,20 @@ svg text { font-family: var(--font-eva); }
 
 button,
 input,
-select { font: inherit; }
+select,
+textarea { font: inherit; }
 
 button { cursor: pointer; }
 
 button:disabled,
 input:disabled,
-select:disabled { cursor: not-allowed; opacity: 0.56; }
+select:disabled,
+textarea:disabled { cursor: not-allowed; opacity: 0.56; }
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid #ffc15c;
   outline-offset: 3px;
 }

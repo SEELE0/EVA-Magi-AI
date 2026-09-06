@@ -48,7 +48,7 @@ describe('DecisionHome narrow viewport CSS', () => {
     expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.3;[^}]*repeating-linear-gradient/);
     expect(css).toMatch(/\.magi-home__decision-stage \.agent-node\s*\{[^}]*background:\s*transparent;/);
     expect(css).toMatch(/\.magi-home__decision-stage \.vote-state\s*\{[^}]*min-height:\s*34px;[^}]*font-size:\s*clamp\(16px,/);
-    expect(css).toMatch(/\.magi-home__decision-stage \.network-connectors line\s*\{[^}]*stroke:\s*#69dca0;/);
+    expect(css).toMatch(/\.magi-home__decision-stage \.network-topology,[\s\S]*?stroke:\s*#69dca0;/);
     expect(css).toMatch(/\.agent-node\.vote-reject\s*\{\s*--node-outline:\s*#ff6258;/);
   });
 
@@ -58,19 +58,30 @@ describe('DecisionHome narrow viewport CSS', () => {
     );
   });
 
-  it('keeps the head node taller without changing network positions', () => {
+  it('positions node content and hotspots from the shared geometry variables', () => {
+    for (const position of ['top', 'left', 'right']) {
+      expect(css).toContain(`top: var(--decision-node-${position}-y);`);
+      expect(css).toContain(`left: var(--decision-node-${position}-x);`);
+      expect(css).toContain(`width: var(--decision-node-${position}-width);`);
+      expect(css).toContain(`height: var(--decision-node-${position}-height);`);
+      expect(css).toContain(`clip-path: var(--decision-node-${position}-clip);`);
+    }
+  });
+
+  it('right-aligns every content row inside the right node', () => {
     expect(css).toMatch(
-      /\.magi-home__decision-stage \.agent-node\.top\s*\{[^}]*top:\s*-1%;[^}]*height:\s*46%;/
+      /\.magi-home__decision-stage \.agent-node\.right\s*\{[^}]*justify-items:\s*end;[^}]*text-align:\s*right;/
     );
   });
 
-  it('hides connector overlap beneath node borders', () => {
+  it('draws one exact topology with a uniform non-overdrawn stroke', () => {
     expect(css).toMatch(
       /\.magi-home__decision-stage \.network-links\s*\{[^}]*z-index:\s*1;/
     );
     expect(css).toMatch(
-      /\.magi-home__decision-stage \.network-connectors line\s*\{[^}]*stroke-width:\s*2;[^}]*stroke-linecap:\s*butt;[^}]*filter:\s*none;/
+      /\.magi-home__decision-stage \.network-topology,[\s\S]*?stroke-width:\s*2;[^}]*stroke-linecap:\s*butt;[^}]*stroke-linejoin:\s*miter;/
     );
+    expect(css).not.toContain('mask-image: url("data:image/svg+xml');
   });
 
   it('maps each invisible config hotspot hover and keyboard focus to its visible node', () => {
@@ -80,7 +91,7 @@ describe('DecisionHome narrow viewport CSS', () => {
       );
     }
     expect(css).toMatch(/\.agent-node\.right\s*\{[\s\S]*?drop-shadow\(0 0 14px/);
-    expect(css).toMatch(/\.agent-node\.right::before\s*\{[\s\S]*?drop-shadow\(1px 0 0 var\(--node-outline\)\)/);
+    expect(css).toMatch(/\.network-node-frame\.is-right\s*\{[^}]*opacity:\s*1;[^}]*stroke-width:\s*4;/);
   });
 
   it('allows mobile content to expose layout errors instead of clipping them', () => {

@@ -16,6 +16,13 @@ import {
   verdictCopy,
   type Scenario
 } from '../decision-console/console-config';
+import {
+  DECISION_NETWORK_LAYOUT,
+  toDecisionNetworkCssVariables,
+  toDecisionNetworkTopologyPath,
+  toSvgPoints,
+  type DecisionNodePosition
+} from './decision-network-layout';
 import { createDecisionHistoryEntry } from './simulator-responses';
 import type { AgentConfigMap, DecisionHistoryEntry } from './simulator-types';
 
@@ -39,6 +46,24 @@ const priorityCopy: Record<DecisionRequest['priority'], string> = {
   normal: '通常',
   critical: '最優先'
 };
+
+const agentPosition: Record<AgentId, DecisionNodePosition> = {
+  'BALTHASAR-2': 'top',
+  'CASPER-3': 'left',
+  'MELCHIOR-1': 'right'
+};
+
+const agentIdByPosition: Record<DecisionNodePosition, AgentId> = {
+  top: 'BALTHASAR-2',
+  left: 'CASPER-3',
+  right: 'MELCHIOR-1'
+};
+
+const decisionNetworkStyle = {
+  ...toDecisionNetworkCssVariables(DECISION_NETWORK_LAYOUT),
+  aspectRatio: `${DECISION_NETWORK_LAYOUT.viewBox.width} / ${DECISION_NETWORK_LAYOUT.viewBox.height}`
+} as CSSProperties;
+const decisionNetworkTopologyPath = toDecisionNetworkTopologyPath(DECISION_NETWORK_LAYOUT);
 
 type SimulatorPhase = 'standby' | 'deliberation' | 'final' | 'error';
 
@@ -329,12 +354,31 @@ export function DecisionSimulator({
 
         <section className="magi-home__decision-stage" aria-label="MAGI 合议マトリクス">
           <InstrumentOverlay />
-          <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`}>
-            <svg className="network-links" viewBox="0 0 600 420" preserveAspectRatio="none" aria-hidden="true">
-              <g className="network-connectors">
-                <line x1="262" y1="188" x2="190" y2="209" vectorEffect="non-scaling-stroke" />
-                <line x1="338" y1="188" x2="410" y2="209" vectorEffect="non-scaling-stroke" />
-                <line x1="274" y1="333.8" x2="326" y2="333.8" vectorEffect="non-scaling-stroke" />
+          <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`} style={decisionNetworkStyle}>
+            <svg
+              className="network-links"
+              viewBox={`0 0 ${DECISION_NETWORK_LAYOUT.viewBox.width} ${DECISION_NETWORK_LAYOUT.viewBox.height}`}
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden="true"
+            >
+              <path
+                className="network-topology"
+                d={decisionNetworkTopologyPath}
+                vectorEffect="non-scaling-stroke"
+              />
+              <g className="network-node-highlights">
+                {Object.values(DECISION_NETWORK_LAYOUT.frames).map((frame) => {
+                  const vote = votes?.[agentIdByPosition[frame.position]] ?? 'pending';
+                  return (
+                    <polygon
+                      key={frame.position}
+                      className={`network-node-frame is-${frame.position} vote-${vote}`}
+                      data-node-frame={frame.position}
+                      points={toSvgPoints(frame.points)}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  );
+                })}
               </g>
             </svg>
             <div className="core-node">
@@ -346,7 +390,7 @@ export function DecisionSimulator({
                 key={agent.id}
                 agent={agent}
                 vote={votes?.[agent.id] ?? 'pending'}
-                position={agent.id === 'BALTHASAR-2' ? 'top' : agent.id === 'CASPER-3' ? 'left' : 'right'}
+                position={agentPosition[agent.id]}
               />
             ))}
             <NodeConfigHotspots disabled={isExecuting} onOpen={onOpenConfig} />
