@@ -35,7 +35,7 @@ describe('direct-link stylesheet isolation', () => {
     expect(css).toMatch(/\.motion-composer\.is-collapsed\s*\{[^}]*max-height:\s*0;/);
     expect(css).toMatch(/\.direct-link-page \.magi-network\s*\{[^}]*transition:\s*transform 520ms/);
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
-    expect(css).toMatch(/\.motion-composer\s*\{[^}]*width:\s*min\(100%, 720px\)/);
+    expect(css).toMatch(/\.motion-composer\s*\{[^}]*width:\s*100%/);
     expect(css).toMatch(/@media \(orientation: landscape\)[\s\S]*?\.motion-composer\s*\{[^}]*max-height:\s*104px/);
     expect(css).toMatch(/@media \(min-width: 720px\) and \(orientation: portrait\)[\s\S]*?\.motion-composer__controls\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(190px, 220px\)/);
   });
@@ -67,10 +67,10 @@ describe('direct-link stylesheet isolation', () => {
   });
 
   it('renders command buttons as animated EVA stripe controls with inverted hover colors', () => {
-    expect(css).toMatch(/\.motion-composer button,\s*\.direct-link-new-motion\s*\{[^}]*color:\s*#050504;[^}]*background:\s*var\(--direct-orange\)/);
-    expect(css).toMatch(/\.motion-composer button::before,[\s\S]*?background-image:[\s\S]*?repeating-linear-gradient\(\s*135deg,\s*var\(--direct-button-stripe\) 0 7px,\s*transparent 7px 15px[\s\S]*?background-size:\s*100% 5px, 100% 5px/);
-    expect(css).not.toContain('.motion-composer button::after');
-    expect(css).toMatch(/\.motion-composer button:not\(:disabled\):hover,[\s\S]*?--direct-button-stripe:\s*var\(--direct-orange\);[^}]*color:\s*var\(--direct-orange\);[^}]*background:\s*#050504/);
+    expect(css).toMatch(/\.motion-composer button\[type="submit"\],\s*\.direct-link-new-motion\s*\{[^}]*color:\s*#050504;[^}]*background:\s*var\(--direct-orange\)/);
+    expect(css).toMatch(/\.motion-composer button\[type="submit"\]::before,[\s\S]*?background-image:[\s\S]*?repeating-linear-gradient\(\s*135deg,\s*var\(--direct-button-stripe\) 0 7px,\s*transparent 7px 15px[\s\S]*?background-size:\s*100% 5px, 100% 5px/);
+    expect(css).not.toContain('.motion-composer button\[type="submit"\]::after');
+    expect(css).toMatch(/\.motion-composer button\[type="submit"\]:not\(:disabled\):hover,[\s\S]*?--direct-button-stripe:\s*var\(--direct-orange\);[^}]*color:\s*var\(--direct-orange\);[^}]*background:\s*#050504/);
     expect(css).toMatch(/animation:\s*direct-link-command-stripes 850ms linear infinite/);
     expect(css).toMatch(/@keyframes direct-link-command-stripes\s*\{[\s\S]*?translate3d\(-21\.213px, 0, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
     expect(css).not.toMatch(/direct-link-command-stripes (?:420|600)ms/);

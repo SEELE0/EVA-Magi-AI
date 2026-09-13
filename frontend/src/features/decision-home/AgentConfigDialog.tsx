@@ -92,15 +92,16 @@ export function AgentConfigDialog({ config, onClose, onSave, variant = 'modern' 
             </div>
           </fieldset>
 
+          {draft.connection !== 'mock' ? <>
           <label className="magi-home__config-field">
             <span>BASE URL</span>
             <input
-              type={draft.connection === 'mock' ? 'text' : 'url'}
-              inputMode={draft.connection === 'mock' ? 'text' : 'url'}
+              type="url"
+              inputMode="url"
               value={draft.baseUrl}
               onChange={(event) => setDraft({ ...draft, baseUrl: event.target.value })}
               autoComplete="off"
-              required={draft.connection !== 'mock'}
+              required
             />
           </label>
 
@@ -124,6 +125,8 @@ export function AgentConfigDialog({ config, onClose, onSave, variant = 'modern' 
             />
           </label>
 
+          </> : <p className="magi-home__credential-note">模擬回線を使用中。接続情報の入力は不要です。</p>}
+
           <label className="magi-home__config-field magi-home__config-prompt">
             <span>役割カード PROMPT</span>
             <textarea
@@ -133,9 +136,11 @@ export function AgentConfigDialog({ config, onClose, onSave, variant = 'modern' 
             />
           </label>
 
-          <p className="magi-home__credential-note">
-            API KEY は現在のページメモリ内だけに保持されます。模擬版は資格情報を送信・保存しません。
-          </p>
+          {draft.connection !== 'mock' ? (
+            <p className="magi-home__credential-note">
+              API KEY は現在のページメモリ内だけに保持されます。模擬版は資格情報を送信・保存しません。
+            </p>
+          ) : null}
 
           <footer className="magi-home__config-actions">
             <button type="button" onClick={closeDialog}>取消</button>

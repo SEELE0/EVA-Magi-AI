@@ -9,12 +9,13 @@ import { AgentConfigDialog } from './AgentConfigDialog';
 import { cloneAgentConfigs } from './simulator-config';
 
 describe('AgentConfigDialog BASE URL validation', () => {
-  it('does not apply URL validation to the internal mock label', () => {
+  it('hides unused connection fields in mock mode', () => {
     const config = cloneAgentConfigs()['MELCHIOR-1'];
     const markup = renderToStaticMarkup(<AgentConfigDialog config={config} onClose={() => undefined} onSave={() => undefined} />);
 
-    expect(markup).toContain('type="text"');
-    expect(markup).toContain('value="内部模擬回線"');
+    expect(markup).not.toContain('type="url"');
+    expect(markup).not.toContain('type="password"');
+    expect(markup).toContain('役割カード PROMPT');
     expect(markup).not.toContain('required=""');
   });
 
@@ -38,7 +39,7 @@ describe('AgentConfigDialog BASE URL validation', () => {
 
     expect(markup).toContain('magi-home__config-dialog--original');
     expect(markup).toContain('BALTHASAR-2 ノード設定');
-    expect(markup).toContain('API KEY');
+    expect(markup).toContain('接続情報の入力は不要です');
     expect(markup).toContain('役割カード PROMPT');
   });
 });

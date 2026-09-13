@@ -7,7 +7,7 @@
 
 export type HomeMode = 'original' | 'modern';
 
-export const DEFAULT_HOME_MODE: HomeMode = 'modern';
+export const DEFAULT_HOME_MODE: HomeMode = 'original';
 export const HOME_MODE_SESSION_KEY = 'magi-nerv:home-mode';
 
 export function readHomeMode(): HomeMode {

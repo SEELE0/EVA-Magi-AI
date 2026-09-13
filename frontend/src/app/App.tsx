@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { BootIntro, shouldShowBootIntro } from '../features/boot-intro/BootIntro';
 import { DecisionHome } from '../features/decision-home';
 import { DecisionHomeAnimeOriginal } from '../features/decision-home-anime-original/main';
-import { readHomeMode, saveHomeMode, type HomeMode } from '../domain/home-mode';
+import { DEFAULT_HOME_MODE, readHomeMode, saveHomeMode, type HomeMode } from '../domain/home-mode';
 
 export default function App() {
   const [introActive, setIntroActive] = useState(shouldShowBootIntro);
@@ -21,13 +21,15 @@ export default function App() {
   return (
     <>
       <BootIntro
-        initialMode={homeMode}
+        initialMode={DEFAULT_HOME_MODE}
         onFinished={() => setIntroActive(false)}
         onModeSelected={selectHomeMode}
       />
       {/* inert keeps keyboard focus out of the console while the boot overlay is up. */}
       <div inert={introActive}>
-        {homeMode === 'original' ? <DecisionHomeAnimeOriginal /> : <DecisionHome />}
+        {homeMode === 'original'
+          ? <DecisionHomeAnimeOriginal />
+          : <DecisionHome entryRevealReady={!introActive} />}
       </div>
     </>
   );

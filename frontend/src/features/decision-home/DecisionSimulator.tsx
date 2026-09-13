@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { HoneycombReveal } from './HoneycombReveal';
+import { markHoneycombRevealAsPlayed, shouldPlayHoneycombReveal } from './honeycomb-reveal';
 import type { Agent, AgentId, Decision, DecisionRequest, SystemStatus } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
@@ -30,6 +32,8 @@ interface DecisionSimulatorProps {
   service: DecisionService;
   agents: Agent[];
   configs: AgentConfigMap;
+  /** False while the boot intro overlay owns the screen; the entry reveal waits for it. */
+  revealReady?: boolean;
   onOpenConfig: (agentId: AgentId) => void;
   onHistoryCreated: (entry: DecisionHistoryEntry) => void;
   onStatusChange: (status: SystemStatus) => void;
@@ -235,6 +239,7 @@ export function DecisionSimulator({
   service,
   agents,
   configs,
+  revealReady = true,
   onOpenConfig,
   onHistoryCreated,
   onStatusChange
@@ -244,6 +249,11 @@ export function DecisionSimulator({
   const [subject, setSubject] = useState(scenarioSubject.standard);
   const [priority, setPriority] = useState<DecisionRequest['priority']>(defaultPriority);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const finishReveal = useCallback(() => {
+    markHoneycombRevealAsPlayed();
+    setIsRevealing(false);
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const activeController = useRef<AbortController | null>(null);
   const mounted = useRef(false);
@@ -256,6 +266,10 @@ export function DecisionSimulator({
       activeController.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (revealReady && shouldPlayHoneycombReveal()) setIsRevealing(true);
+  }, [revealReady]);
 
   function cancelActiveRun() {
     activeController.current?.abort();
@@ -283,6 +297,7 @@ export function DecisionSimulator({
 
   async function runDecision() {
     if (isExecuting) return;
+    finishReveal();
     if (!subject.trim()) {
       setError('MAGIに送信する議題を入力してください。');
       return;
@@ -393,8 +408,10 @@ export function DecisionSimulator({
                 position={agentPosition[agent.id]}
               />
             ))}
-            <NodeConfigHotspots disabled={isExecuting} onOpen={onOpenConfig} />
+            <NodeConfigHotspots disabled={isExecuting || isRevealing} onOpen={onOpenConfig} />
           </div>
+          {!showTerminal ? <small className="magi-home__node-hint">人格ノードを選択して設定 · SELECT NODE</small> : null}
+          {isRevealing ? <HoneycombReveal onComplete={finishReveal} /> : null}
         </section>
 
         {showTerminal ? <LayerStack agents={agents} votes={votes} /> : null}
@@ -416,12 +433,15 @@ export function DecisionSimulator({
             onChange={(event) => updateSubject(event.target.value)}
             maxLength={240}
             disabled={isExecuting}
-            rows={3}
+            rows={2}
             placeholder="一つの議題（問い）を入力してください…"
           />
           <small>{subject.length} / 240</small>
         </label>
 
+        <details className="magi-home__advanced-options">
+          <summary>詳細設定 <span>{priorityCopy[priority]} / {scenarioCopy[scenario]}</span></summary>
+          <div className="magi-home__advanced-fields">
         <label className="magi-home__dock-field" htmlFor="magi-home-priority">
           <span>優先度</span>
           <select
@@ -450,6 +470,8 @@ export function DecisionSimulator({
           </select>
         </label>
 
+          </div>
+        </details>
         <button className="magi-home__execute" type="button" onClick={() => void runDecision()} disabled={isExecuting}>
           <span>{isExecuting ? '判定実行中' : '判定開始'}</span>
           <small>EXECUTE DECISION</small>

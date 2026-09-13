@@ -10,8 +10,7 @@ import type { DecisionService } from '../../services/decision-service';
 import { Readout } from '../decision-console/ConsolePrimitives';
 import {
   connectionCopy,
-  defaultAgents,
-  sourceCopy
+  defaultAgents
 } from '../decision-console/console-config';
 import { AgentConfigDialog } from './AgentConfigDialog';
 import { DecisionSimulator } from './DecisionSimulator';
@@ -21,6 +20,7 @@ import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from
 import { cloneAgentConfigs } from './simulator-config';
 import type { AgentConfigMap, AgentRuntimeConfig, DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
 import './decision-home.css';
+import './decision-header.css';
 
 const service: DecisionService = createDecisionService();
 const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
@@ -29,7 +29,7 @@ function formatTime(date: Date) {
   return date.toLocaleTimeString('ja-JP', { hour12: false });
 }
 
-export function DecisionHome() {
+export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: boolean }) {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
   const [clock, setClock] = useState(() => new Date());
@@ -87,7 +87,8 @@ export function DecisionHome() {
     <main className="magi-home">
       <div className="screen-noise" aria-hidden="true" />
       <div className="magi-home__scanlines" aria-hidden="true" />
-      <header className="topbar">
+      <header className="magi-home__masthead">
+      <div className="topbar">
         <div className="brand-block">
           <span className="brand-mark" aria-hidden="true">
             <img src={nervLogoUrl} alt="" />
@@ -97,30 +98,30 @@ export function DecisionHome() {
             <h1>MAGI <span>System</span></h1>
           </div>
         </div>
-        <div className="header-readout">
-          <Readout label="回線" value={status ? connectionCopy[status.connection] : '起動中'} tone={status?.connection ?? 'offline'} />
-          <Readout label="系統" value={status ? sourceCopy[status.source] : 'ローカル'} tone="online" />
-          <Readout label="時刻" value={formatTime(clock)} tone="online" />
-        </div>
-      </header>
-
-      <section className="magi-home__navigation" aria-label="システム状態と主ナビゲーション">
-        <div className="magi-home__system-status" aria-live="polite">
+        <nav className="magi-home__primary-nav" aria-label="MAGI シミュレータ">
+          <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined}>判定</a>
+          <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined}>履歴</a>
+        </nav>
+      </div>
+      <div className="magi-home__telemetry" aria-label="システム状態">
+        <div className="magi-home__system-status" data-connection={startupError ? 'offline' : status?.connection ?? 'offline'} aria-live="polite">
           <span aria-hidden="true" />
           <strong>{startupError ?? status?.notice ?? '神経接続を確立中...'}</strong>
           <small>{status?.protocol ?? 'MAGI/3.0'}</small>
         </div>
-        <nav aria-label="MAGI シミュレータ">
-          <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined}>判定</a>
-          <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined}>履歴</a>
-        </nav>
-      </section>
+        <div className="header-readout">
+          <Readout label="回線" value={status ? connectionCopy[status.connection] : '起動中'} tone={status?.connection ?? 'offline'} />
+          <Readout label="時刻" value={formatTime(clock)} tone="online" />
+        </div>
+      </div>
+      </header>
 
       {route.name === 'decision' ? (
         <DecisionSimulator
           service={service}
           agents={agents}
           configs={configs}
+          revealReady={entryRevealReady}
           onOpenConfig={setSelectedAgentId}
           onHistoryCreated={addHistoryEntry}
           onStatusChange={setStatus}

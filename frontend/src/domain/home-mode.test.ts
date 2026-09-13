@@ -16,7 +16,8 @@ import {
 describe('home mode session preference', () => {
   afterEach(() => window.sessionStorage.clear());
 
-  it('defaults to the modern home', () => {
+  it('defaults to option one, the original home', () => {
+    expect(DEFAULT_HOME_MODE).toBe('original');
     expect(readHomeMode()).toBe(DEFAULT_HOME_MODE);
   });
 

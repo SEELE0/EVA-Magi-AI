@@ -11,14 +11,17 @@ import {
   type FormEvent,
 } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { AgentId, Decision, DecisionRequest } from '../../domain/decision';
+import { TerminalMotionInput } from './TerminalMotionInput';
+import { AGENT_IDS, type AgentId, type Decision, type DecisionRequest } from '../../domain/decision';
+import { HistoryArchive } from './HistoryArchive';
+import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from '../decision-home/history-store';
 import { createDecisionService } from '../../services/create-decision-service';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentConfigDialog } from '../decision-home/AgentConfigDialog';
 import { verdictCopy } from '../decision-console/console-config';
 import { cloneAgentConfigs } from '../decision-home/simulator-config';
-import type { AgentConfigMap, AgentRuntimeConfig } from '../decision-home/simulator-types';
+import type { AgentConfigMap, AgentRuntimeConfig, DecisionHistoryEntry } from '../decision-home/simulator-types';
 import {
   ANIME_ORIGINAL_LAYOUT_PRESETS,
   TERMINAL_MODULE_LAYOUT,
@@ -362,12 +365,13 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
   );
 }
 
-function MotionComposer({ collapsed, error, isExecuting, subject, onChange, onSubmit }: {
+function MotionComposer({ collapsed, error, isExecuting, subject, onChange, onSubmit, onOpenHistory }: {
   collapsed: boolean;
   error: string | null;
   isExecuting: boolean;
   subject: string;
   onChange: (value: string) => void;
+  onOpenHistory: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
@@ -378,7 +382,10 @@ function MotionComposer({ collapsed, error, isExecuting, subject, onChange, onSu
         <div className="motion-composer__controls">
           <div className="motion-composer__input">
             <span aria-hidden="true">&gt;</span>
-            <textarea id="direct-link-motion" value={subject} onChange={(event) => onChange(event.target.value)} maxLength={240} rows={2} placeholder="ENTER MOTION FOR DELIBERATION..." />
+            <TerminalMotionInput value={subject} onChange={onChange} />
+            <button className="direct-history-trigger" type="button" aria-label="历史记录" title="历史记录" aria-haspopup="dialog" onClick={onOpenHistory}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4v5h5" /><path d="M3.7 8a9 9 0 1 1-.4 7" /><path d="M12 7v5l3 2" /></svg>
+            </button>
             <small>{subject.length} / 240</small>
           </div>
           <button type="submit">EXECUTE MOTION</button>
@@ -398,6 +405,9 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
   const [configs, setConfigs] = useState<AgentConfigMap>(() => cloneAgentConfigs());
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [history, setHistory] = useState(loadDecisionHistory);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [archiveWarning, setArchiveWarning] = useState(false);
   const activeController = useRef<AbortController | null>(null);
   const mounted = useRef(false);
 
@@ -464,6 +474,24 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       await polling.catch(() => undefined);
       if (!mounted.current) return;
       setDecision(completed);
+      if (completed.status === 'completed') {
+        // This service returns votes, not agent responses or provider metadata.
+        // Do not manufacture reasoning from the local configuration dialog.
+        const entry: DecisionHistoryEntry = {
+          id: completed.id, subject: completed.subject, scenario: 'standard',
+          priority: completed.priority, createdAt: completed.createdAt,
+          completedAt: completed.completedAt ?? new Date().toISOString(),
+          verdict: completed.verdict, votes: { ...completed.votes },
+          agents: Object.fromEntries(AGENT_IDS.map((id) => [id, {
+            agentId: id, role: configs[id].role, vote: completed.votes[id],
+            response: '本次服务仅返回投票结果，未提供独立论证或模型信息。',
+            connection: 'unknown', baseUrl: '', model: '',
+          }])) as DecisionHistoryEntry['agents'],
+        };
+        const next = prependDecisionHistory(archiveWarning ? history : loadDecisionHistory(), entry);
+        setHistory(next);
+        setArchiveWarning(!saveDecisionHistory(next));
+      }
       setPhase(completed.status === 'failed' ? 'error' : 'final');
       if (completed.status === 'failed') setError('MAGI 判定が失敗しました。入力内容を確認して再試行してください。');
     } catch (cause) {
@@ -491,9 +519,11 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       <div className="direct-link-workspace">
         <section className="terminal-screen" aria-label="MAGI direct link terminal screen">
           <MagiTerminalGraphic decision={decision} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
+          {archiveWarning ? <p className="direct-history-warning" role="status">本机存储不可用，记录仅保留在当前页面。</p> : null}
           {phase === 'final' ? <button className="direct-link-new-motion" type="button" onClick={resetMotion}>NEW MOTION</button> : null}
         </section>
         <MotionComposer
+          onOpenHistory={() => { if (!archiveWarning) setHistory(loadDecisionHistory()); setHistoryOpen(true); }}
           collapsed={composerCollapsed}
           error={error}
           isExecuting={isExecuting}
@@ -510,6 +540,7 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       </div>
 
       <AgentConfigDialog config={selectedAgentConfig} onClose={() => setSelectedAgentId(null)} onSave={saveAgentConfig} variant="original" />
+      {historyOpen ? <HistoryArchive entries={history} onClose={() => setHistoryOpen(false)} /> : null}
     </main>
   );
 }

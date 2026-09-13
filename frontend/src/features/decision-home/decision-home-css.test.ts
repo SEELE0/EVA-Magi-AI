@@ -21,7 +21,7 @@ describe('DecisionHome narrow viewport CSS', () => {
 
   it('defines the standby-to-deliberation layout and subject transform', () => {
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="deliberation"\][\s\S]*?\.magi-home__deliberation-grid\s*\{[^}]*grid-template-columns:\s*minmax\(150px,\s*0\.22fr\)/);
-    expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(0\.88\)/);
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.3\)/);
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.04\)/);
   });
 
@@ -45,7 +45,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   });
 
   it('adds subtle scanlines and renders the reused nodes as transparent outlines', () => {
-    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.3;[^}]*repeating-linear-gradient/);
+    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.12;[^}]*repeating-linear-gradient/);
     expect(css).toMatch(/\.magi-home__decision-stage \.agent-node\s*\{[^}]*background:\s*transparent;/);
     expect(css).toMatch(/\.magi-home__decision-stage \.vote-state\s*\{[^}]*min-height:\s*34px;[^}]*font-size:\s*clamp\(16px,/);
     expect(css).toMatch(/\.magi-home__decision-stage \.network-topology,[\s\S]*?stroke:\s*#69dca0;/);
@@ -97,6 +97,12 @@ describe('DecisionHome narrow viewport CSS', () => {
   it('allows mobile content to expose layout errors instead of clipping them', () => {
     expect(css).toMatch(/@media \(max-width: 760px\)[\s\S]*?\.magi-home\s*\{[^}]*overflow:\s*visible;/);
     expect(css).toMatch(/@media \(max-width: 480px\)[\s\S]*?grid-template-areas:[\s\S]*?"subject"[\s\S]*?"execute"[\s\S]*?"error"/);
+  });
+
+  it('hides both calibration rails on narrow viewports despite the flex rule specificity', () => {
+    expect(css).toMatch(
+      /@media \(max-width: 760px\)[\s\S]*?\.magi-home__calibration-rail,\s*\.magi-home__calibration-rail\.is-left\s*\{[^}]*display:\s*none;/
+    );
   });
 
   it('allows history titles, metadata and response paragraphs to wrap', () => {

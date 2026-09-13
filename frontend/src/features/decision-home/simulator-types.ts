@@ -21,7 +21,7 @@ export interface AgentRuntimeConfig {
 export type AgentConfigMap = Record<AgentId, AgentRuntimeConfig>;
 
 export interface AgentPublicMetadata {
-  connection: AgentConnectionMode;
+  connection: AgentConnectionMode | 'unknown';
   baseUrl: string;
   model: string;
 }

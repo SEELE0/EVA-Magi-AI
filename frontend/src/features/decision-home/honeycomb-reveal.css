@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * License: https://www.gnu.org/licenses/agpl-3.0.html
+ */
+.magi-honeycomb {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  background: #050504;
+  pointer-events: auto;
+}
+
+.magi-honeycomb[data-ready="true"] { background: transparent; }
+.magi-honeycomb__cell > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.magi-honeycomb__cell {
+  position: absolute;
+  /* Composite each static tile instead of scaling/repainting a shared SVG. */
+  will-change: opacity;
+  animation: magi-honeycomb-release var(--cell-duration) cubic-bezier(.33, 0, .67, 1) var(--cell-delay) both;
+}
+.magi-honeycomb__cell text {
+  fill: #050504;
+  font-family: var(--font-eva-display);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+@keyframes magi-honeycomb-release {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .magi-honeycomb { display: none; }
+  .magi-honeycomb__cell { animation: none; }
+}

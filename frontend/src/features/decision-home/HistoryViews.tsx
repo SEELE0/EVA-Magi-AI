@@ -59,7 +59,7 @@ export function HistoryList({ entries }: { entries: DecisionHistoryEntry[] }) {
                   {verdictCopy[entry.verdict].label}
                 </span>
                 <span className="magi-home__history-votes" aria-label="三人格の投票">
-                  {AGENT_IDS.map((agentId) => <i key={agentId}>{voteCopy[entry.votes[agentId]]}</i>)}
+                  {AGENT_IDS.map((agentId) => <i key={agentId} title={agentId} aria-label={`${agentId}: ${voteCopy[entry.votes[agentId]]}`} data-vote={entry.votes[agentId]}>{agentId[0]} · {voteCopy[entry.votes[agentId]]}</i>)}
                 </span>
               </a>
             </li>
@@ -88,17 +88,21 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
       <a className="magi-home__back-link" href="#/history">← 履歴に戻る</a>
 
       <header className="magi-home__detail-heading">
-        <div>
-          <span>日時</span>
-          <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt)}</time>
+        <div className="magi-home__detail-subject">
+          <span>質問</span>
+          <h2>{entry.subject}</h2>
         </div>
         <div>
           <span>最終判定</span>
           <strong className={`is-${verdictTone(entry.verdict)}`}>{verdictCopy[entry.verdict].label}</strong>
         </div>
-        <div className="magi-home__detail-subject">
-          <span>質問</span>
-          <h2>{entry.subject}</h2>
+        <div>
+          <span>三人格の投票</span>
+          <strong>{AGENT_IDS.filter((id) => entry.votes[id] === 'approve').length} 承認 / {AGENT_IDS.filter((id) => entry.votes[id] === 'reject').length} 否決 / {AGENT_IDS.filter((id) => entry.votes[id] === 'abstain').length} 保留</strong>
+        </div>
+        <div>
+          <span>日時</span>
+          <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt)}</time>
         </div>
         <div>
           <span>優先度</span>
@@ -116,15 +120,18 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
                   <h3 id={`history-agent-${agentId}`}>{result.agentId} <span>/ {result.role}</span></h3>
                   <strong>投票：{voteCopy[result.vote]}</strong>
                 </div>
+              </header>
+              <div className="magi-home__response-copy">
+                {result.response.split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+              </div>
+              <details className="magi-home__connection-details">
+                <summary>接続情報 · {result.connection === 'unknown' ? '未提供' : connectionModeCopy[result.connection]}</summary>
                 <dl>
-                  <div><dt>接続</dt><dd>{connectionModeCopy[result.connection]}</dd></div>
+                  <div><dt>接続</dt><dd>{result.connection === 'unknown' ? '未提供' : connectionModeCopy[result.connection]}</dd></div>
                   <div><dt>使用モデル</dt><dd>{result.model}</dd></div>
                   <div><dt>BASE URL</dt><dd>{result.baseUrl}</dd></div>
                 </dl>
-              </header>
-              <div className="magi-home__response-copy">
-                {result.response.split('\n\n').map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              </div>
+              </details>
             </section>
           );
         })}

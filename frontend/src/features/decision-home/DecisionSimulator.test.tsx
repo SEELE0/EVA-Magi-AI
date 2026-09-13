@@ -11,6 +11,7 @@ import type { Decision, SystemStatus } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
 import { defaultAgents } from '../decision-console/console-config';
 import { DecisionSimulator } from './DecisionSimulator';
+import { markHoneycombRevealAsPlayed } from './honeycomb-reveal';
 import { cloneAgentConfigs } from './simulator-config';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -47,7 +48,29 @@ function serviceStub(): DecisionService {
 
 afterEach(() => {
   document.body.innerHTML = '';
+  window.sessionStorage.clear();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
+
+function simulatorElement(revealReady?: boolean) {
+  return (
+    <DecisionSimulator
+      service={serviceStub()}
+      agents={defaultAgents}
+      configs={cloneAgentConfigs()}
+      revealReady={revealReady}
+      onOpenConfig={vi.fn()}
+      onHistoryCreated={vi.fn()}
+      onStatusChange={vi.fn()}
+    />
+  );
+}
+
+function stubRevealSurfaces() {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 800, height: 400 } as DOMRect);
+}
 
 describe('DecisionSimulator', () => {
   it('keeps an interrupted non-terminal decision in the error phase', async () => {
@@ -56,16 +79,7 @@ describe('DecisionSimulator', () => {
     const root = createRoot(container);
 
     act(() => {
-      root.render(
-        <DecisionSimulator
-          service={serviceStub()}
-          agents={defaultAgents}
-          configs={cloneAgentConfigs()}
-          onOpenConfig={vi.fn()}
-          onHistoryCreated={vi.fn()}
-          onStatusChange={vi.fn()}
-        />
-      );
+      root.render(simulatorElement());
     });
 
     await act(async () => {
@@ -80,6 +94,61 @@ describe('DecisionSimulator', () => {
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('REMOTE LINK LOST');
     expect(container.querySelector('.magi-home__motion-banner')).toBeNull();
     expect(container.querySelector('.magi-home__new-motion')).toBeNull();
+
+    act(() => root.unmount());
+  });
+
+  it('plays the honeycomb entry reveal on the first visit of a session', () => {
+    window.sessionStorage.clear();
+    stubRevealSurfaces();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(simulatorElement());
+    });
+
+    expect(container.querySelector('.magi-honeycomb')).not.toBeNull();
+    expect(container.querySelector<HTMLButtonElement>('.magi-home__node-hotspot button')?.disabled).toBe(true);
+
+    act(() => root.unmount());
+  });
+
+  it('skips the honeycomb entry reveal once it has played this session', () => {
+    markHoneycombRevealAsPlayed();
+    stubRevealSurfaces();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(simulatorElement());
+    });
+
+    expect(container.querySelector('.magi-honeycomb')).toBeNull();
+    expect(container.querySelector<HTMLButtonElement>('.magi-home__node-hotspot button')?.disabled).toBe(false);
+
+    act(() => root.unmount());
+  });
+
+  it('waits for the boot handoff before playing the entry reveal', () => {
+    window.sessionStorage.clear();
+    stubRevealSurfaces();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(simulatorElement(false));
+    });
+    expect(container.querySelector('.magi-honeycomb')).toBeNull();
+
+    act(() => {
+      root.render(simulatorElement(true));
+    });
+
+    expect(container.querySelector('.magi-honeycomb')).not.toBeNull();
 
     act(() => root.unmount());
   });

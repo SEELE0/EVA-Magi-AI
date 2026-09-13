@@ -18,6 +18,60 @@
 .direct-link-page,
 .direct-link-page * { box-sizing: border-box; }
 
+.direct-history-trigger {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  color: var(--direct-orange);
+  background: transparent;
+  cursor: pointer;
+}
+.direct-history-trigger:hover { color: #ffb65c; background: #26170a; }
+.direct-history-trigger:focus-visible { outline: 1px solid var(--direct-orange); outline-offset: -2px; }
+.direct-history-warning { position: absolute; bottom: 48px; left: 18px; color: #f2ce52; font-size: 12px; }
+.direct-history {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(480px, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid #a66228;
+  color: #ddb584;
+  background: #060b09;
+  font-family: inherit;
+}
+.direct-history::backdrop { background: #000b; }
+.direct-history__panel { min-height: 100%; padding: 24px; }
+.direct-history header { position: sticky; top: 0; z-index: 1; background: #060b09; display: flex; align-items: start; justify-content: space-between; gap: 12px; border-bottom: 1px solid #74471f; padding-bottom: 18px; }
+.direct-history h2 { margin: 8px 0 0; color: #f7871e; font-size: 24px; }
+.direct-history h2 span { font-size: 14px; margin-left: 8px; }
+.direct-history button { padding: 8px 10px; color: #f7871e; background: transparent; border: 1px solid #835124; font: inherit; cursor: pointer; }
+.direct-history__notice { font-size: 12px; color: #9b987f; }
+.direct-history__empty { padding: 56px 0; line-height: 2; }
+.direct-history ol { list-style: none; padding: 0; margin: 24px 0; }
+.direct-history li { border-top: 1px solid #324237; }
+.direct-history summary { padding: 16px 0; cursor: pointer; }
+.direct-history summary time { display: block; font-size: 12px; color: #94a28e; margin: 0 0 8px; }
+.direct-history summary strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; line-height: 1.6; font-size: 16px; }
+.direct-history__verdict { display: inline-block; margin-top: 10px; font-size: 13px; color: #f2ce52; }
+.direct-history__verdict.is-approved { color: #72ffc5; }
+.direct-history__verdict.is-rejected { color: #ff716a; }
+.direct-history__detail { padding: 0 12px 16px; border-left: 2px solid #835124; }
+.direct-history__detail p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.direct-history dl div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; color: #8cc5a5; font-size: 13px; }
+.direct-history dd { margin: 0; }
+@media (max-width: 600px) {
+  .direct-history { width: 100vw; }
+  .direct-history__panel { padding: 20px; }
+}
+
 html:has(.direct-link-page),
 body:has(.direct-link-page),
 #root:has(.direct-link-page) {
@@ -63,30 +117,6 @@ body:has(.direct-link-page) {
   overflow: hidden;
   isolation: isolate;
   background: #020303;
-}
-
-.direct-link-page .terminal-screen::before,
-.direct-link-page .terminal-screen::after {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  content: "";
-  pointer-events: none;
-}
-
-.direct-link-page .terminal-screen::before {
-  opacity: 0.1;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(161, 255, 204, 0.08) 0,
-    rgba(161, 255, 204, 0.08) 1px,
-    transparent 1px,
-    transparent 4px
-  );
-}
-
-.direct-link-page .terminal-screen::after {
-  box-shadow: inset 0 0 84px 22px rgba(0, 0, 0, 0.68);
 }
 
 .direct-link-page .terminal-graphic {
@@ -354,9 +384,11 @@ body:has(.direct-link-page) {
 .motion-composer {
   position: relative;
   z-index: 4;
-  width: min(100%, 720px);
+  width: 100%;
   max-height: 170px;
-  padding: 0 8px max(8px, env(safe-area-inset-bottom));
+  padding: 14px 8px max(8px, env(safe-area-inset-bottom));
+  border-top: 1px solid #34433b;
+  background: #040a07;
   overflow: hidden;
   opacity: 1;
   transform: translateY(0);
@@ -380,7 +412,7 @@ body:has(.direct-link-page) {
   min-width: 0;
   margin: 0;
   padding: 8px;
-  border: 2px solid #8d5d1d;
+  border: 0;
   background: rgba(2, 7, 5, 0.96);
 }
 
@@ -392,53 +424,99 @@ body:has(.direct-link-page) {
 }
 
 .motion-composer label {
-  display: block;
-  margin: 2px 0 5px;
-  color: #3d875f;
-  font: 14px/1 var(--font-eva-ui);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
 .motion-composer__controls { display: grid; min-width: 0; gap: 8px; }
 
 .motion-composer__input {
+  --prompt-size: 18px;
+  --prompt-top: 7px;
   position: relative;
   display: grid;
   min-width: 0;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 1.6ch minmax(0, 1fr) 40px;
+  font: var(--prompt-size)/1.35 var(--font-eva-ui);
+  font-size: var(--prompt-size);
+  line-height: 1.35;
   align-items: start;
-  border-bottom: 1px solid #24553d;
+  padding-left: 10px;
+  border: 0;
+  background: transparent;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.motion-composer__input:hover { border-color: #477e5e; }
+.motion-composer__input:focus-within {
+  box-shadow: inset 2px 0 0 #477e5e;
 }
 
 .motion-composer__input > span {
-  padding-top: 9px;
-  color: #72ffc5;
-  font: 700 24px/1 var(--font-eva-ui);
+  padding-top: var(--prompt-top);
+  color: #659b7e;
+  font: inherit;
+  letter-spacing: 0.055em;
 }
 
 .motion-composer textarea {
   width: 100%;
   min-height: 48px;
-  padding: 5px 58px 7px 0;
+  padding: 7px 62px 7px 2px;
   resize: none;
   border: 0;
   outline: 0;
   color: #83e9b8;
   background: transparent;
+  caret-color: #a3ffcf;
+  scrollbar-width: thin;
+  scrollbar-color: #477e5e #06110c;
   font: 18px/1.35 var(--font-eva-ui);
   letter-spacing: 0.055em;
 }
 
-.motion-composer textarea::placeholder { color: #214b38; opacity: 1; }
+.motion-composer textarea::placeholder { color: #659b7e; opacity: 1; }
+.motion-composer textarea:focus::placeholder { opacity: 0; }
+/* The enclosing terminal field carries the visible keyboard focus indicator. */
+.motion-composer textarea:focus-visible { outline: none; box-shadow: none; }
+
+.motion-composer__editor { position: relative; min-width: 0; overflow: hidden; }
+.motion-composer__editor textarea { display: block; caret-color: transparent; }
+.motion-composer__caret-mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  pointer-events: none;
+}
+.motion-composer__caret {
+  position: absolute;
+  height: 2px;
+  background: #a3ffcf;
+  pointer-events: none;
+}
+.motion-composer__editor:focus-within .motion-composer__caret { animation: motion-input-caret 1.1s steps(1, end) infinite; }
+.motion-composer__editor[data-empty="false"]:not(:focus-within) .motion-composer__caret,
+.motion-composer__editor.is-composing .motion-composer__caret { display: none; }
+.motion-composer__editor.is-composing textarea { caret-color: #a3ffcf; }
+@keyframes motion-input-caret { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
 
 .motion-composer__input small {
   position: absolute;
-  right: 4px;
-  bottom: 7px;
-  color: #496b59;
+  right: 50px;
+  bottom: 8px;
+  color: #80a58e;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
   font: 9px var(--font-eva-data);
 }
 
-.motion-composer button,
+.motion-composer button[type="submit"],
 .direct-link-new-motion {
   --direct-button-stripe: #050504;
   position: relative;
@@ -459,7 +537,7 @@ body:has(.direct-link-page) {
     box-shadow 160ms ease-out;
 }
 
-.motion-composer button::before,
+.motion-composer button[type="submit"]::before,
 .direct-link-new-motion::before {
   position: absolute;
   z-index: -1;
@@ -488,8 +566,8 @@ body:has(.direct-link-page) {
   pointer-events: none;
 }
 
-.motion-composer button:not(:disabled):hover,
-.motion-composer button:focus-visible,
+.motion-composer button[type="submit"]:not(:disabled):hover,
+.motion-composer button[type="submit"]:focus-visible,
 .direct-link-new-motion:hover,
 .direct-link-new-motion:focus-visible {
   --direct-button-stripe: var(--direct-orange);
@@ -500,14 +578,14 @@ body:has(.direct-link-page) {
   outline-offset: 2px;
 }
 
-.motion-composer button:not(:disabled):hover::before,
-.motion-composer button:focus-visible::before,
+.motion-composer button[type="submit"]:not(:disabled):hover::before,
+.motion-composer button[type="submit"]:focus-visible::before,
 .direct-link-new-motion:hover::before,
 .direct-link-new-motion:focus-visible::before {
   animation: direct-link-command-stripes 850ms linear infinite;
 }
 
-.motion-composer button:disabled { cursor: wait; }
+.motion-composer button[type="submit"]:disabled { cursor: wait; }
 
 .motion-composer__error {
   margin: 8px 0 0;
@@ -556,15 +634,15 @@ body:has(.direct-link-page) {
 @media (orientation: landscape) {
   .motion-composer {
     max-height: 104px;
-    padding: 0 12px 6px;
+    padding: 14px 12px 10px;
   }
 
   .motion-composer fieldset { padding: 5px 10px 6px; }
   .motion-composer label { margin: 1px 0 4px; font-size: 12px; }
   .motion-composer__controls { grid-template-columns: minmax(0, 1fr) minmax(180px, 220px); gap: 10px; }
   .motion-composer textarea { min-height: 40px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
-  .motion-composer__input > span { padding-top: 6px; font-size: 20px; }
-  .motion-composer button { min-height: 44px; font-size: 17px; }
+  .motion-composer__input { --prompt-top: 3px; --prompt-size: 15px; }
+  .motion-composer button[type="submit"] { min-height: 44px; font-size: 17px; }
   .motion-composer__error { position: absolute; right: 32px; bottom: 14px; }
 }
 
@@ -573,7 +651,8 @@ body:has(.direct-link-page) {
   .motion-composer legend { font-size: 14px; }
   .motion-composer fieldset { padding: 5px 10px 6px; }
   .motion-composer textarea { min-height: 36px; font-size: 13px; }
-  .motion-composer button { min-height: 42px; font-size: 16px; }
+  .motion-composer__input { --prompt-size: 13px; }
+  .motion-composer button[type="submit"] { min-height: 42px; font-size: 16px; }
   .motion-composer__error { bottom: 8px; font-size: 9px; }
   .direct-link-new-motion { right: 10px; bottom: 10px; min-height: 38px; }
 }
@@ -583,7 +662,8 @@ body:has(.direct-link-page) {
   .motion-composer fieldset { padding: 8px; }
   .motion-composer legend { font-size: 15px; }
   .motion-composer textarea { min-height: 48px; font-size: 15px; }
-  .motion-composer button { min-height: 46px; font-size: 18px; }
+  .motion-composer__input { --prompt-size: 15px; }
+  .motion-composer button[type="submit"] { min-height: 46px; font-size: 18px; }
 }
 
 @media (min-width: 481px) and (orientation: portrait) {
@@ -592,7 +672,7 @@ body:has(.direct-link-page) {
   .motion-composer label { margin-bottom: 4px; font-size: 13px; }
   .motion-composer__controls { gap: 6px; }
   .motion-composer textarea { font-size: 16px; }
-  .motion-composer button { font-size: 18px; }
+  .motion-composer button[type="submit"] { font-size: 18px; }
 }
 
 @media (min-width: 720px) and (orientation: portrait) {
@@ -610,11 +690,15 @@ body:has(.direct-link-page) {
     gap: 10px;
   }
   .motion-composer textarea { min-height: 42px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
-  .motion-composer__input > span { padding-top: 6px; font-size: 20px; }
-  .motion-composer button { min-height: 44px; font-size: 17px; }
+  .motion-composer__input { --prompt-top: 3px; --prompt-size: 15px; }
+  .motion-composer button[type="submit"] { min-height: 44px; font-size: 17px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .motion-composer__editor .motion-composer__caret {
+    animation: none !important;
+    opacity: 1;
+  }
   .direct-link-page *,
   .direct-link-page *::before,
   .direct-link-page *::after {

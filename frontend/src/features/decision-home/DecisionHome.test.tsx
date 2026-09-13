@@ -15,7 +15,7 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('MAGI');
     expect(markup).toContain('System');
     expect(markup).toContain('回線');
-    expect(markup).toContain('系統');
+    expect(markup).not.toContain('系統');
     expect(markup).toContain('時刻');
     expect(markup).toContain('class="topbar"');
     expect(markup).toContain('class="brand-block"');

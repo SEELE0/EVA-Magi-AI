@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Decision } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
 import { DecisionHomeAnimeOriginal } from './main';
+import { loadDecisionHistory } from '../decision-home/history-store';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -139,6 +140,17 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(service.createDecision).not.toHaveBeenCalled();
   });
 
+  it('opens an empty local archive without losing the draft and closes it', () => {
+    const { container } = renderOrigin(serviceStub());
+    fillTextarea(container.querySelector('textarea')!, '未提交的议题');
+    act(() => container.querySelector<HTMLButtonElement>('.direct-history-trigger')!.click());
+    expect(container.querySelector('dialog.direct-history')?.hasAttribute('open')).toBe(true);
+    expect(container.querySelector('.direct-history')?.textContent).toContain('NO RECORDS');
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="关闭历史记录"]')!.click());
+    expect(container.querySelector('.direct-history')).toBeNull();
+    expect(container.querySelector('textarea')?.value).toBe('未提交的议题');
+  });
+
   it('renders the three nodes, connectors, and core inside one positioned network component', () => {
     const { container } = renderOrigin(serviceStub());
     const leftCalibration = container.querySelector<SVGSVGElement>('.terminal-calibration-layer--left');
@@ -209,6 +221,11 @@ describe('DecisionHomeAnimeOriginal', () => {
 
     await advance(220);
     expect(phase(container)).toBe('final');
+    expect(loadDecisionHistory()).toHaveLength(1);
+    expect(loadDecisionHistory()[0].subject).toBe(completed.subject);
+    expect(loadDecisionHistory()[0].votes).toEqual(completed.votes);
+    expect(loadDecisionHistory()[0].agents['MELCHIOR-1'].connection).toBe('unknown');
+    expect(JSON.stringify(loadDecisionHistory())).not.toContain('apiKey');
     expect([...container.querySelectorAll('.vote-text')].map((node) => node.textContent)).toEqual(['承認', '否決', '承認']);
     expect(container.querySelector('.motion-copy')?.textContent).toBe('FINAL VERDICT : 承認 / 02 / 03');
     expect(container.querySelector<HTMLButtonElement>('.direct-link-new-motion')).not.toBeNull();
@@ -251,12 +268,16 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(dialog.hasAttribute('open')).toBe(true);
     expect(dialog.textContent).toContain('BALTHASAR-2 ノード設定');
 
+    expect(dialog.querySelector('input[type="url"]')).toBeNull();
+    act(() => dialog.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.click());
     const fields = dialog.querySelectorAll<HTMLInputElement>('.magi-home__config-field input');
     const model = fields[1];
     const apiKey = fields[2];
     if (!model || !apiKey) throw new Error('Node configuration fields were not rendered.');
     const inputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
     act(() => {
+      inputSetter?.call(fields[0], 'https://example.invalid/v1');
+      fields[0]?.dispatchEvent(new Event('input', { bubbles: true }));
       inputSetter?.call(model, 'MAGI-SIM / CUSTOM');
       model.dispatchEvent(new Event('input', { bubbles: true }));
       inputSetter?.call(apiKey, 'sk-page-memory-only');
