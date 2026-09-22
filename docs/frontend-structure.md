@@ -68,12 +68,13 @@ Vite 配置了七个构建入口：
 flowchart LR
     App["app / features"] --> Domain["domain types"]
     App --> Contract["DecisionService"]
-    Factory["createDecisionService"] --> Mock["MockDecisionService"]
-    Factory --> Resilient["ResilientDecisionService"]
-    Resilient --> HTTP["HttpDecisionService"]
-    Resilient --> Mock
-    Mock --> Domain
-    HTTP --> API["REST API"]
+    App --> Runtime["useDecisionRuntime"]
+    Runtime --> Engine["DecisionEngine"]
+    Engine --> Providers["AgentProvider"]
+    Providers --> Mock["MockProvider"]
+    Providers --> Chat["ChatCompletionsProvider"]
+    Chat --> API["User API endpoint"]
+    Engine --> Domain
 ```
 
 依赖应从界面与功能层流向领域和服务层。服务层不应导入 React 组件，领域层不应依赖具体的 HTTP 或 Mock 实现。
@@ -99,16 +100,19 @@ flowchart LR
 - 创建、读取和执行决策。
 - 读取决策事件。
 
-React 组件不直接调用 `fetch`，因此可以在不改动界面的情况下替换数据源。
+React 组件不直接调用 `fetch`，因此可以在不改动界面的情况下替换数据源。正式页面通过 `DecisionEngine` 组合节点 Provider；只有 Chat Completions Provider 触碰浏览器网络。
 
 ### 实现与选择策略
 
 | 文件 | 职责 |
 | --- | --- |
-| `mock-decision-service.ts` | 在内存中模拟完整决策过程，支持 standard/reject/review 场景 |
-| `http-decision-service.ts` | 按 REST 契约请求远程后端，并将网络与 HTTP 错误转换为 `DecisionServiceError` |
-| `resilient-decision-service.ts` | 远程网络不可达、超时或服务端暂时不可用时一次性切换至 Mock；参数、权限、资源和业务错误继续上抛 |
-| `create-decision-service.ts` | 根据 Vite 环境变量组装正确的服务实例 |
+| `application/decision-engine.ts` | 管理创建、并发执行、取消、失败状态、只执行一次和内存缓存 |
+| `providers/mock-provider.ts` | 固定场景演示投票，不伪造真实模型分析 |
+| `providers/chat-completions-provider.ts` | 校验用户端点，发送 Chat Completions 请求并严格解析 JSON 投票 |
+| `storage/agent-config-store.ts` | 保存公开配置，不保存 API Key |
+| `services/create-decision-service.ts` | 组装浏览器引擎；显式 remote 模式才使用 REST 客户端 |
+
+`services/mock-decision-service.ts`、`http-decision-service.ts` 和 `resilient-decision-service.ts` 是旧接口兼容实现，供迁移中的实验或测试使用，正式页面默认不调用故障降级服务。
 
 运行模式：
 
@@ -116,20 +120,20 @@ React 组件不直接调用 `fetch`，因此可以在不改动界面的情况下
 # 默认值，不依赖后端
 VITE_API_MODE=mock
 
-# 优先请求远程服务，失败后降级到 Mock
+# 显式请求另行部署的远程服务，失败直接报错
 VITE_API_MODE=remote
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## 当前模拟应用
+## 当前应用
 
 `DecisionHome.tsx` 是 `modern` 模式的主容器：
 
 - `#/` 只显示原 title 顶栏、复用的三节点判定舞台、问题/优先级/场景输入和紧凑裁定。
 - 鼠标悬停、键盘聚焦或点击节点会显示可配置提示并打开 `AgentConfigDialog`。
 - `#/history` 是历史列表；`#/history/:id` 展示一次判定中三个 Agent 的完整用户可见输出。
-- 节点配置目前只在 React 页面内存中；API Key 不进入 localStorage，也不会发送网络请求。
-- 历史目前按版本写入 localStorage，最多 30 条，包含公开配置元数据和模拟输出。
+- 节点公开配置写入 localStorage；API Key 只在当前页面内存中，并只发送给用户填写的目标端点。
+- 历史按版本写入 localStorage，最多 30 条，包含执行时公开元数据、实际答复或失败原因。
 
 `DecisionSimulator.tsx` 直接复用 `decision-console/ConsolePrimitives.tsx` 的 `AgentNode`、旧 `magi-network` 几何、连线坐标和 `is-scanning` 动画。不要在主页复制或重写绿色三模块。
 
@@ -155,8 +159,8 @@ VITE_API_BASE_URL=http://localhost:8000
 2. 用户选择模拟场景，输入议题与优先级，`DecisionSimulator` 调用 `DecisionService.createDecision`。
 3. 界面获得 `decisionId` 后调用 `executeDecision`。
 4. 执行期间每 220ms 调用 `getDecision`，旧 `is-scanning` 动画和逐票状态由领域对象驱动。
-5. 完成后生成三个 Agent 的用户可见模拟输出并写入本地历史。
-6. 历史路由读取列表或单条明细。Remote 模式下只有网络不可达、请求超时或 5xx/429 等可重试基础设施错误才会触发 `ResilientDecisionService` 切换至 Mock；业务错误不会被伪装成本地成功。
+5. 完成后把三个 Agent 的实际用户可见输出或失败原因写入本地历史。
+6. 历史路由读取列表或单条明细。浏览器 Provider 的网络、超时、非法输出和取消都会保留为失败状态；不会把失败请求替换成模拟成功。显式 `remote` 模式仍由 `HttpDecisionService` 访问预留 REST 后端。
 
 未来把配置和历史迁移到后端时，应先扩展 `DecisionService`，对应 `docs/openapi.yaml` 的 configuration、历史分页和 results 路由；React 组件不要直接调用 `fetch`。
 
@@ -191,3 +195,6 @@ npm run build
 ## 源码许可标识
 
 项目自行维护的 TypeScript/TSX 源码文件使用 `SPDX-License-Identifier: AGPL-3.0-or-later` 文件头。第三方依赖、构建产物和自动生成文件不应添加项目版权声明。
+
+
+当前正式页面的执行层已拆分至 `domain/`、`application/`、`providers/`、`storage/`；`services/mock-decision-service` 和 `resilient-decision-service` 是旧接口兼容实现，不在正式页面默认调用链中。详见 [浏览器执行架构](browser-architecture.md)。

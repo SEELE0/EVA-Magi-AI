@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  // GitHub Pages のプロジェクト配置（リポジトリ名サブパス）でも解決できるよう相対パスで出力する。
+  base: './',
   plugins: [react()],
   build: {
     rollupOptions: {

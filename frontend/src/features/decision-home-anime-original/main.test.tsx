@@ -252,7 +252,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(container.querySelector('.direct-link-live-status')?.textContent).toContain('SIGNAL FAILURE. REMOTE LINK LOST');
   });
 
-  it('opens all three node identities and keeps configuration only in page memory', () => {
+  it('opens all three node identities and persists public configuration without credentials', () => {
     const { container } = renderOrigin(serviceStub());
     const nodeButtons = [...container.querySelectorAll<SVGGElement>('.agent-module')];
 
@@ -289,7 +289,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     const reopenedFields = container.querySelectorAll<HTMLInputElement>('.magi-home__config-field input');
     expect(reopenedFields[1]?.value).toBe('MAGI-SIM / CUSTOM');
     expect(reopenedFields[2]?.value).toBe('sk-page-memory-only');
-    expect(window.localStorage.length).toBe(0);
+    expect(JSON.stringify(window.localStorage)).not.toContain('sk-page-memory-only');
     expect(window.sessionStorage.length).toBe(0);
   });
 

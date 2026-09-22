@@ -2,7 +2,7 @@
 
 本项目是一个以 MAGI 决策系统为基础设定开发的多agent 协同决策项目。
 
-当前已实现 React/Vite 前端模拟应用；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
+当前已实现 React/Vite 浏览器应用，支持模拟节点与用户自填 API 的真实调用；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
 
 ![1787762978228](image/README/1787762978228.png)
 
@@ -40,9 +40,9 @@ VITE_API_MODE=remote
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-若远程服务不可访问，界面会自动切回本地模拟器，并在顶栏显示降级连接状态。
+远程服务失败会明确报错，不会自动用模拟结果替代。默认浏览器模式无需后端，架构与 GitHub Pages 部署说明见 [浏览器执行架构](docs/browser-architecture.md)。
 
-当前 `remote` 适配只覆盖已有 `DecisionService` 的系统状态、Agent、创建、执行和轮询路由。节点配置、三 Agent 完整输出与历史页面仍由前端模拟，不代表 OpenAI 兼容服务、本地模型或任何真实供应商已经接通。
+`VITE_API_MODE=remote` 仍用于显式连接另行部署的 REST 后端；默认页面使用浏览器执行引擎。节点级 API 配置不会被打包进构建产物，也不会自动上传到项目。
 
 ## 开机动画与主页模式
 
@@ -67,10 +67,10 @@ VITE_API_BASE_URL=http://localhost:8000
 ## 当前网页产品流
 
 - 开机结束后先选择原作风格直连页或现代决策主页；所选模式在当前标签页中保持。
-- 现代模式 `#/`：输入一个问题，选择优先级和模拟场景，观察三个 MAGI 人格逐票形成裁定。
-- 点击任一节点：打开该 Agent 的配置弹窗。连接方式、BASE URL、MODEL、角色 Prompt 与 API Key 当前只影响前端模拟状态。
-- `#/history`：读取当前浏览器 `localStorage` 中最多 30 条模拟判定历史。
-- `#/history/:id`：显示最终裁定、三票及三个 Agent 的完整用户可见模拟答复。
+- 现代模式 `#/`：输入一个问题，选择优先级和场景，观察三个 MAGI 人格逐票形成裁定。
+- 点击任一节点：打开该 Agent 的配置弹窗。模擬连接使用固定演示投票；OpenAI 兼容和本地兼容连接会从浏览器直接请求用户填写的地址。
+- `#/history`：读取当前浏览器 `localStorage` 中最多 30 条判定历史，包含成功和失败记录。
+- `#/history/:id`：显示最终裁定、三票及实际返回的用户可见答复；没有答复时会明确标记为未提供。
 
 安全边界：API Key 只保存在当前 React 页面运行时内存，不写入 `localStorage`、历史、日志或公开配置。所谓“完整输出”是结论、理由、风险和建议，不是隐藏 chain-of-thought。
 
@@ -91,11 +91,14 @@ frontend/src/app/              前端入口、根组件与全局样式
 frontend/src/domain/           前端领域模型与 API 数据类型
 frontend/src/domain/home-mode.ts       两套主页模式与会话级保存
 frontend/src/features/         当前产品功能与仍被运行时复用的组件
-frontend/src/features/decision-home/   当前主页、节点配置、hash 路由和前端模拟历史
+frontend/src/application/              执行生命周期、Provider 接口和历史组装
+frontend/src/providers/                模拟 Provider 与 Chat Completions 适配
+frontend/src/storage/                  公开配置和历史的本地存储
+frontend/src/features/decision-home/   当前主页、节点配置、hash 路由和历史展示
 frontend/src/features/decision-console/  当前主页复用的三节点原语与配置
 frontend/src/features/decision-home-anime-original/  原作风格直连主页与独立预览入口
 frontend/src/features/magi-boot/        开机流程复用的 MAGI 几何启动组件
-frontend/src/services/         Mock、HTTP 与故障降级适配层
+frontend/src/services/         服务接口、兼容适配器与组合根
 package.json                   根工作区脚本与项目级工具
 ```
 
@@ -109,7 +112,7 @@ npm run lint:api
 
 完整接口说明见 [docs/API.md](docs/API.md)，OpenAPI 文件见 [docs/openapi.yaml](docs/openapi.yaml)，后端从零开发、安全与联调步骤见 [docs/backend-guides.md](docs/backend-guides.md)，前端分层说明见 [docs/frontend-structure.md](docs/frontend-structure.md)。
 
-预留后端契约覆盖节点配置、判定历史分页、事件和三个 Agent 的完整用户可见输出。`apiKey` 在契约中为 write-only，配置响应只返回 `credentialConfigured`；当前仓库并未实现这些远程路由。
+预留后端契约覆盖节点配置、判定历史分页、事件和三个 Agent 的完整用户可见输出。`apiKey` 在契约中为 write-only，配置响应只返回 `credentialConfigured`；当前仓库仍未实现这些远程路由，但默认页面无需它们即可在浏览器中执行。
 
 ## 许可证
 

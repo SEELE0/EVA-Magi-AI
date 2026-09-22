@@ -1,6 +1,6 @@
 # MAGI REST API v1.1
 
-本文件解释前端与未来后端的调用方式；机器可读的唯一契约是 [openapi.yaml](openapi.yaml)。当前 `backend/` 仍是预留工作区，主应用默认由 `MockDecisionService` 驱动，节点配置和历史记录也只在浏览器端模拟。
+本文件解释前端与未来后端的调用方式；机器可读的唯一契约是 [openapi.yaml](openapi.yaml)。当前 `backend/` 仍是预留工作区，主应用默认由浏览器执行引擎驱动：每个节点可选择固定模拟 Provider 或用户填写的兼容模型 API，配置和历史记录保存在浏览器端。
 
 基础地址由 `VITE_API_BASE_URL` 指定，开发环境示例为 `http://localhost:8000`。所有接口使用 JSON。生产部署应启用 HTTPS 和身份认证。
 

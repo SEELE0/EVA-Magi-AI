@@ -5,8 +5,6 @@
  */
 import { useEffect, useState } from 'react';
 import type { Agent, AgentId, SystemStatus } from '../../domain/decision';
-import { createDecisionService } from '../../services/create-decision-service';
-import type { DecisionService } from '../../services/decision-service';
 import { Readout } from '../decision-console/ConsolePrimitives';
 import {
   connectionCopy,
@@ -17,12 +15,11 @@ import { DecisionSimulator } from './DecisionSimulator';
 import { currentSimulatorRoute } from './hash-route';
 import { HistoryDetail, HistoryList } from './HistoryViews';
 import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from './history-store';
-import { cloneAgentConfigs } from './simulator-config';
-import type { AgentConfigMap, AgentRuntimeConfig, DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
+import { useDecisionRuntime } from './use-decision-runtime';
+import type { AgentRuntimeConfig, DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
 import './decision-home.css';
 import './decision-header.css';
 
-const service: DecisionService = createDecisionService();
 const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
 
 function formatTime(date: Date) {
@@ -34,8 +31,9 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
   const [clock, setClock] = useState(() => new Date());
   const [route, setRoute] = useState<SimulatorRoute>(() => currentSimulatorRoute());
+  const [historyWarning, setHistoryWarning] = useState(false);
   const [history, setHistory] = useState<DecisionHistoryEntry[]>(() => loadDecisionHistory());
-  const [configs, setConfigs] = useState<AgentConfigMap>(() => cloneAgentConfigs());
+  const { configs, service, saveAgentConfig: saveConfig, storageWarning } = useDecisionRuntime();
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [startupError, setStartupError] = useState<string | null>(null);
 
@@ -71,13 +69,15 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
   function addHistoryEntry(entry: DecisionHistoryEntry) {
     setHistory((current) => {
       const next = prependDecisionHistory(current, entry);
-      saveDecisionHistory(next);
+      setHistoryWarning(!saveDecisionHistory(next));
       return next;
     });
   }
 
   function saveAgentConfig(config: AgentRuntimeConfig) {
-    setConfigs((current) => ({ ...current, [config.agentId]: config }));
+    saveConfig(config);
+    // 接続方式の変更をステータス行へ即時反映する。
+    void service.getSystemStatus().then(setStatus).catch(() => undefined);
   }
 
   const selectedAgentConfig = selectedAgentId ? configs[selectedAgentId] : null;
@@ -116,6 +116,7 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
       </div>
       </header>
 
+      {storageWarning || historyWarning ? <p role="status">本机存储不可用，设置或记录仅保留在当前页面。</p> : null}
       {route.name === 'decision' ? (
         <DecisionSimulator
           service={service}
@@ -124,7 +125,10 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
           revealReady={entryRevealReady}
           onOpenConfig={setSelectedAgentId}
           onHistoryCreated={addHistoryEntry}
-          onStatusChange={setStatus}
+          onStatusChange={(nextStatus) => {
+            setStatus(nextStatus);
+            void service.getAgents().then(setAgents).catch(() => undefined);
+          }}
         />
       ) : route.name === 'history' ? (
         <HistoryList entries={history} />

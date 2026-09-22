@@ -56,7 +56,7 @@ export function HistoryList({ entries }: { entries: DecisionHistoryEntry[] }) {
                 <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt)}</time>
                 <span className="magi-home__history-subject">{entry.subject}</span>
                 <span className={`magi-home__history-verdict is-${verdictTone(entry.verdict)}`}>
-                  {verdictCopy[entry.verdict].label}
+                  {entry.status === 'failed' ? '実行失敗' : verdictCopy[entry.verdict].label}
                 </span>
                 <span className="magi-home__history-votes" aria-label="三人格の投票">
                   {AGENT_IDS.map((agentId) => <i key={agentId} title={agentId} aria-label={`${agentId}: ${voteCopy[entry.votes[agentId]]}`} data-vote={entry.votes[agentId]}>{agentId[0]} · {voteCopy[entry.votes[agentId]]}</i>)}
@@ -94,7 +94,7 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
         </div>
         <div>
           <span>最終判定</span>
-          <strong className={`is-${verdictTone(entry.verdict)}`}>{verdictCopy[entry.verdict].label}</strong>
+          <strong className={`is-${verdictTone(entry.verdict)}`}>{entry.status === 'failed' ? '実行失敗' : verdictCopy[entry.verdict].label}</strong>
         </div>
         <div>
           <span>三人格の投票</span>

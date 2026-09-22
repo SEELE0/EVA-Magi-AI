@@ -29,6 +29,24 @@ const agentBlueprints: Omit<Agent, 'vote'>[] = [
   { id: 'CASPER-3', role: '女性論理', health: 'nominal', latencyMs: 21 }
 ];
 
+/** 議題キーワードから三人格分の模擬投票列（MELCHIOR / BALTHASAR / CASPER 順）を導く。 */
+export function simulatedVoteSequence(subject: string): [Vote, Vote, Vote] {
+  const normalized = subject.toLowerCase();
+  if (normalized.includes('[reject]') || normalized.includes('否決')) {
+    return ['reject', 'reject', 'approve'];
+  }
+  if (normalized.includes('[review]') || normalized.includes('保留') || normalized.includes('棄権')) {
+    return ['approve', 'reject', 'abstain'];
+  }
+  return ['approve', 'approve', 'reject'];
+}
+
+/** 単一人格の模擬投票。ハイブリッド実行で模擬ノードの挙動を再利用する。 */
+export function simulatedVoteForAgent(subject: string, agentId: AgentId): Vote {
+  const index = AGENT_IDS.indexOf(agentId);
+  return simulatedVoteSequence(subject)[index < 0 ? AGENT_IDS.length - 1 : index];
+}
+
 export class MockDecisionService implements DecisionService {
   private readonly decisions = new Map<string, Decision>();
   private readonly eventLog = new Map<string, DecisionEvent[]>();
@@ -102,24 +120,17 @@ export class MockDecisionService implements DecisionService {
     return [...(this.eventLog.get(decisionId) ?? [])];
   }
 
-  private voteSequence(subject: string): [Vote, Vote, Vote] {
-    const normalized = subject.toLowerCase();
-    if (normalized.includes('[reject]') || normalized.includes('否決')) {
-      return ['reject', 'reject', 'approve'];
-    }
-    if (normalized.includes('[review]') || normalized.includes('保留') || normalized.includes('棄権')) {
-      return ['approve', 'reject', 'abstain'];
-    }
-    return ['approve', 'approve', 'reject'];
+  protected voteSequence(subject: string): [Vote, Vote, Vote] {
+    return simulatedVoteSequence(subject);
   }
 
-  private mustFind(id: string): Decision {
+  protected mustFind(id: string): Decision {
     const decision = this.decisions.get(id);
     if (!decision) throw new Error(`Decision ${id} was not found.`);
     return decision;
   }
 
-  private event(id: string, kind: DecisionEvent['kind'], message: string, agentId?: AgentId): DecisionEvent {
+  protected event(id: string, kind: DecisionEvent['kind'], message: string, agentId?: AgentId): DecisionEvent {
     return {
       id: `evt-${crypto.randomUUID().slice(0, 8)}`,
       decisionId: id,
@@ -130,19 +141,19 @@ export class MockDecisionService implements DecisionService {
     };
   }
 
-  private pushEvent(id: string, event: DecisionEvent) {
+  protected pushEvent(id: string, event: DecisionEvent) {
     this.eventLog.set(id, [...(this.eventLog.get(id) ?? []), event]);
   }
 
-  private voteLabel(vote: Vote): string {
+  protected voteLabel(vote: Vote): string {
     return { approve: '承認', reject: '否決', abstain: '棄権', pending: '待機' }[vote];
   }
 
-  private verdictLabel(verdict: Decision['verdict']): string {
+  protected verdictLabel(verdict: Decision['verdict']): string {
     return { approved: '承認', rejected: '否決', review: '要再審', pending: '待機' }[verdict];
   }
 
-  private cloneDecision(decision: Decision): Decision {
+  protected cloneDecision(decision: Decision): Decision {
     return { ...decision, votes: { ...decision.votes } };
   }
 }

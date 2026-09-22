@@ -1,6 +1,8 @@
 # MAGI Backend（预留工作区）
 
-当前目录**不是可运行后端**：尚无 FastAPI/Spring Boot 路由、数据库或模型供应商依赖。主应用仍由前端 Mock 驱动。
+当前目录**不是可运行后端**：尚无 FastAPI/Spring Boot 路由、数据库或模型供应商依赖。主应用在浏览器中运行，可使用模拟节点或用户配置的兼容 API。
+
+浏览器判定逻辑位于 `frontend/src/application`、`domain`、`providers` 和 `storage`，详见 [浏览器架构](../docs/browser-architecture.md)。
 
 - REST 唯一契约：[`../docs/openapi.yaml`](../docs/openapi.yaml)
 - 接口与示例：[`../docs/API.md`](../docs/API.md)

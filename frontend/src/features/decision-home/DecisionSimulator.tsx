@@ -330,7 +330,12 @@ export function DecisionSimulator({
       if (!mounted.current) return;
       setDecision(completed);
       onHistoryCreated(createDecisionHistoryEntry(completed, scenario, agents, configs));
-      onStatusChange(await service.getSystemStatus());
+      try {
+        onStatusChange(await service.getSystemStatus());
+      } catch {
+        // A status refresh must not turn an already completed decision into a UI error.
+      }
+      if (completed.status === 'failed') setError('ノードの実行に失敗しました。履歴を確認してください。');
     } catch (cause) {
       const shouldReportError = mounted.current;
       controller.abort();

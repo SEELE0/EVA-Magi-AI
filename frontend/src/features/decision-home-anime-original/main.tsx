@@ -12,16 +12,15 @@ import {
 } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TerminalMotionInput } from './TerminalMotionInput';
-import { AGENT_IDS, type AgentId, type Decision, type DecisionRequest } from '../../domain/decision';
+import { type AgentId, type Decision, type DecisionRequest } from '../../domain/decision';
 import { HistoryArchive } from './HistoryArchive';
 import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from '../decision-home/history-store';
-import { createDecisionService } from '../../services/create-decision-service';
+import { useDecisionRuntime } from '../decision-home/use-decision-runtime';
+import { createDecisionHistoryEntry } from '../decision-home/simulator-responses';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentConfigDialog } from '../decision-home/AgentConfigDialog';
 import { verdictCopy } from '../decision-console/console-config';
-import { cloneAgentConfigs } from '../decision-home/simulator-config';
-import type { AgentConfigMap, AgentRuntimeConfig, DecisionHistoryEntry } from '../decision-home/simulator-types';
 import {
   ANIME_ORIGINAL_LAYOUT_PRESETS,
   TERMINAL_MODULE_LAYOUT,
@@ -55,7 +54,7 @@ const DEFAULT_VOTES: Decision['votes'] = {
 const TRANSITION_DURATION_MS = 520;
 const ORIENTATION_QUERY = '(orientation: landscape)';
 const WIDE_PORTRAIT_QUERY = '(orientation: portrait) and (min-width: 720px)';
-const defaultService = createDecisionService();
+
 
 function shortDecisionCode(id?: string) {
   if (!id) return 'WAIT';
@@ -396,13 +395,14 @@ function MotionComposer({ collapsed, error, isExecuting, subject, onChange, onSu
   );
 }
 
-export function DecisionHomeAnimeOriginal({ service = defaultService }: DecisionHomeAnimeOriginalProps = {}) {
+export function DecisionHomeAnimeOriginal({ service: suppliedService }: DecisionHomeAnimeOriginalProps = {}) {
   const layoutMode = useAnimeOriginalLayoutMode();
   const [phase, setPhase] = useState<AnimeOriginalPhase>('compose');
   const [subject, setSubject] = useState('');
   const [decision, setDecision] = useState<Decision | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [configs, setConfigs] = useState<AgentConfigMap>(() => cloneAgentConfigs());
+  const { configs, service: runtimeService, saveAgentConfig, storageWarning } = useDecisionRuntime();
+  const service = suppliedService ?? runtimeService;
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [history, setHistory] = useState(loadDecisionHistory);
@@ -420,9 +420,6 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
     };
   }, []);
 
-  function saveAgentConfig(config: AgentRuntimeConfig) {
-    setConfigs((current) => ({ ...current, [config.agentId]: config }));
-  }
 
   function resetMotion() {
     activeController.current?.abort();
@@ -474,20 +471,8 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       await polling.catch(() => undefined);
       if (!mounted.current) return;
       setDecision(completed);
-      if (completed.status === 'completed') {
-        // This service returns votes, not agent responses or provider metadata.
-        // Do not manufacture reasoning from the local configuration dialog.
-        const entry: DecisionHistoryEntry = {
-          id: completed.id, subject: completed.subject, scenario: 'standard',
-          priority: completed.priority, createdAt: completed.createdAt,
-          completedAt: completed.completedAt ?? new Date().toISOString(),
-          verdict: completed.verdict, votes: { ...completed.votes },
-          agents: Object.fromEntries(AGENT_IDS.map((id) => [id, {
-            agentId: id, role: configs[id].role, vote: completed.votes[id],
-            response: '本次服务仅返回投票结果，未提供独立论证或模型信息。',
-            connection: 'unknown', baseUrl: '', model: '',
-          }])) as DecisionHistoryEntry['agents'],
-        };
+      {
+        const entry = createDecisionHistoryEntry(completed, 'standard', [], configs);
         const next = prependDecisionHistory(archiveWarning ? history : loadDecisionHistory(), entry);
         setHistory(next);
         setArchiveWarning(!saveDecisionHistory(next));
@@ -519,7 +504,7 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       <div className="direct-link-workspace">
         <section className="terminal-screen" aria-label="MAGI direct link terminal screen">
           <MagiTerminalGraphic decision={decision} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
-          {archiveWarning ? <p className="direct-history-warning" role="status">本机存储不可用，记录仅保留在当前页面。</p> : null}
+          {archiveWarning || storageWarning ? <p className="direct-history-warning" role="status">本机存储不可用，记录仅保留在当前页面。</p> : null}
           {phase === 'final' ? <button className="direct-link-new-motion" type="button" onClick={resetMotion}>NEW MOTION</button> : null}
         </section>
         <MotionComposer

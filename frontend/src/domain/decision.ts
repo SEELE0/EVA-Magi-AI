@@ -37,6 +37,17 @@ export interface DecisionRequest {
   simulationHint?: 'standard' | 'reject' | 'review';
 }
 
+export interface AgentResult {
+  agentId: AgentId;
+  role: string;
+  vote: Exclude<Vote, 'pending'>;
+  response: string;
+  connection: 'mock' | 'openai-compatible' | 'local-compatible';
+  baseUrl: string;
+  model: string;
+  latencyMs: number;
+}
+
 export interface Decision {
   id: string;
   subject: string;
@@ -46,6 +57,10 @@ export interface Decision {
   votes: Record<AgentId, Vote>;
   createdAt: string;
   completedAt?: string;
+  /** 外部 API 接続ノードが返した本文。模擬ノードには存在しない。 */
+  responses?: Partial<Record<AgentId, string>>;
+  outputs?: Partial<Record<AgentId, AgentResult>>;
+  failures?: Partial<Record<AgentId, string>>;
 }
 
 export interface DecisionEvent {
