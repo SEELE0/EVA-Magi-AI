@@ -4,6 +4,7 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import type { KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AgentId, Decision, Vote } from '../../domain/decision';
 import {
   MAGI_NETWORK_LAYOUT,
@@ -23,12 +24,7 @@ export interface MagiNetworkProps {
   readonly onOpenConfig: (agentId: AgentId) => void;
 }
 
-const votePresentation: Record<Vote, { label: string; className: string }> = {
-  pending: { label: '待機', className: 'pending' },
-  approve: { label: '承認', className: 'approve' },
-  reject: { label: '否決', className: 'reject' },
-  abstain: { label: '棄権', className: 'abstain' },
-};
+const voteClass: Record<Vote, string> = { pending: 'pending', approve: 'approve', reject: 'reject', abstain: 'abstain' };
 
 function AgentFrame({ agent }: { readonly agent: AgentModuleLayout }) {
   return (
@@ -45,9 +41,11 @@ function AgentFrame({ agent }: { readonly agent: AgentModuleLayout }) {
 }
 
 function AgentContent({ agent, vote }: { readonly agent: AgentModuleLayout; readonly vote: Vote }) {
+  const { t } = useTranslation();
   const [nameX, nameY] = agent.namePlacement.anchor;
   const [voteX, voteY] = agent.votePlacement.anchor;
-  const presentation = votePresentation[vote];
+  const label = t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`);
+  const presentation = { label, className: voteClass[vote] };
 
   return (
     <g data-agent-content={agent.id}>
@@ -70,6 +68,7 @@ function activateAgent(
 }
 
 export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpenConfig }: MagiNetworkProps) {
+  const { t } = useTranslation();
   const layout = MAGI_NETWORK_LAYOUT;
   const [lowerStartX, lowerStartY] = layout.lowerConnector.start;
   const [lowerEndX] = layout.lowerConnector.end;
@@ -93,8 +92,8 @@ export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpe
         return (
           <g
             aria-disabled={disabled || undefined}
-            aria-label={`${agent.agentId} の設定を開く`}
-            className={`agent-module agent-module--${agent.id} vote-${votePresentation[vote].className}`}
+            aria-label={`${agent.agentId} · ${t('decision.nodeConfig')}`}
+            className={`agent-module agent-module--${agent.id} vote-${voteClass[vote]}`}
             key={agent.id}
             onClick={() => { if (!disabled) onOpenConfig(agent.agentId); }}
             onKeyDown={(event) => activateAgent(event, agent.agentId, disabled, onOpenConfig)}

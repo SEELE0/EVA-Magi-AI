@@ -4,36 +4,37 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Agent, AgentId, SystemStatus } from '../../domain/decision';
 import { Readout } from '../decision-console/ConsolePrimitives';
-import {
-  connectionCopy,
-  defaultAgents
-} from '../decision-console/console-config';
-import { AgentConfigDialog } from './AgentConfigDialog';
+import { defaultAgents } from '../decision-console/console-config';
+import { RuntimeSettings } from './RuntimeSettings';
 import { DecisionSimulator } from './DecisionSimulator';
 import { currentSimulatorRoute } from './hash-route';
 import { HistoryDetail, HistoryList } from './HistoryViews';
 import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from './history-store';
 import { useDecisionRuntime } from './use-decision-runtime';
-import type { AgentRuntimeConfig, DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
+import type { DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
+import { LanguageSelector } from '../../components/LanguageSelector';
 import './decision-home.css';
 import './decision-header.css';
 
 const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
 
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('ja-JP', { hour12: false });
+function formatTime(date: Date, locale: string) {
+  return date.toLocaleTimeString(locale, { hour12: false });
 }
 
 export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: boolean }) {
+  const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
   const [clock, setClock] = useState(() => new Date());
   const [route, setRoute] = useState<SimulatorRoute>(() => currentSimulatorRoute());
   const [historyWarning, setHistoryWarning] = useState(false);
   const [history, setHistory] = useState<DecisionHistoryEntry[]>(() => loadDecisionHistory());
-  const { configs, service, saveAgentConfig: saveConfig, storageWarning } = useDecisionRuntime();
+  const runtime = useDecisionRuntime();
+  const { configs, service, storageWarning } = runtime;
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [startupError, setStartupError] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
         setAgents(nextAgents);
       })
       .catch(() => {
-        if (isActive) setStartupError('起動シーケンスが中断されました');
+        if (isActive) setStartupError(t('status.startupError'));
       });
 
     return () => {
@@ -74,13 +75,6 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
     });
   }
 
-  function saveAgentConfig(config: AgentRuntimeConfig) {
-    saveConfig(config);
-    // 接続方式の変更をステータス行へ即時反映する。
-    void service.getSystemStatus().then(setStatus).catch(() => undefined);
-  }
-
-  const selectedAgentConfig = selectedAgentId ? configs[selectedAgentId] : null;
   const isHistoryRoute = route.name !== 'decision';
 
   return (
@@ -98,25 +92,36 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
             <h1>MAGI <span>System</span></h1>
           </div>
         </div>
-        <nav className="magi-home__primary-nav" aria-label="MAGI シミュレータ">
-          <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined}>判定</a>
-          <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined}>履歴</a>
+        <nav className="magi-home__primary-nav" aria-label={t('nav.label')}>
+          <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined}>{t('common.decision')}</a>
+          <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined}>{t('common.history')}</a>
+          <RuntimeSettings
+            runtime={runtime}
+            selectedAgentId={selectedAgentId}
+            onCloseNode={() => setSelectedAgentId(null)}
+            onSaved={() => { void service.getSystemStatus().then(setStatus).catch(() => undefined); }}
+            renderEntry={({ openOverall, openSettingBook }) => <>
+              <button type="button" className="magi-home__nav-button" onClick={openOverall}>{t('common.setting')}</button>
+              <button type="button" className="magi-home__nav-button" onClick={openSettingBook}>{t('common.settingBook')}</button>
+            </>}
+          />
+          <LanguageSelector />
         </nav>
       </div>
-      <div className="magi-home__telemetry" aria-label="システム状態">
+      <div className="magi-home__telemetry" aria-label={t('nav.status')}>
         <div className="magi-home__system-status" data-connection={startupError ? 'offline' : status?.connection ?? 'offline'} aria-live="polite">
           <span aria-hidden="true" />
-          <strong>{startupError ?? status?.notice ?? '神経接続を確立中...'}</strong>
+          <strong>{startupError ?? (status ? t(`status.${status.connection}`) : t('status.connecting'))}</strong>
           <small>{status?.protocol ?? 'MAGI/3.0'}</small>
         </div>
         <div className="header-readout">
-          <Readout label="回線" value={status ? connectionCopy[status.connection] : '起動中'} tone={status?.connection ?? 'offline'} />
-          <Readout label="時刻" value={formatTime(clock)} tone="online" />
+          <Readout label={t('settings.connection')} value={status ? t(`status.${status.connection}`) : t('status.starting')} tone={status?.connection ?? 'offline'} />
+          <Readout label={i18n.language.startsWith('en') ? 'TIME' : i18n.language === 'zh-TW' ? '時間' : i18n.language.startsWith('zh') ? '时间' : '時刻'} value={formatTime(clock, i18n.language)} tone="online" />
         </div>
       </div>
       </header>
 
-      {storageWarning || historyWarning ? <p role="status">本机存储不可用，设置或记录仅保留在当前页面。</p> : null}
+      {storageWarning || historyWarning ? <p role="status">{t('history.notStored')}</p> : null}
       {route.name === 'decision' ? (
         <DecisionSimulator
           service={service}
@@ -136,11 +141,7 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
         <HistoryDetail entry={history.find((entry) => entry.id === route.id)} />
       )}
 
-      <AgentConfigDialog
-        config={selectedAgentConfig}
-        onClose={() => setSelectedAgentId(null)}
-        onSave={saveAgentConfig}
-      />
+
     </main>
   );
 }

@@ -16,6 +16,7 @@ export interface AgentRuntimeConfig {
   model: string;
   apiKey: string;
   prompt: string;
+  sharedBackground?: string;
 }
 
 export type AgentConfigMap = Record<AgentId, AgentRuntimeConfig>;

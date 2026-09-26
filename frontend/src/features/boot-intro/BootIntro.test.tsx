@@ -8,6 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from '../../i18n';
 import { BOOT_INTRO_SESSION_KEY, BOOT_SCHEDULE_MS, BootIntro } from './BootIntro';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -51,7 +52,8 @@ function finishConfirmedIntro() {
 }
 
 describe('BootIntro', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-CN');
     vi.useFakeTimers();
     window.sessionStorage.clear();
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
@@ -131,7 +133,7 @@ describe('BootIntro', () => {
 
     act(() => originalOption?.click());
     expect(originalOption?.getAttribute('aria-checked')).toBe('true');
-    expect(confirmButton?.textContent).toContain('CONFIRM ORIGINAL / DIRECT LINK');
+    expect(confirmButton?.textContent).toContain('进入 MAGI DIRECT-LINK INTERFACE');
     expect(onModeSelected).not.toHaveBeenCalled();
 
     act(() => confirmButton?.click());

@@ -82,8 +82,17 @@ export class ChatCompletionsProvider implements AgentProvider {
   validate = validateAgentConfig;
 
   async invoke(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal): Promise<ProviderResult> {
+    return parseAgentVote(await this.complete(config, request, signal));
+  }
+
+  async testConnection(config: AgentRuntimeConfig, signal: AbortSignal): Promise<void> {
+    if (config.connection === 'mock') throw new DecisionServiceError('模擬回線不能验证真实 AI 接入，请先选择真实连接方式。', 'AGENT_CONFIG_INVALID');
+    await this.complete(config, { subject: 'Reply OK.', priority: 'normal' }, signal, true);
+  }
+
+  private async complete(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal, probe = false): Promise<string> {
     throwIfAborted(signal);
-    this.validate(config);
+    this.validate(probe ? { ...config, prompt: 'Connection test' } : config);
     const controller = new AbortController();
     const forwardAbort = () => controller.abort();
     signal.addEventListener('abort', forwardAbort, { once: true });
@@ -100,8 +109,8 @@ export class ChatCompletionsProvider implements AgentProvider {
         body: JSON.stringify({
           model: config.model.trim(),
           stream: false,
-          messages: [
-            { role: 'system', content: `${config.prompt.trim()}\n\n只返回一个 JSON 对象：{"vote":"approve|reject|abstain","reason":"面向用户的结论、理由、风险和建议"}。vote 必须是其中一个英文枚举。reason 使用议题的语言，不输出隐藏思考过程。` },
+          messages: probe ? [{ role: 'user', content: 'Connection test. Reply only OK.' }] : [
+            { role: 'system', content: `${config.sharedBackground?.trim() ? `共同背景：\n${config.sharedBackground.trim()}\n\n节点角色：\n` : ''}${config.prompt.trim()}\n\n只返回一个 JSON 对象：{"vote":"approve|reject|abstain","reason":"面向用户的结论、理由、风险和建议"}。vote 必须是其中一个英文枚举。reason 使用议题的语言，不输出隐藏思考过程。` },
             { role: 'user', content: `议题：${request.subject}\n优先级：${request.priority}` }
           ]
         }),
@@ -119,8 +128,8 @@ export class ChatCompletionsProvider implements AgentProvider {
       const content = payload?.choices?.[0]?.message?.content;
       throwIfAborted(signal);
       if (controller.signal.aborted) throw new DecisionServiceError('模型响应超时，请稍后重新提交。', 'REQUEST_TIMEOUT');
-      if (typeof content !== 'string') throw invalidResult();
-      return parseAgentVote(content);
+      if (typeof content !== 'string' || !content.trim()) throw new DecisionServiceError('模型未返回有效的文本响应。', 'INVALID_AGENT_RESULT');
+      return content;
     } catch (error) {
       throwIfAborted(signal);
       if (controller.signal.aborted) throw new DecisionServiceError('模型响应超时，请稍后重新提交。', 'REQUEST_TIMEOUT');

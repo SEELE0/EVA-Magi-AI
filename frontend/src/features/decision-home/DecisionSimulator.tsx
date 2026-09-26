@@ -4,6 +4,7 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HoneycombReveal } from './HoneycombReveal';
 import { markHoneycombRevealAsPlayed, shouldPlayHoneycombReveal } from './honeycomb-reveal';
 import type { Agent, AgentId, Decision, DecisionRequest, SystemStatus } from '../../domain/decision';
@@ -12,10 +13,7 @@ import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/po
 import { AgentNode } from '../decision-console/ConsolePrimitives';
 import {
   defaultPriority,
-  healthCopy,
   scenarioSubject,
-  voteCopy,
-  verdictCopy,
   type Scenario
 } from '../decision-console/console-config';
 import {
@@ -27,6 +25,8 @@ import {
 } from './decision-network-layout';
 import { createDecisionHistoryEntry } from './simulator-responses';
 import type { AgentConfigMap, DecisionHistoryEntry } from './simulator-types';
+import { MagiSelect } from '../../components/MagiSelect';
+import { localizeError } from '../../i18n-error';
 
 interface DecisionSimulatorProps {
   service: DecisionService;
@@ -38,18 +38,6 @@ interface DecisionSimulatorProps {
   onHistoryCreated: (entry: DecisionHistoryEntry) => void;
   onStatusChange: (status: SystemStatus) => void;
 }
-
-const scenarioCopy: Record<Scenario, string> = {
-  standard: '標準',
-  reject: '否決検証',
-  review: '保留検証'
-};
-
-const priorityCopy: Record<DecisionRequest['priority'], string> = {
-  low: '低',
-  normal: '通常',
-  critical: '最優先'
-};
 
 const agentPosition: Record<AgentId, DecisionNodePosition> = {
   'BALTHASAR-2': 'top',
@@ -81,8 +69,9 @@ function priorityCode(priority: DecisionRequest['priority']) {
 }
 
 function LinkStrip() {
+  const { t } = useTranslation();
   return (
-    <section className="magi-home__link-strip" aria-label="MAGI 直连状态">
+    <section className="magi-home__link-strip" aria-label={t('decision.directStatus')}>
       <span>DIRECT LINK CONNECTION: MAGI 01</span>
       <strong>ACCESS MODE: SUPERUSER</strong>
     </section>
@@ -98,15 +87,16 @@ function MotionBanner({
   verdict: Decision['verdict'];
   isExecuting: boolean;
 }) {
-  const verdictLabel = isExecuting ? '判定中' : verdictCopy[verdict].label;
-  const verdictDetail = isExecuting ? '三人格の投票を受信中' : verdictCopy[verdict].detail;
+  const { t } = useTranslation();
+  const verdictLabel = isExecuting ? t('decision.pending') : t(`verdict.${verdict}`);
+  const verdictDetail = isExecuting ? t('decision.receivingVotes') : t(`verdict.${verdict}Detail`);
 
   return (
     <section className={`magi-home__motion-banner verdict-${isExecuting ? 'pending' : verdict}`} aria-live="polite">
-      <p>RESULT OF THE DELIBERATION</p>
-      <h2>MOTION: <span>{subject || '未入力'}</span></h2>
+      <p>{t('decision.result')}</p>
+      <h2>{t('decision.motion')} <span>{subject || t('decision.emptySubject')}</span></h2>
       <div className="magi-home__motion-result">
-        <span>FINAL VERDICT</span>
+        <span>{t('decision.finalVerdict')}</span>
         <strong>{verdictLabel}</strong>
         <small>{verdictDetail}</small>
       </div>
@@ -115,15 +105,16 @@ function MotionBanner({
 }
 
 function FailureBanner({ decisionId, message }: { decisionId?: string; message: string }) {
+  const { t } = useTranslation();
   return (
     <section className="magi-home__failure-banner" role="alert" aria-live="assertive">
       <div className="magi-home__failure-stripe" aria-hidden="true" />
       <div>
-        <span>SIGNAL FAILURE / {shortDecisionCode(decisionId)}</span>
-        <strong>DIRECT LINK INTERRUPTED</strong>
+        <span>{t('decision.failure', { code: shortDecisionCode(decisionId) })}</span>
+        <strong>{t('decision.interrupted')}</strong>
         <small>{message}</small>
       </div>
-      <b>RETRY ENABLED</b>
+      <b>{t('decision.retry')}</b>
     </section>
   );
 }
@@ -139,6 +130,7 @@ function SystemStack({
   subject: string;
   priority: DecisionRequest['priority'];
 }) {
+  const { t } = useTranslation();
   const subjectLength = Array.from(subject).length;
   const payloadLevel = Math.min(100, Math.max(4, (subjectLength / 240) * 100));
   const priorityLevel = priority === 'critical' ? 100 : priority === 'normal' ? 66 : 33;
@@ -148,11 +140,11 @@ function SystemStack({
     { label: 'FILE', value: 'MAGI.SYS' },
     { label: 'PAYLOAD', value: `${subjectLength.toString().padStart(3, '0')} CH`, level: payloadLevel },
     { label: 'EXEC MODE', value: execMode },
-    { label: 'PRIORITY', value: priorityCode(priority), level: priorityLevel }
+    { label: t('decision.priority'), value: priorityCode(priority), level: priorityLevel }
   ];
 
   return (
-    <aside className="magi-home__system-stack" aria-label="MAGI 系统参数">
+    <aside className="magi-home__system-stack" aria-label={t('decision.systemParameters')}>
       <p className="magi-home__stack-heading">SYSTEM / CODE</p>
       <dl>
         {rows.map((row) => (
@@ -174,6 +166,7 @@ function SystemStack({
 }
 
 function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['votes'] }) {
+  const { t } = useTranslation();
   return (
     <aside className="magi-home__layer-stack" aria-label="MAGI 人格层">
       <p className="magi-home__stack-heading">PERSONALITY / LAYER</p>
@@ -184,8 +177,8 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
             <li className={`vote-${vote}`} key={agent.id}>
               <span>LAYER-{String(index + 1).padStart(2, '0')}</span>
               <strong>{agent.id}</strong>
-              <b>{voteCopy[vote]}</b>
-              <small>{healthCopy[agent.health]} / {agent.latencyMs}ms</small>
+              <b>{t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`)}</b>
+              <small>{t(`status.${agent.health}`)} / {agent.latencyMs}ms</small>
               <span
                 className="magi-home__latency-rail"
                 style={{ '--magi-level': `${Math.min(100, (agent.latencyMs / 80) * 100)}%` } as CSSProperties}
@@ -200,6 +193,7 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
 }
 
 function NodeConfigHotspots({ disabled, onOpen }: { disabled: boolean; onOpen: (agentId: AgentId) => void }) {
+  const { t } = useTranslation();
   const hotspots: Array<{ agentId: AgentId; position: 'top' | 'left' | 'right' }> = [
     { agentId: 'BALTHASAR-2', position: 'top' },
     { agentId: 'CASPER-3', position: 'left' },
@@ -207,14 +201,14 @@ function NodeConfigHotspots({ disabled, onOpen }: { disabled: boolean; onOpen: (
   ];
 
   return (
-    <div className="magi-home__node-hotspots" aria-label="人格ノード設定">
+    <div className="magi-home__node-hotspots" aria-label={t('decision.nodeConfig')}>
       {hotspots.map(({ agentId, position }) => (
         <div key={agentId} className={`magi-home__node-hotspot is-${position}`}>
           <button
             type="button"
             onClick={() => onOpen(agentId)}
             disabled={disabled}
-            aria-label={`${agentId} の設定を開く`}
+            aria-label={`${agentId} · ${t('decision.nodeConfig')}`}
           />
         </div>
       ))}
@@ -244,6 +238,17 @@ export function DecisionSimulator({
   onHistoryCreated,
   onStatusChange
 }: DecisionSimulatorProps) {
+  const { t } = useTranslation();
+  const scenarioCopy: Record<Scenario, string> = {
+    standard: t('decision.standard'),
+    reject: t('decision.rejectScenario'),
+    review: t('decision.reviewScenario')
+  };
+  const priorityCopy: Record<DecisionRequest['priority'], string> = {
+    low: t('decision.low'),
+    normal: t('decision.normal'),
+    critical: t('decision.critical')
+  };
   const [decision, setDecision] = useState<Decision | null>(null);
   const [scenario, setScenario] = useState<Scenario>('standard');
   const [subject, setSubject] = useState(scenarioSubject.standard);
@@ -299,7 +304,7 @@ export function DecisionSimulator({
     if (isExecuting) return;
     finishReveal();
     if (!subject.trim()) {
-      setError('MAGIに送信する議題を入力してください。');
+      setError(t('decision.subjectRequired'));
       return;
     }
 
@@ -335,13 +340,13 @@ export function DecisionSimulator({
       } catch {
         // A status refresh must not turn an already completed decision into a UI error.
       }
-      if (completed.status === 'failed') setError('ノードの実行に失敗しました。履歴を確認してください。');
+      if (completed.status === 'failed') setError(t('decision.nodeFailed'));
     } catch (cause) {
       const shouldReportError = mounted.current;
       controller.abort();
       await polling?.catch(() => undefined);
       if (shouldReportError) {
-        setError(cause instanceof Error ? cause.message : '判定回線に障害が発生しました');
+        setError(localizeError(cause, t));
       }
     } finally {
       if (activeController.current === controller) activeController.current = null;
@@ -372,7 +377,7 @@ export function DecisionSimulator({
           <SystemStack decisionId={decision?.id} phase={phase} subject={subject} priority={priority} />
         ) : null}
 
-        <section className="magi-home__decision-stage" aria-label="MAGI 合议マトリクス">
+        <section className="magi-home__decision-stage" aria-label={t('decision.matrix')}>
           <InstrumentOverlay />
           <div className={`magi-network ${isExecuting ? 'is-scanning' : ''}`} style={decisionNetworkStyle}>
             <svg
@@ -403,7 +408,7 @@ export function DecisionSimulator({
             </svg>
             <div className="core-node">
               <span>MAGI</span>
-              <small>第03中枢</small>
+              <small>MAGI/03</small>
             </div>
             {agents.map((agent) => (
               <AgentNode
@@ -415,7 +420,7 @@ export function DecisionSimulator({
             ))}
             <NodeConfigHotspots disabled={isExecuting || isRevealing} onOpen={onOpenConfig} />
           </div>
-          {!showTerminal ? <small className="magi-home__node-hint">人格ノードを選択して設定 · SELECT NODE</small> : null}
+          {!showTerminal ? <small className="magi-home__node-hint">{t('decision.nodeHint')}</small> : null}
           {isRevealing ? <HoneycombReveal onComplete={finishReveal} /> : null}
         </section>
 
@@ -424,14 +429,14 @@ export function DecisionSimulator({
 
       <section className="magi-home__input-dock" aria-labelledby="magi-home-input-title">
         {showTerminal ? (
-          <div className="magi-home__input-summary" aria-label="当前动议">
-            <span>ACTIVE MOTION</span>
+          <div className="magi-home__input-summary" aria-label={t('decision.currentMotion')}>
+            <span>{t('decision.activeMotion')}</span>
             <strong>{subject}</strong>
             <small>{priorityCopy[priority]} / {scenarioCopy[scenario]}</small>
           </div>
         ) : null}
         <label className="magi-home__subject-field" htmlFor="magi-home-subject">
-          <span id="magi-home-input-title">判定議題</span>
+          <span id="magi-home-input-title">{t('decision.agenda')}</span>
           <textarea
             id="magi-home-subject"
             value={subject}
@@ -439,52 +444,48 @@ export function DecisionSimulator({
             maxLength={240}
             disabled={isExecuting}
             rows={2}
-            placeholder="一つの議題（問い）を入力してください…"
+            placeholder={t('decision.agendaPlaceholder')}
           />
-          <small>{subject.length} / 240</small>
+          <small>{t('decision.characterCount', { count: subject.length })}</small>
         </label>
 
         <details className="magi-home__advanced-options">
-          <summary>詳細設定 <span>{priorityCopy[priority]} / {scenarioCopy[scenario]}</span></summary>
+          <summary>{t('decision.advanced')} <span>{priorityCopy[priority]} / {scenarioCopy[scenario]}</span></summary>
           <div className="magi-home__advanced-fields">
-        <label className="magi-home__dock-field" htmlFor="magi-home-priority">
-          <span>優先度</span>
-          <select
+        <label className="magi-home__dock-field">
+          <span>{t('decision.priority')}</span>
+          <MagiSelect
             id="magi-home-priority"
+            ariaLabel={t('decision.priority')}
             value={priority}
-            onChange={(event) => setPriority(event.target.value as DecisionRequest['priority'])}
+            options={(Object.keys(priorityCopy) as DecisionRequest['priority'][]).map((item) => ({ value: item, label: priorityCopy[item] }))}
+            onValueChange={(value) => setPriority(value as DecisionRequest['priority'])}
             disabled={isExecuting}
-          >
-            {(Object.keys(priorityCopy) as DecisionRequest['priority'][]).map((item) => (
-              <option key={item} value={item}>{priorityCopy[item]}</option>
-            ))}
-          </select>
+          />
         </label>
 
-        <label className="magi-home__dock-field" htmlFor="magi-home-scenario">
-          <span>シナリオ</span>
-          <select
+        <label className="magi-home__dock-field">
+          <span>{t('decision.scenario')}</span>
+          <MagiSelect
             id="magi-home-scenario"
+            ariaLabel={t('decision.scenario')}
             value={scenario}
-            onChange={(event) => selectScenario(event.target.value as Scenario)}
+            options={(Object.keys(scenarioCopy) as Scenario[]).map((item) => ({ value: item, label: scenarioCopy[item] }))}
+            onValueChange={(value) => selectScenario(value as Scenario)}
             disabled={isExecuting}
-          >
-            {(Object.keys(scenarioCopy) as Scenario[]).map((item) => (
-              <option key={item} value={item}>{scenarioCopy[item]}</option>
-            ))}
-          </select>
+          />
         </label>
 
           </div>
         </details>
         <button className="magi-home__execute" type="button" onClick={() => void runDecision()} disabled={isExecuting}>
-          <span>{isExecuting ? '判定実行中' : '判定開始'}</span>
+          <span>{isExecuting ? t('decision.pending') : t('decision.execute')}</span>
           <small>EXECUTE DECISION</small>
         </button>
 
         {phase === 'final' ? (
           <button className="magi-home__new-motion" type="button" onClick={resetForNewMotion}>
-            <span>新しい動議</span>
+            <span>{t('decision.clear')}</span>
             <small>NEW MOTION</small>
           </button>
         ) : null}

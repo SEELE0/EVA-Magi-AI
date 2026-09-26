@@ -30,14 +30,23 @@ describe('direct-link stylesheet isolation', () => {
     expect(css).toContain('.direct-link-page *::before');
   });
 
-  it('defines landscape reflow, collapsing input, and transform-only network motion', () => {
+  it('defines landscape reflow, keeps the toolbar visible while collapsing input, and animates only network motion', () => {
     expect(css).toContain('@media (orientation: landscape)');
-    expect(css).toMatch(/\.motion-composer\.is-collapsed\s*\{[^}]*max-height:\s*0;/);
+    expect(css).toMatch(/\.motion-composer\.is-collapsed\s*\{[^}]*max-height:\s*100px;[^}]*pointer-events:\s*auto/);
     expect(css).toMatch(/\.direct-link-page \.magi-network\s*\{[^}]*transition:\s*transform 520ms/);
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toMatch(/\.motion-composer\s*\{[^}]*width:\s*100%/);
     expect(css).toMatch(/@media \(orientation: landscape\)[\s\S]*?\.motion-composer\s*\{[^}]*max-height:\s*104px/);
     expect(css).toMatch(/@media \(min-width: 720px\) and \(orientation: portrait\)[\s\S]*?\.motion-composer__controls\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(190px, 220px\)/);
+  });
+
+  it('scopes input-only styles to the composer form so nested settings remain visible', () => {
+    expect(css).toContain('.motion-composer__form label');
+    expect(css).not.toMatch(/\.motion-composer label\s*\{/);
+    expect(css).toContain('.motion-composer__form legend');
+    expect(css).not.toMatch(/\.motion-composer legend\s*\{/);
+    expect(css).toContain('.motion-composer__form fieldset');
+    expect(css).not.toMatch(/\.motion-composer fieldset\s*\{/);
   });
 
   it('layers terminal information independently from centered MAGI geometry', () => {
@@ -67,10 +76,10 @@ describe('direct-link stylesheet isolation', () => {
   });
 
   it('renders command buttons as animated EVA stripe controls with inverted hover colors', () => {
-    expect(css).toMatch(/\.motion-composer button\[type="submit"\],\s*\.direct-link-new-motion\s*\{[^}]*color:\s*#050504;[^}]*background:\s*var\(--direct-orange\)/);
-    expect(css).toMatch(/\.motion-composer button\[type="submit"\]::before,[\s\S]*?background-image:[\s\S]*?repeating-linear-gradient\(\s*135deg,\s*var\(--direct-button-stripe\) 0 7px,\s*transparent 7px 15px[\s\S]*?background-size:\s*100% 5px, 100% 5px/);
-    expect(css).not.toContain('.motion-composer button\[type="submit"\]::after');
-    expect(css).toMatch(/\.motion-composer button\[type="submit"\]:not\(:disabled\):hover,[\s\S]*?--direct-button-stripe:\s*var\(--direct-orange\);[^}]*color:\s*var\(--direct-orange\);[^}]*background:\s*#050504/);
+    expect(css).toMatch(/\.motion-composer__form button\[type="submit"\],\s*\.direct-link-new-motion\s*\{[^}]*color:\s*#050504;[^}]*background:\s*var\(--direct-orange\)/);
+    expect(css).toMatch(/\.motion-composer__form button\[type="submit"\]::before,[\s\S]*?background-image:[\s\S]*?repeating-linear-gradient\(\s*135deg,\s*var\(--direct-button-stripe\) 0 7px,\s*transparent 7px 15px[\s\S]*?background-size:\s*100% 5px, 100% 5px/);
+    expect(css).not.toContain('.motion-composer__form button[type="submit"]::after');
+    expect(css).toMatch(/\.motion-composer__form button\[type="submit"\]:not\(:disabled\):hover,[\s\S]*?--direct-button-stripe:\s*var\(--direct-orange\);[^}]*color:\s*var\(--direct-orange\);[^}]*background:\s*#050504/);
     expect(css).toMatch(/animation:\s*direct-link-command-stripes 850ms linear infinite/);
     expect(css).toMatch(/@keyframes direct-link-command-stripes\s*\{[\s\S]*?translate3d\(-21\.213px, 0, 0\)[\s\S]*?translate3d\(0, 0, 0\)/);
     expect(css).not.toMatch(/direct-link-command-stripes (?:420|600)ms/);

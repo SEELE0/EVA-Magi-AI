@@ -27,6 +27,7 @@
   align-items: center;
   gap: 28px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .magi-home__primary-nav a {
@@ -84,11 +85,13 @@
 }
 
 @media (max-width: 760px) {
-  .magi-home__masthead > .topbar { gap: 12px; padding: 4px 0 14px; }
+  .magi-home__masthead > .topbar { flex-wrap: wrap; gap: 12px; padding: 4px 0 14px; }
   .magi-home__masthead .brand-block { gap: 10px; }
   .magi-home__masthead .brand-block > div { min-width: 0; }
   .magi-home__masthead .brand-block h1 { max-width: 100%; overflow-wrap: anywhere; }
-  .magi-home__primary-nav { gap: 16px; }
+  .magi-home__primary-nav { width: 100%; min-height: 42px; align-self: auto; justify-content: flex-start; gap: 8px 14px; }
+  .magi-home__primary-nav a,
+  .magi-home__nav-button { min-height: 40px; font-size: 12px; }
   .magi-home__telemetry { flex-wrap: wrap; gap: 8px; padding: 10px 0; }
   .magi-home__telemetry .magi-home__system-status { flex: 1 1 100%; }
   .magi-home__telemetry .header-readout { justify-content: flex-start; }

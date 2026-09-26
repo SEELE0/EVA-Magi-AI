@@ -9,8 +9,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Decision } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
+import i18n from '../../i18n';
 import { DecisionHomeAnimeOriginal } from './main';
 import { loadDecisionHistory } from '../decision-home/history-store';
+import { AGENT_CONFIG_STORAGE_KEY } from '../../storage/agent-config-store';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -105,7 +107,8 @@ function phase(container: HTMLElement) {
 }
 
 describe('DecisionHomeAnimeOriginal', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('ja-JP');
     vi.useFakeTimers();
     installMatchMedia();
     window.localStorage.clear();
@@ -133,7 +136,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     const service = serviceStub();
     const { container } = renderOrigin(service);
 
-    act(() => container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')?.click());
 
     expect(phase(container)).toBe('error');
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('議題を入力');
@@ -145,10 +148,25 @@ describe('DecisionHomeAnimeOriginal', () => {
     fillTextarea(container.querySelector('textarea')!, '未提交的议题');
     act(() => container.querySelector<HTMLButtonElement>('.direct-history-trigger')!.click());
     expect(container.querySelector('dialog.direct-history')?.hasAttribute('open')).toBe(true);
-    expect(container.querySelector('.direct-history')?.textContent).toContain('NO RECORDS');
-    act(() => container.querySelector<HTMLButtonElement>('[aria-label="关闭历史记录"]')!.click());
+    expect(container.querySelector('.direct-history')?.textContent).toContain('履歴はありません');
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="履歴を閉じる"]')!.click());
     expect(container.querySelector('.direct-history')).toBeNull();
     expect(container.querySelector('textarea')?.value).toBe('未提交的议题');
+  });
+
+  it('places icon navigation beside the motion composer heading', () => {
+    const { container } = renderOrigin(serviceStub());
+    const workspace = container.querySelector('.direct-link-workspace');
+    const composer = workspace?.querySelector('.motion-composer');
+    const toolbar = composer?.querySelector('.direct-link-controls');
+    const iconButtons = [...(toolbar?.querySelectorAll<HTMLButtonElement>('.direct-link-control-button') ?? [])];
+
+    expect(workspace?.querySelector('.terminal-screen')?.nextElementSibling).toBe(composer);
+    expect(toolbar?.parentElement).toBe(composer?.querySelector('.motion-composer__header'));
+    expect(toolbar?.parentElement?.querySelector('.motion-composer__heading')).not.toBeNull();
+    expect(iconButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['履歴', '全体設定', '設定書']);
+    expect(iconButtons.every((button) => button.querySelector('svg') !== null)).toBe(true);
+    expect(toolbar?.querySelector('[role="combobox"]')).not.toBeNull();
   });
 
   it('renders the three nodes, connectors, and core inside one positioned network component', () => {
@@ -205,10 +223,13 @@ describe('DecisionHomeAnimeOriginal', () => {
     if (!textarea) throw new Error('Motion input was not rendered.');
 
     fillTextarea(textarea, draft.subject);
-    act(() => container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')?.click());
 
     expect(phase(container)).toBe('transitioning');
     expect(container.querySelector('.motion-composer')?.classList.contains('is-collapsed')).toBe(true);
+    expect(container.querySelector('.motion-composer')?.hasAttribute('inert')).toBe(false);
+    expect(container.querySelector('.motion-composer__form')).toBeNull();
+    expect(container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="全体設定"]')?.disabled).toBe(false);
     expect(container.querySelector('.agent-module')?.getAttribute('aria-disabled')).toBe('true');
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.dataset.positionY).toBe('-81');
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.style.transform).toBe('translate(0px, -81px) scale(1)');
@@ -227,10 +248,20 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(loadDecisionHistory()[0].agents['MELCHIOR-1'].connection).toBe('unknown');
     expect(JSON.stringify(loadDecisionHistory())).not.toContain('apiKey');
     expect([...container.querySelectorAll('.vote-text')].map((node) => node.textContent)).toEqual(['承認', '否決', '承認']);
-    expect(container.querySelector('.motion-copy')?.textContent).toBe('FINAL VERDICT : 承認 / 02 / 03');
-    expect(container.querySelector<HTMLButtonElement>('.direct-link-new-motion')).not.toBeNull();
+    expect(container.querySelector('.motion-copy')?.textContent).toBe('最終判定：承認。合意 02 / 03。');
+    const newMotionButton = container.querySelector<HTMLButtonElement>('.motion-composer__header .direct-link-new-motion');
+    expect(newMotionButton).not.toBeNull();
+    expect(container.querySelector('.terminal-screen .direct-link-new-motion')).toBeNull();
 
-    act(() => container.querySelector<HTMLButtonElement>('.direct-link-new-motion')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="全体設定"]')?.click());
+    const settingsDialog = container.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
+    expect(settingsDialog?.hasAttribute('open')).toBe(true);
+    act(() => settingsDialog?.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.click());
+    expect(settingsDialog?.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.checked).toBe(true);
+    expect(settingsDialog?.querySelector('input[type="url"]')).not.toBeNull();
+    act(() => settingsDialog?.querySelector<HTMLButtonElement>('.magi-home__dialog-close')?.click());
+
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__header .direct-link-new-motion')?.click());
     expect(phase(container)).toBe('compose');
     expect(container.querySelector<HTMLTextAreaElement>('#direct-link-motion')?.value).toBe('');
   });
@@ -242,24 +273,25 @@ describe('DecisionHomeAnimeOriginal', () => {
     if (!textarea) throw new Error('Motion input was not rendered.');
 
     fillTextarea(textarea, draft.subject);
-    act(() => container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')?.click());
     await advance(520);
 
     expect(phase(container)).toBe('error');
     expect(container.querySelector<HTMLTextAreaElement>('#direct-link-motion')?.value).toBe(draft.subject);
     expect(container.querySelector('[role="alert"]')?.textContent).toBe('REMOTE LINK LOST');
-    expect(container.querySelector('.motion-copy')?.textContent).toContain('SIGNAL FAILURE / RETRY ENABLED');
-    expect(container.querySelector('.direct-link-live-status')?.textContent).toContain('SIGNAL FAILURE. REMOTE LINK LOST');
+    expect(container.querySelector('.motion-copy')?.textContent).toContain('信号異常 / WAIT / 再試行可能');
+    expect(container.querySelector('.direct-link-live-status')?.textContent).toContain('信号異常。REMOTE LINK LOST');
   });
 
   it('opens all three node identities and persists public configuration without credentials', () => {
+    window.localStorage.setItem(AGENT_CONFIG_STORAGE_KEY, '{}');
     const { container } = renderOrigin(serviceStub());
     const nodeButtons = [...container.querySelectorAll<SVGGElement>('.agent-module')];
 
     expect(nodeButtons.map((node) => node.getAttribute('aria-label'))).toEqual([
-      'BALTHASAR-2 の設定を開く',
-      'CASPER-3 の設定を開く',
-      'MELCHIOR-1 の設定を開く',
+      'BALTHASAR-2 · 人格ノード設定',
+      'CASPER-3 · 人格ノード設定',
+      'MELCHIOR-1 · 人格ノード設定',
     ]);
 
     act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
@@ -270,14 +302,22 @@ describe('DecisionHomeAnimeOriginal', () => {
 
     expect(dialog.querySelector('input[type="url"]')).toBeNull();
     act(() => dialog.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.click());
-    const fields = dialog.querySelectorAll<HTMLInputElement>('.magi-home__config-field input');
-    const model = fields[1];
-    const apiKey = fields[2];
-    if (!model || !apiKey) throw new Error('Node configuration fields were not rendered.');
+    const baseUrl = dialog.querySelector<HTMLInputElement>('.magi-home__config-field input[type="url"]');
+    const model = dialog.querySelector<HTMLInputElement>('.magi-home__config-field input[maxlength="200"]');
+    const apiKey = dialog.querySelector<HTMLInputElement>('.magi-home__api-key-input');
+    if (!baseUrl || !model || !apiKey) throw new Error('Node configuration fields were not rendered.');
+    const apiKeyToggle = dialog.querySelector<HTMLButtonElement>('.magi-home__api-key-toggle');
+    expect(apiKey.type).toBe('password');
+    expect(apiKeyToggle?.getAttribute('aria-label')).toBe('API キーを表示');
+    act(() => apiKeyToggle?.click());
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__api-key-input')?.type).toBe('text');
+    expect(apiKeyToggle?.getAttribute('aria-label')).toBe('API キーを隠す');
+    act(() => apiKeyToggle?.click());
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__api-key-input')?.type).toBe('password');
     const inputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
     act(() => {
-      inputSetter?.call(fields[0], 'https://example.invalid/v1');
-      fields[0]?.dispatchEvent(new Event('input', { bubbles: true }));
+      inputSetter?.call(baseUrl, 'https://example.invalid/v1');
+      baseUrl.dispatchEvent(new Event('input', { bubbles: true }));
       inputSetter?.call(model, 'MAGI-SIM / CUSTOM');
       model.dispatchEvent(new Event('input', { bubbles: true }));
       inputSetter?.call(apiKey, 'sk-page-memory-only');
@@ -286,9 +326,10 @@ describe('DecisionHomeAnimeOriginal', () => {
     act(() => dialog.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
     act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
-    const reopenedFields = container.querySelectorAll<HTMLInputElement>('.magi-home__config-field input');
-    expect(reopenedFields[1]?.value).toBe('MAGI-SIM / CUSTOM');
-    expect(reopenedFields[2]?.value).toBe('sk-page-memory-only');
+    expect(container.querySelector<HTMLInputElement>('.magi-home__config-field input[maxlength="200"]')?.value).toBe('MAGI-SIM / CUSTOM');
+    const reopenedApiKey = container.querySelector<HTMLInputElement>('.magi-home__api-key-input');
+    expect(reopenedApiKey?.value).toBe('sk-page-memory-only');
+    expect(reopenedApiKey?.type).toBe('password');
     expect(JSON.stringify(window.localStorage)).not.toContain('sk-page-memory-only');
     expect(window.sessionStorage.length).toBe(0);
   });
@@ -300,7 +341,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     if (!textarea) throw new Error('Motion input was not rendered.');
 
     fillTextarea(textarea, draft.subject);
-    act(() => container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')?.click());
     await flush();
 
     expect(phase(container)).toBe('final');
@@ -319,7 +360,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     if (!textarea) throw new Error('Motion input was not rendered.');
 
     fillTextarea(textarea, draft.subject);
-    act(() => container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')?.click());
     await advance(520);
     expect(requestSignal?.aborted).toBe(false);
 

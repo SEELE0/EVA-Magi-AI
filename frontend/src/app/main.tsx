@@ -5,6 +5,8 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import '../i18n';
+import '../components/magi-select.css';
 import App from './App';
 import './app.css';
 

@@ -4,14 +4,28 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { I18nextProvider } from 'react-i18next';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { AgentConfigDialog } from './AgentConfigDialog';
 import { cloneAgentConfigs } from './simulator-config';
+import i18n from '../../i18n';
+
+beforeEach(async () => {
+  await i18n.changeLanguage('ja-JP');
+});
+
+function renderDialog(config: ReturnType<typeof cloneAgentConfigs>[keyof ReturnType<typeof cloneAgentConfigs>], variant?: 'modern' | 'original') {
+  return renderToStaticMarkup(
+    <I18nextProvider i18n={i18n}>
+      <AgentConfigDialog config={config} onClose={() => undefined} onSave={() => undefined} variant={variant} />
+    </I18nextProvider>
+  );
+}
 
 describe('AgentConfigDialog BASE URL validation', () => {
   it('hides unused connection fields in mock mode', () => {
     const config = cloneAgentConfigs()['MELCHIOR-1'];
-    const markup = renderToStaticMarkup(<AgentConfigDialog config={config} onClose={() => undefined} onSave={() => undefined} />);
+    const markup = renderDialog(config);
 
     expect(markup).not.toContain('type="url"');
     expect(markup).not.toContain('type="password"');
@@ -25,20 +39,21 @@ describe('AgentConfigDialog BASE URL validation', () => {
       connection: 'openai-compatible' as const,
       baseUrl: 'https://example.invalid/v1'
     };
-    const markup = renderToStaticMarkup(<AgentConfigDialog config={config} onClose={() => undefined} onSave={() => undefined} />);
+    const markup = renderDialog(config);
 
     expect(markup).toContain('type="url"');
+    expect(markup).toContain('type="password"');
+    expect(markup).toContain('aria-label="API キーを表示"');
     expect(markup).toContain('required=""');
   });
 
   it('exposes an original terminal skin without changing the form contract', () => {
     const config = cloneAgentConfigs()['BALTHASAR-2'];
-    const markup = renderToStaticMarkup(
-      <AgentConfigDialog config={config} onClose={() => undefined} onSave={() => undefined} variant="original" />
-    );
+    const markup = renderDialog(config, 'original');
 
     expect(markup).toContain('magi-home__config-dialog--original');
     expect(markup).toContain('BALTHASAR-2 ノード設定');
+    expect(markup).toContain('aria-label="設定を閉じる"><span aria-hidden="true">×</span></button>');
     expect(markup).toContain('接続情報の入力は不要です');
     expect(markup).toContain('役割カード PROMPT');
   });

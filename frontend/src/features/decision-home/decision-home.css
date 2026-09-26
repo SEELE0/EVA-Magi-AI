@@ -775,8 +775,7 @@
   letter-spacing: 0.05em;
 }
 
-.magi-home__subject-field textarea,
-.magi-home__dock-field select {
+.magi-home__subject-field textarea {
   width: 100%;
   border: 1px solid #825011;
   border-radius: 0;
@@ -802,10 +801,7 @@
   font: 10px var(--font-eva-data);
 }
 
-.magi-home__dock-field select {
-  min-height: 50px;
-  padding: 0 12px;
-}
+.magi-home__dock-field .magi-select__trigger { width: 100%; min-height: 50px; }
 
 .magi-home__execute {
   --command-orange: #f7871e;
@@ -1251,7 +1247,7 @@
       "advanced"
       "error";
   }
-  .magi-home__dock-field select { min-height: 46px; }
+  .magi-home__dock-field .magi-select__trigger { min-height: 46px; }
   .magi-home__page-heading { align-items: start; flex-direction: column; gap: 8px; }
   .magi-home__history-detail { padding-right: 2px; padding-left: 2px; }
   .magi-home__detail-heading { grid-template-columns: repeat(2, minmax(0, 1fr)); }
