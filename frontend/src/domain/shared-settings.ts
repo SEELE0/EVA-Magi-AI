@@ -2,12 +2,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later */
 import { AGENT_IDS, type AgentId } from './decision';
 import { cloneAgentConfigs, mockModelFor, type AgentConfigMap, type AgentRuntimeConfig } from './agent-config';
+import evaBackground from './eva-tv-reference-draft.md?raw';
 
-export const EVA_BACKGROUND = `世界观：EVA / NERV / MAGI
-你们是特务机关 NERV 的 MAGI 决策系统，共同分析议题并给出独立判断。
-MAGI 由 MELCHIOR-1、BALTHASAR-2、CASPER-3 三个节点组成，分别保留科学者、母亲与女性的视角。
-以使徒威胁、组织责任与人类生存为世界观背景，但不得将虚构设定当作现实事实。对现实议题仍应依据可核实的信息。
-共享背景不替代各节点的角色卡；允许不同意见，明确不确定性、风险与可执行建议。`;
+export const EVA_BACKGROUND = evaBackground.trim();
 
 /** 每个节点从哪个连接配置档读取连接信息。节点自身代表独立配置。 */
 export type AgentConfigSource = 'global' | AgentId;
