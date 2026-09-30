@@ -40,6 +40,9 @@
 .direct-history h2 { margin: 8px 0 0; color: #f7871e; font-size: 24px; }
 .direct-history h2 span { font-size: 14px; margin-left: 8px; }
 .direct-history button { padding: 8px 10px; color: #f7871e; background: transparent; border: 1px solid #835124; font: inherit; cursor: pointer; }
+.direct-history .direct-history__close { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; padding: 0; border: 0; font-size: 27px; line-height: 1; }
+.direct-history .direct-history__close:hover { color: #ffc078; background: transparent; }
+.direct-history .direct-history__close:focus-visible { outline: 2px solid #72ffc5; outline-offset: 2px; }
 .direct-history__notice { font-size: 12px; color: #9b987f; }
 .direct-history__empty { padding: 56px 0; line-height: 2; }
 .direct-history ol { list-style: none; padding: 0; margin: 24px 0; }

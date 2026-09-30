@@ -17,7 +17,7 @@ function setup(provider: AgentProvider) {
 describe('browser decision lifecycle', () => {
   it('runs nodes concurrently, exposes partial votes and executes only once', async () => {
     vi.useFakeTimers();
-    const provider = new MockProvider(100);
+    const provider = new MockProvider(100, () => 0);
     const invoke = vi.spyOn(provider, 'invoke');
     const { engine } = setup(provider);
     const created = await engine.createDecision(request);
@@ -66,7 +66,7 @@ describe('browser decision lifecycle', () => {
   });
   it('snapshots configuration, returns copies and redacts credentials from output', async () => {
     vi.useFakeTimers();
-    const provider = new MockProvider(10);
+    const provider = new MockProvider(10, () => 0);
     const { engine, configs } = setup(provider);
     configs['MELCHIOR-1'].apiKey = 'secret-test-key';
     const created = await engine.createDecision({ ...request, subject: 'secret-test-key' });

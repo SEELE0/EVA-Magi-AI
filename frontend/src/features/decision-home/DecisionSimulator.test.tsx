@@ -6,9 +6,11 @@
  */
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nextProvider } from 'react-i18next';
 import type { Decision, SystemStatus } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
+import i18n from '../../i18n';
 import { defaultAgents } from '../decision-console/console-config';
 import { DecisionSimulator } from './DecisionSimulator';
 import { markHoneycombRevealAsPlayed } from './honeycomb-reveal';
@@ -46,24 +48,31 @@ function serviceStub(): DecisionService {
   };
 }
 
-afterEach(() => {
+beforeEach(async () => {
+  await i18n.changeLanguage('en-US');
+});
+
+afterEach(async () => {
   document.body.innerHTML = '';
   window.sessionStorage.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  await i18n.changeLanguage('zh-CN');
 });
 
 function simulatorElement(revealReady?: boolean) {
   return (
-    <DecisionSimulator
-      service={serviceStub()}
-      agents={defaultAgents}
-      configs={cloneAgentConfigs()}
-      revealReady={revealReady}
-      onOpenConfig={vi.fn()}
-      onHistoryCreated={vi.fn()}
-      onStatusChange={vi.fn()}
-    />
+    <I18nextProvider i18n={i18n}>
+      <DecisionSimulator
+        service={serviceStub()}
+        agents={defaultAgents}
+        configs={cloneAgentConfigs()}
+        revealReady={revealReady}
+        onOpenConfig={vi.fn()}
+        onHistoryCreated={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    </I18nextProvider>
   );
 }
 
@@ -73,6 +82,22 @@ function stubRevealSurfaces() {
 }
 
 describe('DecisionSimulator', () => {
+  it('removes the advanced priority and scenario controls', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(simulatorElement(false));
+    });
+
+    expect(container.querySelector('.magi-home__advanced-options')).toBeNull();
+    expect(container.querySelector('#magi-home-priority')).toBeNull();
+    expect(container.querySelector('#magi-home-scenario')).toBeNull();
+
+    act(() => root.unmount());
+  });
+
   it('keeps an interrupted non-terminal decision in the error phase', async () => {
     const container = document.createElement('div');
     document.body.appendChild(container);

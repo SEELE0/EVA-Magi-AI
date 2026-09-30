@@ -34,6 +34,7 @@ export interface SystemStatus {
 export interface DecisionRequest {
   subject: string;
   priority: 'low' | 'normal' | 'critical';
+  /** Legacy request metadata retained for the isolated design testbed. */
   simulationHint?: 'standard' | 'reject' | 'review';
 }
 

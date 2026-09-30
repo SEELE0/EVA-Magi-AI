@@ -29,8 +29,25 @@ describe('AgentConfigDialog BASE URL validation', () => {
 
     expect(markup).not.toContain('type="url"');
     expect(markup).not.toContain('type="password"');
-    expect(markup).toContain('役割カード PROMPT');
+    expect(markup).toContain('役割プロンプト');
     expect(markup).not.toContain('required=""');
+  });
+
+  it('renders the built-in role prompt in the selected interface language', async () => {
+    await i18n.changeLanguage('zh-CN');
+    const config = cloneAgentConfigs()['MELCHIOR-1'];
+    const markup = renderDialog(config);
+
+    expect(markup).toContain('请以科学家的视角进行判断');
+    expect(markup).not.toContain('あなたは科学者として');
+  });
+
+  it('keeps a user-edited role prompt unchanged when the interface is localized', async () => {
+    await i18n.changeLanguage('zh-CN');
+    const config = { ...cloneAgentConfigs()['MELCHIOR-1'], prompt: 'User-authored prompt text.' };
+    const markup = renderDialog(config);
+
+    expect(markup).toContain('User-authored prompt text.');
   });
 
   it('requires a valid URL for compatible connection modes', () => {
@@ -55,6 +72,6 @@ describe('AgentConfigDialog BASE URL validation', () => {
     expect(markup).toContain('BALTHASAR-2 ノード設定');
     expect(markup).toContain('aria-label="設定を閉じる"><span aria-hidden="true">×</span></button>');
     expect(markup).toContain('接続情報の入力は不要です');
-    expect(markup).toContain('役割カード PROMPT');
+    expect(markup).toContain('役割プロンプト');
   });
 });

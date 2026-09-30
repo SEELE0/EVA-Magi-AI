@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Agent, AgentId, SystemStatus } from '../../domain/decision';
 import { Readout } from '../decision-console/ConsolePrimitives';
@@ -37,6 +37,9 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
   const { configs, service, storageWarning } = runtime;
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [startupError, setStartupError] = useState<string | null>(null);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
+  const navControlsRef = useRef<HTMLDivElement>(null);
+  const navMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const clockTimer = window.setInterval(() => setClock(new Date()), 1000);
@@ -67,6 +70,28 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
     return () => window.removeEventListener('hashchange', updateRoute);
   }, []);
 
+  useEffect(() => {
+    if (!navMenuOpen) return;
+
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      const target = event.target;
+      const isLanguageOption = target instanceof Element && target.closest('.magi-select__positioner--language-icon');
+      if (!navControlsRef.current?.contains(target as Node) && !isLanguageOption) setNavMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setNavMenuOpen(false);
+      navMenuButtonRef.current?.focus();
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsidePress);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePress);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [navMenuOpen]);
+
   function addHistoryEntry(entry: DecisionHistoryEntry) {
     setHistory((current) => {
       const next = prependDecisionHistory(current, entry);
@@ -81,44 +106,60 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
     <main className="magi-home">
       <div className="screen-noise" aria-hidden="true" />
       <div className="magi-home__scanlines" aria-hidden="true" />
-      <header className="magi-home__masthead">
-      <div className="topbar">
-        <div className="brand-block">
-          <span className="brand-mark" aria-hidden="true">
-            <img src={nervLogoUrl} alt="" />
-          </span>
-          <div>
-            <p className="eyebrow">特務機関NERV</p>
-            <h1>MAGI <span>System</span></h1>
+      <header className="magi-home__masthead" data-nav-menu-open={navMenuOpen}>
+        <div className="topbar">
+          <div className="brand-block">
+            <span className="brand-mark" aria-hidden="true">
+              <img src={nervLogoUrl} alt="" />
+            </span>
+            <div>
+              <p className="eyebrow">特務機関NERV</p>
+              <h1>MAGI <span>System</span></h1>
+            </div>
+          </div>
+          <div className="magi-home__nav-controls" ref={navControlsRef}>
+            <button
+              ref={navMenuButtonRef}
+              type="button"
+              className="magi-home__nav-menu-toggle"
+              aria-expanded={navMenuOpen}
+              aria-controls="magi-primary-navigation"
+              aria-label={navMenuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+              title={navMenuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+              onClick={() => setNavMenuOpen((open) => !open)}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="square">
+                {navMenuOpen ? <path d="m6 6 12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+              </svg>
+            </button>
+            <nav id="magi-primary-navigation" className="magi-home__primary-nav" aria-label={t('nav.label')} data-menu-open={navMenuOpen}>
+              <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined} onClick={() => setNavMenuOpen(false)}>{t('common.decision')}</a>
+              <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined} onClick={() => setNavMenuOpen(false)}>{t('common.history')}</a>
+              <RuntimeSettings
+                runtime={runtime}
+                selectedAgentId={selectedAgentId}
+                onCloseNode={() => setSelectedAgentId(null)}
+                onSaved={() => { void service.getSystemStatus().then(setStatus).catch(() => undefined); }}
+                renderEntry={({ openOverall, openSettingBook }) => <div className="magi-home__nav-actions">
+                  <button type="button" className="magi-home__nav-button" onClick={() => { setNavMenuOpen(false); openOverall(); }}>{t('nav.settings')}</button>
+                  <button type="button" className="magi-home__nav-button" onClick={() => { setNavMenuOpen(false); openSettingBook(); }}>{t('common.settingBook')}</button>
+                </div>}
+              />
+            </nav>
+            <LanguageSelector onLocaleChange={() => setNavMenuOpen(false)} />
           </div>
         </div>
-        <nav className="magi-home__primary-nav" aria-label={t('nav.label')}>
-          <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined}>{t('common.decision')}</a>
-          <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined}>{t('common.history')}</a>
-          <RuntimeSettings
-            runtime={runtime}
-            selectedAgentId={selectedAgentId}
-            onCloseNode={() => setSelectedAgentId(null)}
-            onSaved={() => { void service.getSystemStatus().then(setStatus).catch(() => undefined); }}
-            renderEntry={({ openOverall, openSettingBook }) => <>
-              <button type="button" className="magi-home__nav-button" onClick={openOverall}>{t('common.setting')}</button>
-              <button type="button" className="magi-home__nav-button" onClick={openSettingBook}>{t('common.settingBook')}</button>
-            </>}
-          />
-          <LanguageSelector />
-        </nav>
-      </div>
-      <div className="magi-home__telemetry" aria-label={t('nav.status')}>
-        <div className="magi-home__system-status" data-connection={startupError ? 'offline' : status?.connection ?? 'offline'} aria-live="polite">
-          <span aria-hidden="true" />
-          <strong>{startupError ?? (status ? t(`status.${status.connection}`) : t('status.connecting'))}</strong>
-          <small>{status?.protocol ?? 'MAGI/3.0'}</small>
+        <div className="magi-home__telemetry" aria-label={t('nav.status')}>
+          <div className="magi-home__system-status" data-connection={startupError ? 'offline' : status?.connection ?? 'offline'} aria-live="polite">
+            <span aria-hidden="true" />
+            <strong>{startupError ?? (status ? t(`status.${status.connection}`) : t('status.connecting'))}</strong>
+            <small>{status?.protocol ?? 'MAGI/3.0'}</small>
+          </div>
+          <div className="header-readout">
+            <Readout label={t('settings.connection')} value={status ? t(`status.${status.connection}`) : t('status.starting')} tone={status?.connection ?? 'offline'} />
+            <Readout label={i18n.language.startsWith('en') ? 'TIME' : i18n.language === 'zh-TW' ? '時間' : i18n.language.startsWith('zh') ? '时间' : '時刻'} value={formatTime(clock, i18n.language)} tone="online" />
+          </div>
         </div>
-        <div className="header-readout">
-          <Readout label={t('settings.connection')} value={status ? t(`status.${status.connection}`) : t('status.starting')} tone={status?.connection ?? 'offline'} />
-          <Readout label={i18n.language.startsWith('en') ? 'TIME' : i18n.language === 'zh-TW' ? '時間' : i18n.language.startsWith('zh') ? '时间' : '時刻'} value={formatTime(clock, i18n.language)} tone="online" />
-        </div>
-      </div>
       </header>
 
       {storageWarning || historyWarning ? <p role="status">{t('history.notStored')}</p> : null}

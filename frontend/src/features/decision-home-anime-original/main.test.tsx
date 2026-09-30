@@ -164,7 +164,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(workspace?.querySelector('.terminal-screen')?.nextElementSibling).toBe(composer);
     expect(toolbar?.parentElement).toBe(composer?.querySelector('.motion-composer__header'));
     expect(toolbar?.parentElement?.querySelector('.motion-composer__heading')).not.toBeNull();
-    expect(iconButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['履歴', '全体設定', '設定書']);
+    expect(iconButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['履歴', '設定', '設定書']);
     expect(iconButtons.every((button) => button.querySelector('svg') !== null)).toBe(true);
     expect(toolbar?.querySelector('[role="combobox"]')).not.toBeNull();
   });
@@ -229,7 +229,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(container.querySelector('.motion-composer')?.classList.contains('is-collapsed')).toBe(true);
     expect(container.querySelector('.motion-composer')?.hasAttribute('inert')).toBe(false);
     expect(container.querySelector('.motion-composer__form')).toBeNull();
-    expect(container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="全体設定"]')?.disabled).toBe(false);
+    expect(container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="設定"]')?.disabled).toBe(false);
     expect(container.querySelector('.agent-module')?.getAttribute('aria-disabled')).toBe('true');
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.dataset.positionY).toBe('-81');
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.style.transform).toBe('translate(0px, -81px) scale(1)');
@@ -253,7 +253,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(newMotionButton).not.toBeNull();
     expect(container.querySelector('.terminal-screen .direct-link-new-motion')).toBeNull();
 
-    act(() => container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="全体設定"]')?.click());
+    act(() => container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="設定"]')?.click());
     const settingsDialog = container.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
     expect(settingsDialog?.hasAttribute('open')).toBe(true);
     act(() => settingsDialog?.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.click());

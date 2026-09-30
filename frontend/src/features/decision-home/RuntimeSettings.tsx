@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 SEELE0
  * SPDX-License-Identifier: AGPL-3.0-or-later */
 import { useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { AgentId } from '../../domain/decision';
 import { AgentConfigDialog } from './AgentConfigDialog';
@@ -34,20 +35,24 @@ export function RuntimeSettings({ runtime, selectedAgentId, onCloseNode, variant
     </div>
   );
 
-  return <>
-    {fallbackEntry}
-    {renderEntry?.({ openOverall: () => open('overall'), openSettingBook: () => open('book') })}
+  const dialogs = <>
     <AgentConfigDialog
-      config={view === 'overall' ? settings.global : selectedAgentId ? settings.nodes[selectedAgentId] : null}
-      globalConfig={view === 'overall' ? undefined : settings.global}
-      source={selectedAgentId ? settings.sources[selectedAgentId] : 'global'}
-      sourceConfigs={configs}
+      config={view === 'overall' ? settings.global : selectedAgentId ? configs[selectedAgentId] : null}
       overall={view === 'overall'}
       variant={variant}
       onClose={() => { setView(null); onCloseNode(); }}
-      onSave={(config, source) => {
-        if (view === 'overall') runtime.saveGlobalConfig(config);
-        else if (selectedAgentId) runtime.saveAgentConfig(config, source ?? selectedAgentId);
+      onSave={(config) => {
+        if (view === 'overall') {
+          runtime.saveGlobalConfig(config);
+        } else if (selectedAgentId) {
+          // 连接参数未被修改时保持原有配置来源，避免仅查看/保存 Prompt 就脱离全局继承。
+          const before = configs[selectedAgentId];
+          const untouched = before.connection === config.connection
+            && before.baseUrl === config.baseUrl
+            && before.model === config.model
+            && before.apiKey === config.apiKey;
+          runtime.saveAgentConfig(config, untouched ? settings.sources[selectedAgentId] ?? selectedAgentId : selectedAgentId);
+        }
         onSaved?.();
       }}
     />
@@ -61,5 +66,11 @@ export function RuntimeSettings({ runtime, selectedAgentId, onCloseNode, variant
         onSaved?.();
       }}
     />
+  </>;
+
+  return <>
+    {fallbackEntry}
+    {renderEntry?.({ openOverall: () => open('overall'), openSettingBook: () => open('book') })}
+    {typeof document === 'undefined' ? dialogs : createPortal(dialogs, document.body)}
   </>;
 }

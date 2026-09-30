@@ -5,34 +5,23 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AGENT_IDS, type AgentId } from '../../domain/decision';
-import type { AgentConfigMap, AgentConnectionMode, AgentRuntimeConfig } from '../../domain/agent-config';
-import type { AgentConfigSource } from '../../domain/shared-settings';
+import { localizeDefaultAgentPrompt, type AgentConnectionMode, type AgentRuntimeConfig } from '../../domain/agent-config';
 import { ChatCompletionsProvider, validateAgentConfig } from '../../providers/chat-completions-provider';
 import { MOCK_CONNECTION_BASE_URL, mockModelFor } from './simulator-config';
 import './AgentConfigDialog.css';
-import { MagiSelect } from '../../components/MagiSelect';
 import { localizeError } from '../../i18n-error';
+import { normalizeLocale } from '../../i18n';
 
 interface AgentConfigDialogProps {
   config: AgentRuntimeConfig | null;
   onClose: () => void;
-  onSave: (config: AgentRuntimeConfig, source?: AgentConfigSource) => void;
-  globalConfig?: AgentRuntimeConfig;
-  source?: AgentConfigSource;
-  /** Effective node configs, used when a node selects another node as its source. */
-  sourceConfigs?: AgentConfigMap;
+  onSave: (config: AgentRuntimeConfig) => void;
   overall?: boolean;
   variant?: 'modern' | 'original';
 }
 
 const connectionModes: AgentConnectionMode[] = ['mock', 'openai-compatible', 'local-compatible'];
-
-function sourceLabel(source: AgentConfigSource, t: ReturnType<typeof useTranslation>['t']): string {
-  if (source === 'global') return t('settings.sourceGlobal');
-  const index = AGENT_IDS.indexOf(source) + 1;
-  return t('settings.sourceNode', { index, id: source });
-}
+type ConnectionTestStatus = 'idle' | 'testing' | 'success' | 'failure';
 
 /** 接続方式切替時に模擬回線の哨兵値と実接続の空欄を入れ替える。 */
 function switchConnection(draft: AgentRuntimeConfig, mode: AgentConnectionMode): AgentRuntimeConfig {
@@ -55,38 +44,53 @@ export function AgentConfigDialog({
   onClose,
   onSave,
   variant = 'modern',
-  globalConfig,
-  source = 'global',
-  sourceConfigs,
   overall = false
 }: AgentConfigDialogProps) {
-  const { t } = useTranslation();
-  const [selectedSource, setSelectedSource] = useState<AgentConfigSource>(source);
-  const [draft, setDraft] = useState<AgentRuntimeConfig | null>(config ? { ...config } : null);
+  const { t, i18n } = useTranslation();
+  const locale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language ?? 'zh-CN');
+  const [draft, setDraft] = useState<AgentRuntimeConfig | null>(config ? {
+    ...config,
+    prompt: localizeDefaultAgentPrompt(config.agentId, config.prompt, locale)
+  } : null);
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [testStatus, setTestStatus] = useState('');
+  const [testStatusKind, setTestStatusKind] = useState<ConnectionTestStatus>('idle');
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const testController = useRef<AbortController | null>(null);
+  // 以弹窗目标（节点 ID / overall）作为重置依据：config 对象引用在每次父级渲染时都会变化，
+  // 若直接依赖 config，外部状态刷新会不停重置 draft，导致输入无法进行。
+  const dialogKey = config ? `${overall ? 'overall' : config.agentId}` : null;
 
   useEffect(() => {
     const dialog = dialogRef.current;
     setError(null);
-    setSelectedSource(source);
-    setDraft(config ? { ...config } : null);
+    setDraft(config ? {
+      ...config,
+      prompt: localizeDefaultAgentPrompt(config.agentId, config.prompt, locale)
+    } : null);
     setApiKeyVisible(false);
     if (config && dialog && !dialog.open) dialog.showModal();
     if (!config && dialog?.open) dialog.close();
-  }, [config, source]);
+  }, [dialogKey]);
+
+  useEffect(() => {
+    setDraft((current) => {
+      if (!current) return current;
+      const prompt = localizeDefaultAgentPrompt(current.agentId, current.prompt, locale);
+      return prompt === current.prompt ? current : { ...current, prompt };
+    });
+  }, [locale]);
 
   useEffect(() => {
     testController.current?.abort();
     testController.current = null;
     setTesting(false);
     setTestStatus('');
+    setTestStatusKind('idle');
     return () => testController.current?.abort();
-  }, [draft, selectedSource]);
+  }, [draft]);
 
   function closeDialog() {
     testController.current?.abort();
@@ -95,25 +99,23 @@ export function AgentConfigDialog({
     onClose();
   }
 
-  function effectiveConfig(value: AgentRuntimeConfig): AgentRuntimeConfig {
-    if (overall || !globalConfig || !sourceConfigs || selectedSource === value.agentId) return value;
-    const inherited = selectedSource === 'global' ? globalConfig : sourceConfigs[selectedSource as AgentId];
-    if (!inherited) return value;
-    return { ...value, connection: inherited.connection, baseUrl: inherited.baseUrl, model: inherited.model, apiKey: inherited.apiKey };
-  }
-
   async function testConnection() {
     if (!draft || testing) return;
     const controller = new AbortController();
     testController.current = controller;
     setTesting(true);
+    setTestStatusKind('testing');
     setTestStatus(t('settings.testing'));
     const start = performance.now();
     try {
-      await new ChatCompletionsProvider(15000).testConnection(effectiveConfig(draft), controller.signal);
-      if (testController.current === controller) setTestStatus(t('settings.testSuccess', { ms: Math.round(performance.now() - start) }));
+      await new ChatCompletionsProvider(15000).testConnection(draft, controller.signal);
+      if (testController.current === controller) {
+        setTestStatusKind('success');
+        setTestStatus(t('settings.testSuccess', { ms: Math.round(performance.now() - start) }));
+      }
     } catch (cause) {
       if (testController.current === controller && !controller.signal.aborted) {
+        setTestStatusKind('failure');
         setTestStatus(t('settings.testFailed', { ms: Math.round(performance.now() - start), message: localizeError(cause, t) }));
       }
     } finally {
@@ -125,22 +127,16 @@ export function AgentConfigDialog({
     event.preventDefault();
     if (!draft) return;
     try {
-      validateAgentConfig(effectiveConfig(draft));
-      onSave({ ...draft }, overall ? undefined : selectedSource);
+      validateAgentConfig(draft);
+      onSave({ ...draft });
       closeDialog();
     } catch (cause) {
       setError(localizeError(cause, t));
     }
   }
 
-  const effective = draft ? effectiveConfig(draft) : null;
-  const isInherited = !overall && !!draft && selectedSource !== draft.agentId;
   const connectionLabel = (mode: AgentConnectionMode) => mode === 'mock'
     ? t('settings.mock') : mode === 'openai-compatible' ? t('settings.openai') : t('settings.local');
-  const sourceOptions = [
-    { value: 'global', label: t('settings.sourceGlobal') },
-    ...AGENT_IDS.map((id, index) => ({ value: id, label: t('settings.sourceNode', { index: index + 1, id }) }))
-  ];
 
   return (
     <dialog
@@ -155,7 +151,7 @@ export function AgentConfigDialog({
         if (config) onClose();
       }}
     >
-      {draft && effective ? (
+      {draft ? (
         <form method="dialog" className="magi-home__config-form" onSubmit={submit}>
           <header className="magi-home__config-header">
             <div>
@@ -167,25 +163,13 @@ export function AgentConfigDialog({
             </button>
           </header>
 
-          {!overall ? <>
-            <label className="magi-home__config-field magi-home__config-source">
-              <span>{t('settings.source')}</span>
-              <MagiSelect ariaLabel={t('settings.source')} value={selectedSource} options={sourceOptions}
-                onValueChange={(value) => {
-                  setSelectedSource(value as AgentConfigSource);
-                  setApiKeyVisible(false);
-                }} portalContainer={dialogRef} />
-            </label>
-            <div className="magi-home__config-identity">
+          {!overall ? <div className="magi-home__config-identity">
               <span>{t('settings.role')}</span>
               <strong>{draft.role}</strong>
-              <span>{t('settings.currentSource')}</span>
-              <strong>{sourceLabel(selectedSource, t)}</strong>
             </div>
-            {isInherited ? <p className="magi-home__credential-note">{t('settings.inherited', { source: sourceLabel(selectedSource, t) })}</p> : null}
-          </> : effective.connection !== 'mock' ? <p className="magi-home__credential-note">{t('settings.security')}</p> : null}
+          : draft.connection !== 'mock' ? <p className="magi-home__credential-note">{t('settings.security')}</p> : null}
 
-          <fieldset disabled={isInherited} className="magi-home__connection-fields">
+          <fieldset className="magi-home__connection-fields">
             <fieldset className="magi-home__connection-options">
               <legend>{t('settings.connection')}</legend>
               <div>
@@ -195,7 +179,7 @@ export function AgentConfigDialog({
                       type="radio"
                       name={`agent-connection-${draft.agentId}`}
                       value={mode}
-                      checked={effective.connection === mode}
+                      checked={draft.connection === mode}
                       onChange={() => {
                         setDraft((current) => (current ? switchConnection(current, mode) : current));
                         setApiKeyVisible(false);
@@ -207,14 +191,14 @@ export function AgentConfigDialog({
               </div>
             </fieldset>
 
-            {effective.connection !== 'mock' ? <>
+            {draft.connection !== 'mock' ? <>
               <label className="magi-home__config-field">
                 <span>{t('settings.baseUrl')}</span>
-                <input type="url" inputMode="url" maxLength={500} value={effective.baseUrl} onChange={(event) => setDraft({ ...draft, baseUrl: event.target.value })} autoComplete="off" placeholder="https://api.openai.com/v1" required />
+                <input type="url" inputMode="url" maxLength={500} value={draft.baseUrl} onChange={(event) => setDraft({ ...draft, baseUrl: event.target.value })} autoComplete="off" placeholder="https://api.openai.com/v1" required />
               </label>
               <label className="magi-home__config-field">
                 <span>{t('settings.model')}</span>
-                <input required maxLength={200} value={effective.model} onChange={(event) => setDraft({ ...draft, model: event.target.value })} autoComplete="off" placeholder={t('settings.modelPlaceholder')} />
+                <input required maxLength={200} value={draft.model} onChange={(event) => setDraft({ ...draft, model: event.target.value })} autoComplete="off" placeholder={t('settings.modelPlaceholder')} />
               </label>
               <div className="magi-home__config-field magi-home__api-key-field">
                 <label htmlFor={`magi-home-api-key-${draft.agentId}`}>{t('settings.apiKey')}</label>
@@ -224,7 +208,7 @@ export function AgentConfigDialog({
                     className="magi-home__api-key-input"
                     type={apiKeyVisible ? 'text' : 'password'}
                     maxLength={4096}
-                    value={effective.apiKey}
+                    value={draft.apiKey}
                     onChange={(event) => setDraft({ ...draft, apiKey: event.target.value })}
                     autoComplete="new-password"
                     spellCheck={false}
@@ -255,8 +239,10 @@ export function AgentConfigDialog({
           </fieldset>
 
           <div className="magi-home__connection-test">
-            <button type="button" onClick={() => void testConnection()} disabled={testing || effective.connection === 'mock'}>{t('settings.test')}</button>
-            <p role="status" aria-live="polite">{testStatus || (effective.connection === 'mock' ? t('settings.mockWarning') : t('settings.testHelp'))}</p>
+            <button type="button" onClick={() => void testConnection()} disabled={testing || draft.connection === 'mock'}>{t('settings.test')}</button>
+            <p className="magi-home__connection-test-status" data-state={testStatusKind} role="status" aria-live="polite">
+              {testStatus || (draft.connection === 'mock' ? t('settings.mockWarning') : t('settings.testHelp'))}
+            </p>
           </div>
 
           {!overall ? <label className="magi-home__config-field magi-home__config-prompt">
@@ -264,7 +250,7 @@ export function AgentConfigDialog({
             <textarea maxLength={12000} value={draft.prompt} onChange={(event) => setDraft({ ...draft, prompt: event.target.value })} rows={9} />
           </label> : null}
 
-          {!overall && effective.connection !== 'mock' ? <p className="magi-home__credential-note">{t('settings.security')}</p> : null}
+          {!overall && draft.connection !== 'mock' ? <p className="magi-home__credential-note">{t('settings.security')}</p> : null}
           {error ? <p role="alert">{error}</p> : null}
           <footer className="magi-home__config-actions">
             <button type="button" onClick={closeDialog}>{t('common.cancel')}</button>

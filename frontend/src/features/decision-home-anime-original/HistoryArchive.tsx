@@ -18,7 +18,7 @@ export function HistoryArchive({ entries, onClose }: { entries: DecisionHistoryE
   return (
     <dialog className="direct-history" ref={dialog} aria-labelledby="direct-history-title" onCancel={onClose} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="direct-history__panel">
-        <header><div><small>{t('history.localArchive')}</small><h2 id="direct-history-title">{t('history.title')} <span>{String(entries.length).padStart(2, '0')}</span></h2></div><button type="button" onClick={onClose} aria-label={t('history.close')} autoFocus>{t('common.close')} ×</button></header>
+        <header><div><small>{t('history.localArchive')}</small><h2 id="direct-history-title">{t('history.title')} <span>{String(entries.length).padStart(2, '0')}</span></h2></div><button className="direct-history__close" type="button" onClick={onClose} aria-label={t('history.close')} title={t('history.close')} autoFocus><span aria-hidden="true">×</span></button></header>
         <p className="direct-history__notice">{t('history.recent', { count: Math.min(entries.length, 30) })}</p>
         {entries.length === 0 ? <p className="direct-history__empty">{t('history.noRecords')}</p> : (
           <ol>{entries.map((entry) => <li key={entry.id}>

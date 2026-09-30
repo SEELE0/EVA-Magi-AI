@@ -10,30 +10,29 @@ const languageItems: Array<{ value: MagiLocale; key: string }> = [
   { value: 'ja-JP', key: 'language.ja' }
 ];
 
-export function LanguageSelector({ variant = 'modern', iconOnly = false }: { variant?: 'modern' | 'original'; iconOnly?: boolean }) {
+export function LanguageSelector({ variant = 'modern', onLocaleChange }: { variant?: 'modern' | 'original'; onLocaleChange?: () => void }) {
   const { t, i18n } = useTranslation();
   const currentLocale = (i18n.resolvedLanguage ?? i18n.language ?? 'en-US') as MagiLocale;
   const options = languageItems.map(({ value, key }) => ({ value, label: t(key) }));
   const selectedLocale = languageItems.some((item) => item.value === currentLocale) ? currentLocale : 'en-US';
 
   return (
-    <div className={`magi-language-selector magi-language-selector--${variant}${iconOnly ? ' magi-language-selector--icon' : ''}`}>
-      {!iconOnly ? <span className="magi-language-selector__label">{t('language.label')}</span> : null}
+    <div className={`magi-language-selector magi-language-selector--${variant} magi-language-selector--icon`}>
       <MagiSelect
-        ariaLabel={iconOnly ? `${t('nav.language')}: ${options.find((item) => item.value === selectedLocale)?.label}` : t('nav.language')}
+        ariaLabel={t('nav.language')}
         className="magi-language-selector__trigger"
         options={options}
-        positionerClassName={iconOnly ? 'magi-select__positioner--language-icon' : undefined}
-        title={iconOnly ? `${t('language.label')}: ${options.find((item) => item.value === selectedLocale)?.label}` : undefined}
-        triggerContent={iconOnly ? (
+        positionerClassName="magi-select__positioner--language-icon"
+        title={t('nav.language')}
+        triggerContent={
           <span
             aria-hidden="true"
             className="magi-language-selector__translate-icon"
             style={{ maskImage: `url("${translateIcon}")`, WebkitMaskImage: `url("${translateIcon}")` }}
           />
-        ) : undefined}
+        }
         value={selectedLocale}
-        onValueChange={(locale) => { void setMagiLocale(locale as MagiLocale); }}
+        onValueChange={(locale) => { void setMagiLocale(locale as MagiLocale); onLocaleChange?.(); }}
       />
     </div>
   );

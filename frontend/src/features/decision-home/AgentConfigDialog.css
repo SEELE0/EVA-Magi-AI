@@ -113,6 +113,13 @@
 .magi-home__api-key-toggle:disabled { cursor: not-allowed; }
 .magi-home__config-field .magi-select__trigger { width: 100%; min-height: 46px; padding: 10px 12px; }
 .magi-home__config-field textarea { min-height: 196px; padding: 12px; resize: vertical; line-height: 1.55; }
+.magi-home__config-prompt:not(.magi-home__setting-book-field) textarea {
+  font-family: var(--font-eva-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.7;
+  letter-spacing: 0.015em;
+}
 
 .magi-home__credential-note {
   margin: 0;
@@ -181,6 +188,7 @@
 .magi-home__connection-test button, .magi-home__restore-background { min-height: 44px; padding: 8px 14px; border: 1px solid #805511; color: var(--config-accent); background: transparent; cursor: pointer; }
 .magi-home__connection-test button:disabled { opacity: .5; cursor: not-allowed; }
 .magi-home__connection-test p { flex: 1 1 220px; margin: 0; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.magi-home__connection-test-status[data-state='failure'] { color: #ff6b61; }
 .magi-home__restore-background { justify-self: start; }
 @media (max-width: 760px) {
   .magi-settings-entry { font-size: 11px; }

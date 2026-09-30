@@ -50,4 +50,5 @@ export const scenarioSubject: Record<Scenario, string> = {
   review: '【保留】観測プロトコルの起動可否'
 };
 
-export const defaultPriority: DecisionRequest['priority'] = 'critical';
+export const defaultSubject = scenarioSubject.standard;
+export const defaultPriority: DecisionRequest['priority'] = 'normal';

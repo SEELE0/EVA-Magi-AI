@@ -64,10 +64,11 @@ describe('BootIntro layout CSS', () => {
     expect(css).not.toMatch(/@media \((?:max|min)-(?:width|height):/);
   });
 
-  it('uses one touch-safe portrait composition whose free row absorbs extra height', () => {
-    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-terminal-body\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*grid-template-rows:\s*710px minmax\(0, 1fr\);/);
-    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-option\s*\{[^}]*min-height:\s*68px;/);
-    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-confirm\s*\{[^}]*min-height:\s*68px;/);
+  it('shares portrait height with the MAGI artwork and keeps mode controls compact and touch-safe', () => {
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-terminal-body\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*grid-template-rows:\s*minmax\(max-content, 1\.25fr\) minmax\(0, 1fr\);/);
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-option\s*\{[^}]*min-height:\s*48px;/);
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-option\.is-selected\s*\{[^}]*background-size:\s*min\(100%, 620px\) 100%;/);
+    expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-mode-confirm\s*\{[^}]*min-height:\s*52px;/);
     expect(css).toMatch(/\[data-boot-layout='portrait'\]\s+\.boot-magi-slot\s*\{[^}]*border-top:\s*1px dashed/);
   });
 

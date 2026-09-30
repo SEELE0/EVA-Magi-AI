@@ -70,9 +70,29 @@
 .magi-select__indicator { position: absolute; right: 12px; color: #ffad42; font-size: 14px; }
 
 .magi-language-selector { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.magi-language-selector__label { color: #a66d36; font: 10px/1.2 var(--font-eva-data, monospace); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-.magi-language-selector__trigger { min-width: 126px; min-height: 36px; padding: 6px 9px; font-size: 12px; }
-.magi-language-selector--original .magi-language-selector__trigger { min-width: 142px; }
+.magi-language-selector__trigger { min-height: 36px; padding: 6px 9px; font-size: 12px; }
+.magi-language-selector--icon .magi-language-selector__trigger {
+  display: grid;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #c88738;
+  background: transparent;
+  box-shadow: none;
+}
+.magi-language-selector--icon .magi-language-selector__trigger:hover,
+.magi-language-selector--icon .magi-language-selector__trigger[data-popup-open] {
+  color: #ffd595;
+  background: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+.magi-language-selector--icon .magi-select__icon { display: none; }
 .magi-language-selector__translate-icon {
   display: block;
   width: 22px;
@@ -86,11 +106,8 @@
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-size: contain;
 }
-
 @media (max-width: 700px) {
   .magi-language-selector { gap: 5px; }
-  .magi-language-selector__label { display: none; }
-  .magi-language-selector__trigger { min-width: 112px; min-height: 38px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

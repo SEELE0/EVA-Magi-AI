@@ -11,11 +11,7 @@ import type { Agent, AgentId, Decision, DecisionRequest, SystemStatus } from '..
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentNode } from '../decision-console/ConsolePrimitives';
-import {
-  defaultPriority,
-  scenarioSubject,
-  type Scenario
-} from '../decision-console/console-config';
+import { defaultPriority, defaultSubject } from '../decision-console/console-config';
 import {
   DECISION_NETWORK_LAYOUT,
   toDecisionNetworkCssVariables,
@@ -25,7 +21,6 @@ import {
 } from './decision-network-layout';
 import { createDecisionHistoryEntry } from './simulator-responses';
 import type { AgentConfigMap, DecisionHistoryEntry } from './simulator-types';
-import { MagiSelect } from '../../components/MagiSelect';
 import { localizeError } from '../../i18n-error';
 
 interface DecisionSimulatorProps {
@@ -239,20 +234,14 @@ export function DecisionSimulator({
   onStatusChange
 }: DecisionSimulatorProps) {
   const { t } = useTranslation();
-  const scenarioCopy: Record<Scenario, string> = {
-    standard: t('decision.standard'),
-    reject: t('decision.rejectScenario'),
-    review: t('decision.reviewScenario')
-  };
   const priorityCopy: Record<DecisionRequest['priority'], string> = {
     low: t('decision.low'),
     normal: t('decision.normal'),
     critical: t('decision.critical')
   };
   const [decision, setDecision] = useState<Decision | null>(null);
-  const [scenario, setScenario] = useState<Scenario>('standard');
-  const [subject, setSubject] = useState(scenarioSubject.standard);
-  const [priority, setPriority] = useState<DecisionRequest['priority']>(defaultPriority);
+  const [subject, setSubject] = useState(defaultSubject);
+  const priority = defaultPriority;
   const [isExecuting, setIsExecuting] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const finishReveal = useCallback(() => {
@@ -279,13 +268,6 @@ export function DecisionSimulator({
   function cancelActiveRun() {
     activeController.current?.abort();
     activeController.current = null;
-  }
-
-  function selectScenario(nextScenario: Scenario) {
-    setScenario(nextScenario);
-    setSubject(scenarioSubject[nextScenario]);
-    setDecision(null);
-    setError(null);
   }
 
   function updateSubject(nextSubject: string) {
@@ -319,7 +301,7 @@ export function DecisionSimulator({
     try {
       const requestOptions = { signal: controller.signal };
       const created = await service.createDecision(
-        { subject: subject.trim(), priority, simulationHint: scenario },
+        { subject: subject.trim(), priority },
         requestOptions
       );
       if (!mounted.current || controller.signal.aborted) return;
@@ -334,7 +316,7 @@ export function DecisionSimulator({
       await polling.catch(() => undefined);
       if (!mounted.current) return;
       setDecision(completed);
-      onHistoryCreated(createDecisionHistoryEntry(completed, scenario, agents, configs));
+      onHistoryCreated(createDecisionHistoryEntry(completed, 'standard', agents, configs));
       try {
         onStatusChange(await service.getSystemStatus());
       } catch {
@@ -432,7 +414,7 @@ export function DecisionSimulator({
           <div className="magi-home__input-summary" aria-label={t('decision.currentMotion')}>
             <span>{t('decision.activeMotion')}</span>
             <strong>{subject}</strong>
-            <small>{priorityCopy[priority]} / {scenarioCopy[scenario]}</small>
+            <small>{priorityCopy[priority]}</small>
           </div>
         ) : null}
         <label className="magi-home__subject-field" htmlFor="magi-home-subject">
@@ -449,35 +431,6 @@ export function DecisionSimulator({
           <small>{t('decision.characterCount', { count: subject.length })}</small>
         </label>
 
-        <details className="magi-home__advanced-options">
-          <summary>{t('decision.advanced')} <span>{priorityCopy[priority]} / {scenarioCopy[scenario]}</span></summary>
-          <div className="magi-home__advanced-fields">
-        <label className="magi-home__dock-field">
-          <span>{t('decision.priority')}</span>
-          <MagiSelect
-            id="magi-home-priority"
-            ariaLabel={t('decision.priority')}
-            value={priority}
-            options={(Object.keys(priorityCopy) as DecisionRequest['priority'][]).map((item) => ({ value: item, label: priorityCopy[item] }))}
-            onValueChange={(value) => setPriority(value as DecisionRequest['priority'])}
-            disabled={isExecuting}
-          />
-        </label>
-
-        <label className="magi-home__dock-field">
-          <span>{t('decision.scenario')}</span>
-          <MagiSelect
-            id="magi-home-scenario"
-            ariaLabel={t('decision.scenario')}
-            value={scenario}
-            options={(Object.keys(scenarioCopy) as Scenario[]).map((item) => ({ value: item, label: scenarioCopy[item] }))}
-            onValueChange={(value) => selectScenario(value as Scenario)}
-            disabled={isExecuting}
-          />
-        </label>
-
-          </div>
-        </details>
         <button className="magi-home__execute" type="button" onClick={() => void runDecision()} disabled={isExecuting}>
           <span>{isExecuting ? t('decision.pending') : t('decision.execute')}</span>
           <small>EXECUTE DECISION</small>

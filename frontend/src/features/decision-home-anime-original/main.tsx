@@ -489,7 +489,7 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
       setPhase('deliberation');
 
       const options = { signal: controller.signal };
-      const created = await service.createDecision({ subject: normalizedSubject, priority: 'normal', simulationHint: 'standard' }, options);
+      const created = await service.createDecision({ subject: normalizedSubject, priority: 'normal' }, options);
       if (!mounted.current || controller.signal.aborted) return;
       setDecision(created);
 
@@ -554,11 +554,11 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
                 onCloseNode={() => setSelectedAgentId(null)}
                 variant="original"
                 renderEntry={({ openOverall, openSettingBook }) => <>
-                  <button className="direct-link-control-button" type="button" aria-label={t('common.setting')} title={t('common.setting')} onClick={openOverall}><DirectControlIcon name="settings" /></button>
+                  <button className="direct-link-control-button" type="button" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openOverall}><DirectControlIcon name="settings" /></button>
                   <button className="direct-link-control-button" type="button" aria-label={t('common.settingBook')} title={t('common.settingBook')} onClick={openSettingBook}><DirectControlIcon name="book" /></button>
                 </>}
               />
-              <LanguageSelector variant="original" iconOnly />
+              <LanguageSelector variant="original" />
             </nav>
           }
           onChange={(value) => {
