@@ -4,8 +4,11 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { DecisionHome } from './DecisionHome';
+import i18n from '../../i18n';
+
+beforeEach(async () => { await i18n.changeLanguage('ja-JP'); });
 
 describe('DecisionHome structure', () => {
   it('renders the title bar, three MAGI personalities and decision controls', () => {
@@ -14,7 +17,7 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('特務機関NERV');
     expect(markup).toContain('MAGI');
     expect(markup).toContain('System');
-    expect(markup).toContain('回線');
+    expect(markup).toContain(i18n.t('settings.connection'));
     expect(markup).not.toContain('系統');
     expect(markup).toContain('時刻');
     expect(markup).toContain('class="topbar"');
@@ -29,11 +32,11 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('MELCHIOR-1');
     expect(markup).toContain('BALTHASAR-2');
     expect(markup).toContain('CASPER-3');
-    expect(markup).toContain('第03中枢');
+    expect(markup).toContain('MAGI/03');
     expect(markup).toContain('待機');
     expect(markup).toContain('正常');
     expect(markup).toContain('判定議題');
-    expect(markup).toContain('判定開始');
+    expect(markup).toContain(i18n.t('decision.execute'));
     expect(markup).toContain('magi-home__deliberation-grid');
     expect(markup).toContain('class="magi-network "');
     expect(markup).toContain('class="network-links"');
@@ -42,7 +45,7 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('--decision-node-top-y:-4%');
     expect(markup).toContain('--decision-node-top-height:46%');
     expect(markup).not.toContain('preserveAspectRatio="none"');
-    expect(markup).toContain('MELCHIOR-1 の設定を開く');
+    expect(markup).toContain('MELCHIOR-1 · 人格ノード設定');
     expect(markup).not.toContain('CFG-01');
     expect(markup).not.toContain('CFG-02');
     expect(markup).not.toContain('CFG-03');

@@ -254,7 +254,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(container.querySelector('.terminal-screen .direct-link-new-motion')).toBeNull();
 
     act(() => container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="設定"]')?.click());
-    const settingsDialog = container.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
+    const settingsDialog = document.body.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
     expect(settingsDialog?.hasAttribute('open')).toBe(true);
     act(() => settingsDialog?.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.click());
     expect(settingsDialog?.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.checked).toBe(true);
@@ -295,7 +295,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     ]);
 
     act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
-    const dialog = container.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
+    const dialog = document.body.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
     if (!dialog) throw new Error('Original node configuration dialog was not rendered.');
     expect(dialog.hasAttribute('open')).toBe(true);
     expect(dialog.textContent).toContain('BALTHASAR-2 ノード設定');
@@ -326,8 +326,8 @@ describe('DecisionHomeAnimeOriginal', () => {
     act(() => dialog.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
     act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
-    expect(container.querySelector<HTMLInputElement>('.magi-home__config-field input[maxlength="200"]')?.value).toBe('MAGI-SIM / CUSTOM');
-    const reopenedApiKey = container.querySelector<HTMLInputElement>('.magi-home__api-key-input');
+    expect(document.body.querySelector<HTMLInputElement>('.magi-home__config-field input[maxlength="200"]')?.value).toBe('MAGI-SIM / CUSTOM');
+    const reopenedApiKey = document.body.querySelector<HTMLInputElement>('.magi-home__api-key-input');
     expect(reopenedApiKey?.value).toBe('sk-page-memory-only');
     expect(reopenedApiKey?.type).toBe('password');
     expect(JSON.stringify(window.localStorage)).not.toContain('sk-page-memory-only');
