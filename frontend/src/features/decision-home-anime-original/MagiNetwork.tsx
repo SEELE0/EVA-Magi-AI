@@ -25,6 +25,7 @@ export interface MagiNetworkProps {
 }
 
 const voteClass: Record<Vote, string> = { pending: 'pending', approve: 'approve', reject: 'reject', abstain: 'abstain' };
+const voteLabel: Record<Vote, string> = { pending: '待機', approve: '承認', reject: '否決', abstain: '棄権' };
 
 function AgentFrame({ agent }: { readonly agent: AgentModuleLayout }) {
   return (
@@ -41,11 +42,9 @@ function AgentFrame({ agent }: { readonly agent: AgentModuleLayout }) {
 }
 
 function AgentContent({ agent, vote }: { readonly agent: AgentModuleLayout; readonly vote: Vote }) {
-  const { t } = useTranslation();
   const [nameX, nameY] = agent.namePlacement.anchor;
   const [voteX, voteY] = agent.votePlacement.anchor;
-  const label = t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`);
-  const presentation = { label, className: voteClass[vote] };
+  const presentation = { label: voteLabel[vote], className: voteClass[vote] };
 
   return (
     <g data-agent-content={agent.id}>

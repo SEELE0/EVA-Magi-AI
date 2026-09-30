@@ -373,7 +373,15 @@ body:has(.direct-link-page) {
   filter: url(#red-glow);
 }
 
-.direct-link-page .agent-module.vote-abstain { color: var(--direct-amber); filter: url(#amber-glow); }
+.direct-link-page .vote-box--abstain {
+  stroke: var(--direct-amber);
+  filter: url(#amber-glow);
+}
+
+.direct-link-page .vote-text--abstain {
+  fill: var(--direct-amber);
+  filter: url(#amber-glow);
+}
 
 .direct-link-live-status {
   position: fixed;
