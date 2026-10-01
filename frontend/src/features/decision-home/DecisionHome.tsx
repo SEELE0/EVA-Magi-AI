@@ -101,6 +101,8 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
   }
 
   const isHistoryRoute = route.name !== 'decision';
+  const connectionMode = status?.source
+    ?? (Object.values(configs).some((config) => config.connection !== 'mock') ? 'remote' : 'mock');
 
   return (
     <main className="magi-home">
@@ -156,7 +158,7 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
             <small>{status?.protocol ?? 'MAGI/3.0'}</small>
           </div>
           <div className="header-readout">
-            <Readout label={t('settings.connection')} value={status ? t(`status.${status.connection}`) : t('status.starting')} tone={status?.connection ?? 'offline'} />
+            <Readout label={t('settings.connection')} value={t(`connectionMode.${connectionMode}`)} tone={status?.connection ?? 'offline'} />
             <Readout label={i18n.language.startsWith('en') ? 'TIME' : i18n.language === 'zh-TW' ? '時間' : i18n.language.startsWith('zh') ? '时间' : '時刻'} value={formatTime(clock, i18n.language)} tone="online" />
           </div>
         </div>

@@ -85,7 +85,7 @@ describe('decision network geometry', () => {
       '--decision-node-top-width': '40%',
       '--decision-node-top-height': '46%',
       '--decision-node-left-y': '49.52%',
-      '--decision-node-right-x': '54%',
+      '--decision-node-right-x': '57%',
       '--decision-core-x': '50%',
       '--decision-core-y': '55%',
     });
@@ -96,7 +96,7 @@ describe('decision network geometry', () => {
     const path = toDecisionNetworkTopologyPath(layout);
 
     expect(path.match(/Z/g)).toHaveLength(3);
-    expect(path).toContain('M259.2 176.4L193.2 207.98');
-    expect(path).toContain('M276 333.79L324 333.79');
+    expect(path).toContain('M259.2 176.4L180.6 207.98');
+    expect(path).toContain('M258 333.79L342 333.79');
   });
 });

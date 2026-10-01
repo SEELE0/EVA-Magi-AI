@@ -66,7 +66,7 @@ export const DEFAULT_DECISION_NETWORK_METRICS: DecisionNetworkMetrics = {
   },
   lowerNodes: {
     top: 0.4952,
-    width: 0.46,
+    width: 0.43,
     height: 0.4048,
     innerShoulderY: 0.48,
     topInnerX: 0.7,

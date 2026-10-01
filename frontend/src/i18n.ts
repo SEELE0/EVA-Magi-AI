@@ -17,6 +17,7 @@ export function normalizeLocale(value: string): MagiLocale {
 
 const resources = {
   'zh-CN': { translation: {
+    connectionMode: { mock: '模拟', remote: 'API 接入' },
     language: { label: '界面语言', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: '关闭', cancel: '取消', save: '保存', restore: '恢复默认', node: '节点{{index}}', global: '全局设定', setting: '整体设定', settingBook: '设定书', decision: '判定', history: '历史', unavailable: '不可用' },
     nav: { label: 'MAGI 主导航', status: '系统状态', language: '选择界面语言', settings: '设置', openMenu: '打开导航菜单', closeMenu: '关闭导航菜单' },
@@ -31,6 +32,7 @@ const resources = {
     original: { terminal: 'MAGI 直连判定终端', history: '历史记录', historyTitle: '判定历史', historyNotice: '保存在本机 · 最近 {{count}} 条判定记录', noRecords: '尚无历史记录', storageWarning: '本机存储不可用，记录仅保留在当前页面。', emptyMotion: '请输入要提交给 MAGI 的议题。', failed: 'MAGI 判定失败。请检查输入内容后重试。', networkError: '判定连接发生错误。', newMotion: '新建议题', agenda: '判定议题', execute: '执行判定', failedStatus: '信号中断。{{message}}', transitioning: '直连切换中。', deliberation: '判定进行中。正在接收三人格投票。', final: '最终判定：{{verdict}}。有效票数 {{count}}。', awaiting: '等待议题。' },
   } },
   'zh-TW': { translation: {
+    connectionMode: { mock: '模擬', remote: 'API 接入' },
     language: { label: '介面語言', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: '關閉', cancel: '取消', save: '儲存', restore: '恢復預設', node: '節點{{index}}', global: '全域設定', setting: '整體設定', settingBook: '設定書', decision: '判定', history: '歷史', unavailable: '無法使用' },
     nav: { label: 'MAGI 主導覽', status: '系統狀態', language: '選擇介面語言', settings: '設定', openMenu: '開啟導覽選單', closeMenu: '關閉導覽選單' },
@@ -45,6 +47,7 @@ const resources = {
     original: { terminal: 'MAGI 直連判定終端', history: '歷史記錄', historyTitle: '判定歷史', historyNotice: '儲存於本機 · 最近 {{count}} 筆判定記錄', noRecords: '尚無歷史記錄', storageWarning: '本機儲存無法使用，記錄僅保留於目前頁面。', emptyMotion: '請輸入要提交給 MAGI 的議題。', failed: 'MAGI 判定失敗。請檢查輸入內容後重試。', networkError: '判定連線發生錯誤。', newMotion: '新增議題', agenda: '判定議題', execute: '執行判定', failedStatus: '訊號中斷。{{message}}', transitioning: '直連切換中。', deliberation: '判定進行中。正在接收三人格投票。', final: '最終判定：{{verdict}}。有效票數 {{count}}。', awaiting: '等待議題。' },
   } },
   'en-US': { translation: {
+    connectionMode: { mock: 'Simulation', remote: 'API access' },
     language: { label: 'Interface language', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: 'Close', cancel: 'Cancel', save: 'Save', restore: 'Restore defaults', node: 'Node {{index}}', global: 'Global settings', setting: 'Overall settings', settingBook: 'Setting book', decision: 'Decision', history: 'History', unavailable: 'Unavailable' },
     nav: { label: 'MAGI primary navigation', status: 'System status', language: 'Select interface language', settings: 'Settings', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu' },
@@ -59,6 +62,7 @@ const resources = {
     original: { terminal: 'MAGI direct-link decision terminal', history: 'History', historyTitle: 'Decision history', historyNotice: 'Saved locally · Last {{count}} decisions', noRecords: 'No history yet', storageWarning: 'Local storage is unavailable. Records remain on this page only.', emptyMotion: 'Enter an agenda to submit to MAGI.', failed: 'MAGI decision failed. Check the agenda and try again.', networkError: 'The decision connection failed.', newMotion: 'NEW MOTION', agenda: 'AGENDA', execute: 'EXECUTE MOTION', failedStatus: 'SIGNAL FAILURE. {{message}}', transitioning: 'DIRECT LINK TRANSITIONING.', deliberation: 'DELIBERATION IN PROGRESS. Receiving votes from three personalities.', final: 'FINAL VERDICT: {{verdict}}. CONSENSUS {{count}}.', awaiting: 'AWAITING MOTION.' },
   } },
   'ja-JP': { translation: {
+    connectionMode: { mock: '模擬', remote: 'API 接続' },
     language: { label: '表示言語', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: '閉じる', cancel: 'キャンセル', save: '保存', restore: '初期設定に戻す', node: 'ノード{{index}}', global: '全体設定', setting: '全体設定', settingBook: '設定書', decision: '判定', history: '履歴', unavailable: '利用できません' },
     nav: { label: 'MAGI メインナビゲーション', status: 'システム状態', language: '表示言語を選択', settings: '設定', openMenu: 'ナビゲーションメニューを開く', closeMenu: 'ナビゲーションメニューを閉じる' },

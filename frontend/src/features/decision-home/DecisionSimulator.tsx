@@ -173,12 +173,6 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
               <span>LAYER-{String(index + 1).padStart(2, '0')}</span>
               <strong>{agent.id}</strong>
               <b>{t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`)}</b>
-              <small>{t(`status.${agent.health}`)} / {agent.latencyMs}ms</small>
-              <span
-                className="magi-home__latency-rail"
-                style={{ '--magi-level': `${Math.min(100, (agent.latencyMs / 80) * 100)}%` } as CSSProperties}
-                aria-hidden="true"
-              />
             </li>
           );
         })}
@@ -398,6 +392,7 @@ export function DecisionSimulator({
                 agent={agent}
                 vote={votes?.[agent.id] ?? 'pending'}
                 position={agentPosition[agent.id]}
+                showTelemetry={false}
               />
             ))}
             <NodeConfigHotspots disabled={isExecuting || isRevealing} onOpen={onOpenConfig} />

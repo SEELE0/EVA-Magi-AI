@@ -23,14 +23,14 @@ export function Telemetry({ label, value, level }: { label: string; value: strin
   );
 }
 
-export function AgentNode({ agent, vote, position }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right' }) {
+export function AgentNode({ agent, vote, position, showTelemetry = true }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right'; showTelemetry?: boolean }) {
   const { t } = useTranslation();
   return (
     <article className={`agent-node ${position} vote-${vote}`}>
       <div className="agent-tag">{agent.role}</div>
       <strong>{agent.id}</strong>
       <span className="vote-state">{t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`)}</span>
-      <small>{t(`status.${agent.health}`)} / {agent.latencyMs}ms</small>
+      {showTelemetry ? <small>{t(`status.${agent.health}`)} / {agent.latencyMs}ms</small> : null}
     </article>
   );
 }
