@@ -24,11 +24,11 @@
 
 ## 启动
 
-默认使用 HTTP 后端适配层，后端请求失败会报错，不切换为前端模拟结果。环境变量：
+默认使用 main 原有的本地 Mock 预览，无需启动后端。真实后端执行需在 `frontend/.env.local` 中显式设置环境变量，然后重启开发服务或重新构建：
 
 ```dotenv
 VITE_API_MODE=remote
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-`main` 当前后端目录是预留骨架，还没有可运行服务。只有显式设置 `VITE_API_MODE=mock` 时使用原有 Mock 预览。
+`main` 当前后端目录是预留骨架，还没有可运行服务。`remote` 模式下后端请求失败会报错，不自动切换为前端模拟结果；本地预览也可以显式设置 `VITE_API_MODE=mock`。

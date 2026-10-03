@@ -1,6 +1,6 @@
 # MAGI Backend（预留工作区）
 
-当前目录**不是可运行后端**：尚无 FastAPI/Spring Boot 路由、数据库或模型供应商依赖。前端默认访问项目 HTTP API；本目录尚未提供可运行服务。界面预览可显式使用 VITE_API_MODE=mock。
+当前目录**不是可运行后端**：尚无 FastAPI/Spring Boot 路由、数据库或模型供应商依赖。前端默认使用本地 Mock 预览，无需后端；显式设置 VITE_API_MODE=remote 后访问项目 HTTP API。本目录尚未提供可运行服务。
 
 - REST 唯一契约：[`../docs/openapi.yaml`](../docs/openapi.yaml)
 - 接口与示例：[`../docs/API.md`](../docs/API.md)

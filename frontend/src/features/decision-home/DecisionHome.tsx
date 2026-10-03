@@ -93,7 +93,7 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
   }
 
   const isHistoryRoute = route.name !== 'decision';
-  const connectionMode = status?.source ?? (import.meta.env.VITE_API_MODE === 'mock' ? 'mock' : 'remote');
+  const connectionMode = status?.source ?? (import.meta.env.VITE_API_MODE === 'remote' ? 'remote' : 'mock');
 
   return (
     <main className="magi-home">

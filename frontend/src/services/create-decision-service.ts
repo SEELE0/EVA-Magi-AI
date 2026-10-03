@@ -4,8 +4,10 @@ import type { DecisionService } from './decision-service';
 import { HttpDecisionService } from './http-decision-service';
 import { MockDecisionService } from './mock-decision-service';
 
-/** Main delegates execution to its backend. Mock is an explicit preview option. */
+/** Preview locally by default; explicitly select remote to use the project backend. */
 export function createDecisionService(): DecisionService {
-  if (import.meta.env.VITE_API_MODE === 'mock') return new MockDecisionService();
-  return new HttpDecisionService(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000');
+  if (import.meta.env.VITE_API_MODE === 'remote') {
+    return new HttpDecisionService(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000');
+  }
+  return new MockDecisionService();
 }

@@ -2,7 +2,7 @@
 
 本项目是一个以 MAGI 决策系统为基础设定开发的多agent 协同决策项目。
 
-当前已实现 React/Vite 前端页面，默认通过 HTTP 适配层调用项目后端；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
+当前已实现 React/Vite 前端页面，默认使用本地 Mock 预览，真实执行通过 HTTP 适配层调用项目后端；`backend/` 仍是待开发工作区，`docs/openapi.yaml` 是未来真实后端的唯一 REST 契约。
 
 ![1787762978228](image/README/1787762978228.png)
 
@@ -29,20 +29,20 @@ npm run dev -- --host 0.0.0.0 --port 5174
 
 ## 运行模式
 
-默认通过 HTTP 调用项目后端。需要独立预览界面时，显式选择 main 原有的 Mock：
+未设置环境变量时，默认使用 main 原有的 Mock 预览，无需启动后端。也可以显式指定：
 
 ```bash
 VITE_API_MODE=mock
 ```
 
-接入后端时，在 `.env.local` 中设置：
+接入后端时，在 `frontend/.env.local` 中设置，并重启开发服务（生产环境需重新构建）：
 
 ```bash
 VITE_API_MODE=remote
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-后端不可访问时显示连接或判定错误，不会自动切回本地模拟器。
+`remote` 模式下，后端不可访问时显示连接或判定错误，不会自动切回本地模拟器。节点弹窗中的连接参数是界面草稿，不负责切换这两种项目运行模式。
 
 当前 `remote` 适配只覆盖已有 `DecisionService` 的系统状态、Agent、创建、执行和轮询路由。节点配置及设定书当前为界面草稿；结果和历史只呈现服务返回的数据，不在浏览器调用模型或生成论证。后端仍需实现后才能完成真实联调。
 
