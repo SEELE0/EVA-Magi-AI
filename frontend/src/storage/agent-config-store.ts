@@ -6,6 +6,10 @@
 import { AGENT_IDS, type AgentId } from '../domain/decision';
 import {
   cloneAgentConfigs,
+  agentDisplayName,
+  agentRole,
+  MAX_AGENT_ROLE_LENGTH,
+  MAX_AGENT_NAME_LENGTH,
   serializeAgentConfigsForStorage,
   type AgentConfigMap,
   type AgentConnectionMode
@@ -39,13 +43,18 @@ function clamp(text: unknown, maxLength: number): string | null {
   return text.slice(0, maxLength);
 }
 
-type PersistedConfig = Partial<Pick<AgentConfigMap[AgentId], 'connection' | 'baseUrl' | 'model' | 'prompt'>>;
+type PersistedConfig = Partial<Pick<AgentConfigMap[AgentId], 'displayName' | 'role' | 'connection' | 'baseUrl' | 'model' | 'prompt'>>;
 
 function readPersistedConfig(value: unknown): PersistedConfig {
   if (!value || typeof value !== 'object') return {};
   const candidate = value as Record<string, unknown>;
 
   const persisted: PersistedConfig = {};
+  const role = clamp(candidate.role, MAX_AGENT_ROLE_LENGTH);
+  if (role !== null) persisted.role = role;
+  if (typeof candidate.displayName === 'string') {
+    persisted.displayName = Array.from(candidate.displayName).slice(0, MAX_AGENT_NAME_LENGTH).join('');
+  }
   if (connectionModes.includes(candidate.connection as AgentConnectionMode)) {
     persisted.connection = candidate.connection as AgentConnectionMode;
   }
@@ -78,6 +87,8 @@ export function loadAgentConfigs(storage: ConfigStorage | null = browserStorage(
       configs[agentId] = {
         ...configs[agentId],
         ...persisted,
+        role: agentRole({ role: persisted.role ?? configs[agentId].role }, agentId),
+        ...(persisted.displayName !== undefined ? { displayName: agentDisplayName(persisted, agentId) } : {}),
         // 哨兵値が壊れた保存に混入した場合は既定へ戻す
         baseUrl: persisted.baseUrl ?? (persisted.connection && persisted.connection !== 'mock'
           ? ''

@@ -15,6 +15,7 @@ export type ConnectionMode = 'mock' | 'remote';
 
 export interface Agent {
   id: AgentId;
+  displayName?: string;
   role: string;
   health: AgentHealth;
   latencyMs: number;
@@ -40,6 +41,7 @@ export interface DecisionRequest {
 
 export interface AgentResult {
   agentId: AgentId;
+  displayName?: string;
   role: string;
   vote: Exclude<Vote, 'pending'>;
   response: string;
@@ -56,6 +58,9 @@ export interface Decision {
   status: DecisionStatus;
   verdict: Verdict;
   votes: Record<AgentId, Vote>;
+  /** Display names captured when execution starts, including failed nodes. */
+  agentNames?: Record<AgentId, string>;
+  agentRoles?: Record<AgentId, string>;
   createdAt: string;
   completedAt?: string;
   /** 外部 API 接続ノードが返した本文。模擬ノードには存在しない。 */

@@ -22,7 +22,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   it('defines the standby-to-deliberation layout and subject transform', () => {
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="deliberation"\][\s\S]*?\.magi-home__deliberation-grid\s*\{[^}]*grid-template-columns:\s*minmax\(150px,\s*0\.22fr\)/);
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.3\)/);
-    expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.04\)/);
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*translate:\s*none;[^}]*transform:\s*scale\(1\)/);
   });
 
   it('defines the screenshot-inspired terminal information layers', () => {
@@ -87,7 +87,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   it('maps each invisible config hotspot hover and keyboard focus to its visible node', () => {
     for (const position of ['top', 'left', 'right']) {
       expect(css).toContain(
-        `.magi-home__node-hotspot.is-${position} button:not(:disabled):is(:hover, :focus-visible)) .agent-node.${position}`
+        `.magi-home__node-hotspot.is-${position} button:not(:disabled):is(:hover, :focus-visible, :active)) .agent-node.${position}`
       );
     }
     expect(css).toMatch(/\.agent-node\.right\s*\{[\s\S]*?drop-shadow\(0 0 14px/);

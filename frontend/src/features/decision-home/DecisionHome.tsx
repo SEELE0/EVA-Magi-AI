@@ -16,20 +16,17 @@ import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from
 import { useDecisionRuntime } from './use-decision-runtime';
 import type { DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
 import { LanguageSelector } from '../../components/LanguageSelector';
+import { NixieClock } from './NixieClock';
+import { NodeConnectionStatus } from './NodeConnectionStatus';
 import './decision-home.css';
 import './decision-header.css';
 
 const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
 
-function formatTime(date: Date, locale: string) {
-  return date.toLocaleTimeString(locale, { hour12: false });
-}
-
 export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: boolean }) {
   const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
-  const [clock, setClock] = useState(() => new Date());
   const [route, setRoute] = useState<SimulatorRoute>(() => currentSimulatorRoute());
   const [historyWarning, setHistoryWarning] = useState(false);
   const [history, setHistory] = useState<DecisionHistoryEntry[]>(() => loadDecisionHistory());
@@ -40,11 +37,6 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const navControlsRef = useRef<HTMLDivElement>(null);
   const navMenuButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const clockTimer = window.setInterval(() => setClock(new Date()), 1000);
-    return () => window.clearInterval(clockTimer);
-  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -135,8 +127,16 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
               </svg>
             </button>
             <nav id="magi-primary-navigation" className="magi-home__primary-nav" aria-label={t('nav.label')} data-menu-open={navMenuOpen}>
-              <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined} onClick={() => setNavMenuOpen(false)}>{t('common.decision')}</a>
-              <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined} onClick={() => setNavMenuOpen(false)}>{t('common.history')}</a>
+              <a href="#/" aria-current={!isHistoryRoute ? 'page' : undefined} onClick={() => setNavMenuOpen(false)}>
+                <span className="nav-bracket" aria-hidden="true">[</span>
+                <span>{t('common.decision')}</span>
+                <span className="nav-bracket" aria-hidden="true">]</span>
+              </a>
+              <a href="#/history" aria-current={isHistoryRoute ? 'page' : undefined} onClick={() => setNavMenuOpen(false)}>
+                <span className="nav-bracket" aria-hidden="true">[</span>
+                <span>{t('common.history')}</span>
+                <span className="nav-bracket" aria-hidden="true">]</span>
+              </a>
               <RuntimeSettings
                 runtime={runtime}
                 selectedAgentId={selectedAgentId}
@@ -152,14 +152,10 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
           </div>
         </div>
         <div className="magi-home__telemetry" aria-label={t('nav.status')}>
-          <div className="magi-home__system-status" data-connection={startupError ? 'offline' : status?.connection ?? 'offline'} aria-live="polite">
-            <span aria-hidden="true" />
-            <strong>{startupError ?? (status ? t(`status.${status.connection}`) : t('status.connecting'))}</strong>
-            <small>{status?.protocol ?? 'MAGI/3.0'}</small>
-          </div>
+          <NodeConnectionStatus configs={configs} protocol={status?.protocol ?? 'MAGI/3.0'} startupFailed={Boolean(startupError)} />
           <div className="header-readout">
             <Readout label={t('settings.connection')} value={t(`connectionMode.${connectionMode}`)} tone={status?.connection ?? 'offline'} />
-            <Readout label={i18n.language.startsWith('en') ? 'TIME' : i18n.language === 'zh-TW' ? '時間' : i18n.language.startsWith('zh') ? '时间' : '時刻'} value={formatTime(clock, i18n.language)} tone="online" />
+            <NixieClock label={i18n.language.startsWith('en') ? 'TIME' : i18n.language === 'zh-TW' ? '時間' : i18n.language.startsWith('zh') ? '时间' : '時刻'} />
           </div>
         </div>
       </header>

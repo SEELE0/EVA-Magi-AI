@@ -23,13 +23,13 @@ export function Telemetry({ label, value, level }: { label: string; value: strin
   );
 }
 
-export function AgentNode({ agent, vote, position, showTelemetry = true }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right'; showTelemetry?: boolean }) {
+export function AgentNode({ agent, vote, position, showTelemetry = true, voteLabel }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right'; showTelemetry?: boolean; voteLabel?: string }) {
   const { t } = useTranslation();
   return (
     <article className={`agent-node ${position} vote-${vote}`}>
-      <div className="agent-tag">{agent.role}</div>
-      <strong>{agent.id}</strong>
-      <span className="vote-state">{t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`)}</span>
+      <div className="agent-tag" title={agent.role}>{agent.role}</div>
+      <strong title={agent.displayName ?? agent.id}>{agent.displayName ?? agent.id}</strong>
+      <span className="vote-state">{voteLabel ?? t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`)}</span>
       {showTelemetry ? <small>{t(`status.${agent.health}`)} / {agent.latencyMs}ms</small> : null}
     </article>
   );

@@ -1,7 +1,7 @@
 /* Copyright (C) 2026 SEELE0
  * SPDX-License-Identifier: AGPL-3.0-or-later */
 import { AGENT_IDS, type Decision, type DecisionEvent, type DecisionRequest } from '../domain/decision';
-import { cloneAgentConfigs, type AgentConfigMap } from '../domain/agent-config';
+import { agentDisplayName, agentRole, cloneAgentConfigs, type AgentConfigMap } from '../domain/agent-config';
 import { redactSecrets } from '../domain/redact-secrets';
 import { aggregateVerdict } from '../domain/verdict';
 import { throwIfAborted } from './abort';
@@ -27,7 +27,9 @@ export class DecisionEngine implements DecisionService {
   async getAgents(options?: DecisionRequestOptions) {
     throwIfAborted(options?.signal);
     const decision = this.latestId ? this.records.get(this.latestId)?.decision : undefined;
-    return AGENT_IDS.map(id => ({ id, role: this.getConfigs()[id].role,
+    const configs = this.getConfigs();
+    return AGENT_IDS.map(id => ({ id, role: configs[id].role,
+      displayName: agentDisplayName(configs[id], id),
       health: decision?.failures?.[id] ? 'offline' as const : 'nominal' as const,
       latencyMs: decision?.outputs?.[id]?.latencyMs ?? 0, vote: decision?.votes[id] ?? 'pending' as const }));
   }
@@ -80,6 +82,10 @@ export class DecisionEngine implements DecisionService {
     const configs = cloneAgentConfigs(this.getConfigs());
     for (const agentId of AGENT_IDS) this.providers[configs[agentId].connection].validate(configs[agentId]);
     const secrets = AGENT_IDS.map(agentId => configs[agentId].apiKey);
+    entry.decision.agentNames = redactSecrets(Object.fromEntries(AGENT_IDS.map(agentId =>
+      [agentId, agentDisplayName(configs[agentId], agentId)])) as Record<typeof AGENT_IDS[number], string>, secrets);
+    entry.decision.agentRoles = redactSecrets(Object.fromEntries(AGENT_IDS.map(agentId =>
+      [agentId, agentRole(configs[agentId], agentId)])) as Record<typeof AGENT_IDS[number], string>, secrets);
     entry.decision.subject = redactSecrets(entry.decision.subject, secrets);
     entry.request.subject = entry.decision.subject;
     entry.decision.status = 'running';
@@ -95,7 +101,7 @@ export class DecisionEngine implements DecisionService {
       try {
         const output = this.normalizeOutput(await this.providers[config.connection].invoke(config, entry.request, controller.signal));
         throwIfAborted(controller.signal);
-        const safe = redactSecrets({ agentId, role: config.role, vote: output.vote, response: output.response,
+        const safe = redactSecrets({ agentId, displayName: entry.decision.agentNames![agentId], role: entry.decision.agentRoles![agentId], vote: output.vote, response: output.response,
           connection: config.connection, baseUrl: config.baseUrl, model: config.model, latencyMs: Date.now() - start }, secrets);
         entry.decision.outputs![agentId] = safe;
         entry.decision.responses![agentId] = safe.response;

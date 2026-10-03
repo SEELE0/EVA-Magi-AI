@@ -298,7 +298,19 @@ describe('DecisionHomeAnimeOriginal', () => {
     const dialog = document.body.querySelector<HTMLDialogElement>('.magi-home__config-dialog--original');
     if (!dialog) throw new Error('Original node configuration dialog was not rendered.');
     expect(dialog.hasAttribute('open')).toBe(true);
-    expect(dialog.textContent).toContain('BALTHASAR-2 ノード設定');
+    expect(dialog.querySelector('h2')?.getAttribute('aria-label')).toBe('BALTHASAR-2 ノード設定');
+    const name = dialog.querySelector<HTMLInputElement>('.magi-home__name-editor input');
+    expect(name?.value).toBe('BALTHASAR-2');
+    if (!name) throw new Error('Inline name editor was not rendered.');
+    const nameSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    act(() => {
+      nameSetter?.call(name, '生命照护');
+      name.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    act(() => name.dispatchEvent(enter));
+    expect(enter.defaultPrevented).toBe(true);
+    expect(dialog.hasAttribute('open')).toBe(true);
 
     expect(dialog.querySelector('input[type="url"]')).toBeNull();
     act(() => dialog.querySelector<HTMLInputElement>('input[value="openai-compatible"]')?.click());
@@ -327,11 +339,29 @@ describe('DecisionHomeAnimeOriginal', () => {
     act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
     expect(document.body.querySelector<HTMLInputElement>('.magi-home__config-field input[maxlength="200"]')?.value).toBe('MAGI-SIM / CUSTOM');
+    expect(document.body.querySelector<HTMLInputElement>('.magi-home__name-editor input')?.value).toBe('生命照护');
     const reopenedApiKey = document.body.querySelector<HTMLInputElement>('.magi-home__api-key-input');
     expect(reopenedApiKey?.value).toBe('sk-page-memory-only');
     expect(reopenedApiKey?.type).toBe('password');
     expect(JSON.stringify(window.localStorage)).not.toContain('sk-page-memory-only');
     expect(window.sessionStorage.length).toBe(0);
+
+    const storedBeforeReset = JSON.stringify(window.localStorage);
+    act(() => dialog.querySelector<HTMLButtonElement>('.magi-home__dialog-reset')?.click());
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__name-editor input')?.value).toBe('BALTHASAR-2');
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__role-editor input')?.value).toBe('母性論理');
+    expect(dialog.querySelector<HTMLInputElement>('input[value="mock"]')?.checked).toBe(true);
+    expect(dialog.querySelector<HTMLTextAreaElement>('textarea')?.value).toContain('あなたは母性論理');
+    expect(JSON.stringify(window.localStorage)).toBe(storedBeforeReset);
+    act(() => dialog.querySelector<HTMLButtonElement>('.magi-home__config-actions button[type="button"]')?.click());
+    act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__api-key-input')?.value).toBe('sk-page-memory-only');
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__name-editor input')?.value).toBe('生命照护');
+    act(() => dialog.querySelector<HTMLButtonElement>('.magi-home__dialog-reset')?.click());
+    act(() => dialog.querySelector<HTMLButtonElement>('button[type="submit"]')?.click());
+    act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(dialog.querySelector<HTMLInputElement>('input[value="mock"]')?.checked).toBe(true);
+    expect(dialog.querySelector<HTMLInputElement>('.magi-home__name-editor input')?.value).toBe('BALTHASAR-2');
   });
 
   it('skips the visual hold for reduced motion', async () => {

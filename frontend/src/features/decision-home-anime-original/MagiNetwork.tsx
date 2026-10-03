@@ -21,6 +21,7 @@ export interface MagiNetworkProps {
   readonly state: MagiNetworkState;
   readonly transform: MagiNetworkTransform;
   readonly votes: Decision['votes'];
+  readonly names?: Partial<Record<AgentId, string>>;
   readonly onOpenConfig: (agentId: AgentId) => void;
 }
 
@@ -41,14 +42,14 @@ function AgentFrame({ agent }: { readonly agent: AgentModuleLayout }) {
   );
 }
 
-function AgentContent({ agent, vote }: { readonly agent: AgentModuleLayout; readonly vote: Vote }) {
+function AgentContent({ agent, vote, name }: { readonly agent: AgentModuleLayout; readonly vote: Vote; readonly name?: string }) {
   const [nameX, nameY] = agent.namePlacement.anchor;
   const [voteX, voteY] = agent.votePlacement.anchor;
   const presentation = { label: voteLabel[vote], className: voteClass[vote] };
 
   return (
     <g data-agent-content={agent.id}>
-      <text x={nameX} y={nameY} textLength={agent.namePlacement.length} lengthAdjust="spacingAndGlyphs" className={`agent-name agent-name--${agent.id}`}>{agent.name}</text>
+      <text x={nameX} y={nameY} textLength={agent.namePlacement.length} lengthAdjust="spacingAndGlyphs" className={`agent-name agent-name--${agent.id}`}>{name ?? agent.name}</text>
       <rect className={`vote-box vote-box--${presentation.className}`} x={agent.voteBox.x} y={agent.voteBox.y} width={agent.voteBox.width} height={agent.voteBox.height} />
       <text x={voteX} y={voteY} textLength={agent.votePlacement.length} lengthAdjust="spacingAndGlyphs" className={`vote-text vote-text--${presentation.className}`}>{presentation.label}</text>
     </g>
@@ -66,7 +67,7 @@ function activateAgent(
   onOpenConfig(agentId);
 }
 
-export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpenConfig }: MagiNetworkProps) {
+export function MagiNetwork({ disabled, scanning, state, transform, votes, names, onOpenConfig }: MagiNetworkProps) {
   const { t } = useTranslation();
   const layout = MAGI_NETWORK_LAYOUT;
   const [lowerStartX, lowerStartY] = layout.lowerConnector.start;
@@ -88,10 +89,11 @@ export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpe
       <polygon className="magi-core" points={toSvgPoints(layout.hub)} />
       {layout.agents.map((agent) => {
         const vote = votes[agent.agentId];
+        const name = names?.[agent.agentId];
         return (
           <g
             aria-disabled={disabled || undefined}
-            aria-label={`${agent.agentId} · ${t('decision.nodeConfig')}`}
+            aria-label={`${name ?? agent.agentId} · ${t('decision.nodeConfig')}`}
             className={`agent-module agent-module--${agent.id} vote-${voteClass[vote]}`}
             key={agent.id}
             onClick={() => { if (!disabled) onOpenConfig(agent.agentId); }}
@@ -100,7 +102,7 @@ export function MagiNetwork({ disabled, scanning, state, transform, votes, onOpe
             tabIndex={disabled ? -1 : 0}
           >
             <AgentFrame agent={agent} />
-            <AgentContent agent={agent} vote={vote} />
+            <AgentContent agent={agent} vote={vote} name={name} />
             <polyline aria-hidden="true" className="agent-hit-target" points={toSvgPoints(agent.frame)} />
           </g>
         );

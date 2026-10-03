@@ -24,8 +24,8 @@ export function HistoryArchive({ entries, onClose }: { entries: DecisionHistoryE
           <ol>{entries.map((entry) => <li key={entry.id}>
             <details>
               <summary><time dateTime={entry.completedAt}>{new Date(entry.completedAt).toLocaleString(i18n.language)}</time><strong>{entry.subject}</strong><span className={`direct-history__verdict is-${entry.verdict}`}>{entry.status === 'failed' ? t('history.failed') : t(`verdict.${entry.verdict}`)}</span></summary>
-              <div className="direct-history__detail"><p>{entry.subject}</p><dl>{AGENT_IDS.map((id) => <div key={id}><dt>{id}</dt><dd>{voteLabel(entry.votes[id])}</dd></div>)}</dl>
-                {AGENT_IDS.map((id) => entry.agents[id].response ? <details key={id}><summary>{id} / {t('history.response')}</summary><p>{entry.agents[id].response}</p></details> : null)}
+              <div className="direct-history__detail"><p>{entry.subject}</p><dl>{AGENT_IDS.map((id) => <div key={id}><dt>{entry.agents[id].displayName ?? id}</dt><dd>{voteLabel(entry.votes[id])}</dd></div>)}</dl>
+                {AGENT_IDS.map((id) => entry.agents[id].response ? <details key={id}><summary>{entry.agents[id].displayName ?? id} / {t('history.response')}</summary><p>{entry.agents[id].response}</p></details> : null)}
               </div>
             </details>
           </li>)}</ol>

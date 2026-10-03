@@ -32,7 +32,7 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('MELCHIOR-1');
     expect(markup).toContain('BALTHASAR-2');
     expect(markup).toContain('CASPER-3');
-    expect(markup).toContain('MAGI/03');
+    expect(markup).not.toContain('MAGI/03');
     expect(markup).toContain('待機');
     expect(markup).toContain('判定議題');
     expect(markup).toContain(i18n.t('decision.execute'));

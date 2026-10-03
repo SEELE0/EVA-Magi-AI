@@ -23,6 +23,22 @@ function renderDialog(config: ReturnType<typeof cloneAgentConfigs>[keyof ReturnT
 }
 
 describe('AgentConfigDialog BASE URL validation', () => {
+  it.each(['zh-CN', 'zh-TW', 'en-US', 'ja-JP'])('localizes the name field while retaining a custom name in %s', async (locale) => {
+    await i18n.changeLanguage(locale);
+    const config = { ...cloneAgentConfigs()['MELCHIOR-1'], displayName: '証拠 / Evidence', role: '証拠审查 / Reviewer' };
+    const markup = renderDialog(config);
+    expect(markup).toContain(`aria-label="${i18n.t('settings.nodeName')}"`);
+    expect(markup).toContain('value="証拠 / Evidence"');
+    expect(markup).toContain('maxLength="32"');
+    expect(markup).toContain('class="magi-home__name-editor"');
+    expect(markup).toContain(`aria-label="${i18n.t('settings.role')}"`);
+    expect(markup).toContain(`aria-label="${i18n.t('common.restore')}"`);
+    expect(markup).toContain('value="証拠审查 / Reviewer"');
+    expect(markup).not.toContain('magi-home__config-name');
+    const globalMarkup = renderToStaticMarkup(<I18nextProvider i18n={i18n}><AgentConfigDialog config={config} overall onClose={() => undefined} onSave={() => undefined} /></I18nextProvider>);
+    expect(globalMarkup).not.toContain('magi-home__name-editor');
+    expect(globalMarkup).not.toContain('magi-home__role-editor');
+  });
   it('hides unused connection fields in mock mode', () => {
     const config = cloneAgentConfigs()['MELCHIOR-1'];
     const markup = renderDialog(config);
@@ -71,7 +87,7 @@ describe('AgentConfigDialog BASE URL validation', () => {
     expect(markup).toContain('magi-home__config-dialog--original');
     expect(markup).toContain('BALTHASAR-2 ノード設定');
     expect(markup).toContain('aria-label="設定を閉じる"><span aria-hidden="true">×</span></button>');
-    expect(markup).toContain('接続情報の入力は不要です');
+    expect(markup).toContain(i18n.t('settings.mockHelp'));
     expect(markup).toContain('役割プロンプト');
   });
 });

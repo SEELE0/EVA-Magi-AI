@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { MagiSelect } from './MagiSelect';
 import { setMagiLocale, type MagiLocale } from '../i18n';
 import translateIcon from '../assets/language-translate-icon.png';
+import { LanguagesIcon } from './LanguagesIcon';
 
 const languageItems: Array<{ value: MagiLocale; key: string }> = [
   { value: 'zh-CN', key: 'language.zhCN' },
@@ -24,13 +25,13 @@ export function LanguageSelector({ variant = 'modern', onLocaleChange }: { varia
         options={options}
         positionerClassName="magi-select__positioner--language-icon"
         title={t('nav.language')}
-        triggerContent={
+        triggerContent={variant === 'modern' ? <LanguagesIcon /> : (
           <span
             aria-hidden="true"
             className="magi-language-selector__translate-icon"
             style={{ maskImage: `url("${translateIcon}")`, WebkitMaskImage: `url("${translateIcon}")` }}
           />
-        }
+        )}
         value={selectedLocale}
         onValueChange={(locale) => { void setMagiLocale(locale as MagiLocale); onLocaleChange?.(); }}
       />

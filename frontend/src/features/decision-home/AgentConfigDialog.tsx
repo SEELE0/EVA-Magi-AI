@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { localizeDefaultAgentPrompt, type AgentConnectionMode, type AgentRuntimeConfig } from '../../domain/agent-config';
+import { agentDisplayName, agentRole, defaultAgentConfigs, MAX_AGENT_NAME_LENGTH, MAX_AGENT_ROLE_LENGTH, localizeDefaultAgentPrompt, type AgentConnectionMode, type AgentRuntimeConfig } from '../../domain/agent-config';
 import { ChatCompletionsProvider, validateAgentConfig } from '../../providers/chat-completions-provider';
 import { MOCK_CONNECTION_BASE_URL, mockModelFor } from './simulator-config';
 import './AgentConfigDialog.css';
@@ -53,6 +53,7 @@ export function AgentConfigDialog({
     prompt: localizeDefaultAgentPrompt(config.agentId, config.prompt, locale)
   } : null);
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [resetTurn, setResetTurn] = useState(0);
   const [testStatus, setTestStatus] = useState('');
   const [testStatusKind, setTestStatusKind] = useState<ConnectionTestStatus>('idle');
   const [testing, setTesting] = useState(false);
@@ -71,6 +72,7 @@ export function AgentConfigDialog({
       prompt: localizeDefaultAgentPrompt(config.agentId, config.prompt, locale)
     } : null);
     setApiKeyVisible(false);
+    setResetTurn(0);
     if (config && dialog && !dialog.open) dialog.showModal();
     if (!config && dialog?.open) dialog.close();
   }, [dialogKey]);
@@ -97,6 +99,17 @@ export function AgentConfigDialog({
     testController.current = null;
     if (dialogRef.current?.open) dialogRef.current.close();
     onClose();
+  }
+
+  function restoreDefaults() {
+    if (!draft) return;
+    setResetTurn((turn) => turn + 1);
+    testController.current?.abort();
+    testController.current = null;
+    const defaults = defaultAgentConfigs[draft.agentId];
+    setDraft({ ...defaults, displayName: draft.agentId, prompt: localizeDefaultAgentPrompt(draft.agentId, defaults.prompt, locale) });
+    setApiKeyVisible(false);
+    setError(null);
   }
 
   async function testConnection() {
@@ -128,7 +141,7 @@ export function AgentConfigDialog({
     if (!draft) return;
     try {
       validateAgentConfig(draft);
-      onSave({ ...draft });
+      onSave(overall ? { ...draft } : { ...draft, displayName: agentDisplayName(draft, draft.agentId), role: agentRole(draft, draft.agentId) });
       closeDialog();
     } catch (cause) {
       setError(localizeError(cause, t));
@@ -147,8 +160,9 @@ export function AgentConfigDialog({
         event.preventDefault();
         closeDialog();
       }}
-      onClose={() => {
-        if (config) onClose();
+      onClose={(event) => {
+        // A queued close event from the previous visit must not close a reopened dialog.
+        if (config && !event.currentTarget.open) onClose();
       }}
     >
       {draft ? (
@@ -156,16 +170,58 @@ export function AgentConfigDialog({
           <header className="magi-home__config-header">
             <div>
               <p>{overall ? t('settings.system') : t('settings.node')}</p>
-              <h2 id="magi-home-config-title">{overall ? t('settings.globalTitle') : t('settings.nodeTitle', { id: draft.agentId })}</h2>
+              <h2 id="magi-home-config-title" className={!overall ? 'magi-home__editable-title' : undefined}
+                aria-label={overall ? undefined : t('settings.nodeTitle', { id: agentDisplayName(config ?? draft, draft.agentId) })}>
+                {overall ? t('settings.globalTitle') : <>
+                  <span className="magi-home__name-editor">
+                    <span aria-hidden="true">{draft.displayName || draft.agentId}</span>
+                    <input type="text" maxLength={MAX_AGENT_NAME_LENGTH} value={draft.displayName ?? draft.agentId}
+                      placeholder={draft.agentId} aria-label={t('settings.nodeName')} aria-describedby="magi-home-name-help"
+                      title={t('settings.nodeNameHelp', { max: MAX_AGENT_NAME_LENGTH })}
+                      onChange={(event) => setDraft({ ...draft, displayName: event.target.value })}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                          event.preventDefault();
+                          event.currentTarget.blur();
+                        }
+                      }} />
+                  </span>
+                  <span>{t('settings.nodeTitle', { id: '' }).trim()}</span>
+                </>}
+              </h2>
+              {!overall ? <span id="magi-home-name-help" className="magi-home__name-help">{t('settings.nodeNameHelp', { max: MAX_AGENT_NAME_LENGTH })}</span> : null}
             </div>
-            <button type="button" className="magi-home__dialog-close" onClick={closeDialog} aria-label={t('settings.close')}>
-              <span aria-hidden="true">×</span>
-            </button>
+            <div className="magi-home__config-header-actions">
+              <button type="button" className="magi-home__dialog-close magi-home__dialog-reset"
+                onClick={restoreDefaults} aria-label={t('common.restore')}>
+                <svg key={resetTurn} className={resetTurn > 0 ? 'is-turning' : undefined}
+                  viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M3 11a9 9 0 1 1 2.6 6.4" />
+                  <path d="M3 4v7h7" />
+                </svg>
+              </button>
+              <button type="button" className="magi-home__dialog-close" onClick={closeDialog} aria-label={t('settings.close')}>
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
           </header>
 
           {!overall ? <div className="magi-home__config-identity">
               <span>{t('settings.role')}</span>
-              <strong>{draft.role}</strong>
+              <strong className="magi-home__name-editor magi-home__role-editor">
+                <span aria-hidden="true">{draft.role || defaultAgentConfigs[draft.agentId].role}</span>
+                <input type="text" maxLength={MAX_AGENT_ROLE_LENGTH} value={draft.role}
+                  placeholder={defaultAgentConfigs[draft.agentId].role} aria-label={t('settings.role')}
+                  aria-describedby="magi-home-role-help" title={t('settings.roleHelp', { max: MAX_AGENT_ROLE_LENGTH })}
+                  onChange={(event) => setDraft({ ...draft, role: event.target.value })}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                      event.preventDefault();
+                      event.currentTarget.blur();
+                    }
+                  }} />
+              </strong>
+              <span id="magi-home-role-help" className="magi-home__name-help">{t('settings.roleHelp', { max: MAX_AGENT_ROLE_LENGTH })}</span>
             </div>
           : draft.connection !== 'mock' ? <p className="magi-home__credential-note">{t('settings.security')}</p> : null}
 

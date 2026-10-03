@@ -6,6 +6,7 @@ type Scenario = 'standard' | 'reject' | 'review';
 
 export interface AgentHistoryResult extends AgentPublicMetadata {
   agentId: AgentId;
+  displayName?: string;
   role: string;
   vote: Vote;
   response: string;
@@ -23,4 +24,3 @@ export interface DecisionHistoryEntry {
   votes: Record<AgentId, Vote>;
   agents: Record<AgentId, AgentHistoryResult>;
 }
-

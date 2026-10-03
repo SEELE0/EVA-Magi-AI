@@ -76,13 +76,23 @@
 }
 
 .magi-home__primary-nav a:hover { color: #ffd595; }
-.magi-home__primary-nav a[aria-current="page"] { color: var(--home-sodium); }
+.magi-home__primary-nav a[aria-current="page"] { color: #ffb347; text-shadow: 0 0 10px #ffb34788; }
+.magi-home__primary-nav .nav-bracket { display: inline-block; width: 1ch; text-align: center; visibility: hidden; }
+.magi-home__primary-nav a[aria-current="page"] .nav-bracket { visibility: visible; }
 .magi-home__primary-nav a[aria-current="page"]::after {
   background: var(--home-sodium);
   box-shadow: 0 0 8px rgba(255, 173, 66, 0.5);
-  animation: magi-home-signal 2s steps(2) infinite;
 }
 .magi-home__primary-nav a:focus-visible { outline: 2px solid #ffd595; outline-offset: 4px; }
+
+@keyframes nav-selection-flicker {
+  0%, 44%, 56%, 68%, 100% { opacity: 1; text-shadow: 0 0 10px #ffb34788; }
+  49% { opacity: .62; text-shadow: 0 0 3px #ffb34744; }
+  62% { opacity: .8; text-shadow: 0 0 14px #ffb347aa; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .magi-home__primary-nav a[aria-current="page"] > span { animation: nav-selection-flicker 2.8s ease-in-out infinite; }
+}
 
 .magi-home__telemetry {
   display: flex;
@@ -94,12 +104,23 @@
   padding: 8px 0;
 }
 
-.magi-home__telemetry .magi-home__system-status { flex-wrap: wrap; gap: 6px 10px; }
-.magi-home__telemetry .magi-home__system-status > span { animation: none; box-shadow: none; background: #799d87; }
+.magi-home__telemetry .magi-home__system-status { flex-wrap: wrap; gap: 6px 10px; min-height: 44px; padding: 0; border: 0; background: transparent; text-align: start; cursor: pointer; }
+.magi-home__telemetry .magi-home__system-status > span { box-shadow: none; background: #7df0b0; }
 .magi-home__telemetry [data-connection="offline"] > span { background: #ff5f5f; }
-.magi-home__telemetry [data-connection="degraded"] > span { background: #f2ea77; }
+.magi-home__telemetry .magi-home__system-status[data-connection="offline"] strong { color: #ff5f5f; }
+.magi-home__telemetry .magi-home__system-status:hover strong { text-shadow: 0 0 8px currentColor; }
+.magi-home__telemetry .magi-home__system-status:focus-visible { outline: 2px solid #ffd595; outline-offset: 4px; }
+.magi-home__telemetry .magi-home__system-status[aria-busy="true"] { cursor: wait; }
 .magi-home__telemetry .magi-home__system-status small { color: #a58b68; }
-.magi-home__telemetry .header-readout { width: auto; flex-wrap: nowrap; gap: 0; flex-shrink: 0; }
+@keyframes node-connection-blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: no-preference) {
+  .magi-home__telemetry .magi-home__system-status > span { animation: node-connection-blink 1.6s steps(2, end) infinite; }
+  .magi-home__telemetry .magi-home__system-status[data-connection="offline"] > span { animation-duration: .8s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .magi-home__telemetry .magi-home__system-status > span { animation: none; opacity: 1; }
+}
+.magi-home__telemetry .header-readout { width: auto; align-items: center; flex-wrap: nowrap; gap: 0; flex-shrink: 0; }
 .magi-home__telemetry .readout { display: flex; align-items: baseline; gap: 10px; min-width: 0; padding: 0 18px; border-left: 1px solid #49331c; }
 .magi-home__telemetry .readout:last-child { padding-right: 0; }
 
@@ -117,7 +138,7 @@
   .magi-home__nav-button { min-height: 40px; font-size: 12px; }
   .magi-home__telemetry { flex-wrap: wrap; gap: 8px; padding: 10px 0; }
   .magi-home__telemetry .magi-home__system-status { flex: 1 1 100%; }
-  .magi-home__telemetry .header-readout { justify-content: flex-start; }
+  .magi-home__telemetry .header-readout { justify-content: flex-start; max-width: 100%; flex-wrap: wrap; row-gap: 8px; }
   .magi-home__telemetry .readout { padding: 0 14px; }
   .magi-home__telemetry .readout:first-child { padding-left: 0; border-left: 0; }
   .magi-home__telemetry .header-readout .readout:last-child { display: flex; }
@@ -199,5 +220,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .magi-home__primary-nav a { transition: none; }
+  .magi-home__primary-nav a[aria-current="page"] > span { animation: none; opacity: 1; }
   .magi-home__primary-nav a[aria-current="page"]::after { animation: none; }
 }

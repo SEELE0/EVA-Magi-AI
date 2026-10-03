@@ -39,6 +39,7 @@ export interface DecisionNetworkMetrics {
     readonly lowerRightX: number;
   };
   readonly lowerNodes: {
+    readonly inset: number;
     readonly top: number;
     readonly width: number;
     readonly height: number;
@@ -65,6 +66,7 @@ export const DEFAULT_DECISION_NETWORK_METRICS: DecisionNetworkMetrics = {
     lowerRightX: 0.67,
   },
   lowerNodes: {
+    inset: 0.025,
     top: 0.4952,
     width: 0.43,
     height: 0.4048,
@@ -121,6 +123,7 @@ export function createDecisionNetworkLayout(
 ): DecisionNetworkLayout {
   const { viewBox, topNode, lowerNodes } = metrics;
   const topBox = scaleBox(topNode.box, viewBox);
+  const lowerInset = roundCoordinate(lowerNodes.inset * viewBox.width);
   const lowerTop = roundCoordinate(lowerNodes.top * viewBox.height);
   const lowerWidth = roundCoordinate(lowerNodes.width * viewBox.width);
   const lowerHeight = roundCoordinate(lowerNodes.height * viewBox.height);
@@ -134,7 +137,7 @@ export function createDecisionNetworkLayout(
     [0, topNode.shoulderY],
   ]);
   const left = createFrame('left', {
-    x: 0,
+    x: lowerInset,
     y: lowerTop,
     width: lowerWidth,
     height: lowerHeight,
@@ -147,7 +150,7 @@ export function createDecisionNetworkLayout(
     [0, 1],
   ]);
   const right = createFrame('right', {
-    x: roundCoordinate(viewBox.width - lowerWidth),
+    x: roundCoordinate(viewBox.width - lowerWidth - lowerInset),
     y: lowerTop,
     width: lowerWidth,
     height: lowerHeight,
@@ -189,13 +192,17 @@ const toOpenSvgPath = (points: readonly SvgPoint[]) => (
   points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join('')
 );
 
-export function toDecisionNetworkTopologyPath(layout: DecisionNetworkLayout) {
-  const framePaths = Object.values(layout.frames)
-    .map((frame) => `${toOpenSvgPath(frame.points)}Z`);
-  const connectorPaths = layout.connectors
-    .map(({ start, end }) => toOpenSvgPath([start, end]));
+export function toDecisionNetworkFramePath(layout: DecisionNetworkLayout) {
+  return Object.values(layout.frames)
+    .map((frame) => `${toOpenSvgPath(frame.points)}Z`).join('');
+}
 
-  return [...framePaths, ...connectorPaths].join('');
+export function toDecisionNetworkConnectorPath(layout: DecisionNetworkLayout) {
+  return layout.connectors.map(({ start, end }) => toOpenSvgPath([start, end])).join('');
+}
+
+export function toDecisionNetworkTopologyPath(layout: DecisionNetworkLayout) {
+  return toDecisionNetworkFramePath(layout) + toDecisionNetworkConnectorPath(layout);
 }
 
 const toPercent = (value: number, total: number) => `${roundCoordinate((value / total) * 100)}%`;

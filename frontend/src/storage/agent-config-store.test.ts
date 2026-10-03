@@ -24,6 +24,8 @@ describe('agent config store', () => {
     const configs = cloneAgentConfigs();
     configs['MELCHIOR-1'] = {
       ...configs['MELCHIOR-1'],
+      displayName: '证据评估节点',
+      role: '证据审查专家',
       connection: 'openai-compatible',
       baseUrl: 'https://api.example.com/v1',
       model: 'glm-test',
@@ -36,6 +38,9 @@ describe('agent config store', () => {
     expect(storage.snapshot()[AGENT_CONFIG_STORAGE_KEY]).not.toContain('apiKey');
 
     const restored = loadAgentConfigs(storage);
+    expect(restored['MELCHIOR-1'].displayName).toBe('证据评估节点');
+    expect(restored['MELCHIOR-1'].role).toBe('证据审查专家');
+    expect(restored['MELCHIOR-1'].agentId).toBe('MELCHIOR-1');
     expect(restored['MELCHIOR-1'].connection).toBe('openai-compatible');
     expect(restored['MELCHIOR-1'].baseUrl).toBe('https://api.example.com/v1');
     expect(restored['MELCHIOR-1'].model).toBe('glm-test');
@@ -51,6 +56,20 @@ describe('agent config store', () => {
       .toEqual(cloneAgentConfigs());
     expect(loadAgentConfigs(memoryStorage({ [AGENT_CONFIG_STORAGE_KEY]: '{"version":99,"configs":{}}' })))
       .toEqual(cloneAgentConfigs());
+  });
+
+  it('normalizes names and retains defaults for old or invalid name fields', () => {
+    const restored = loadAgentConfigs(memoryStorage({ [AGENT_CONFIG_STORAGE_KEY]: JSON.stringify({ version: 1, configs: {
+      'MELCHIOR-1': { displayName: '  证据\n评估  ', role: '  证据\n审查  ' },
+      'BALTHASAR-2': { displayName: ' ', role: ' ' },
+      'CASPER-3': { displayName: { invalid: true }, role: { invalid: true } }
+    } }) }));
+    expect(restored['MELCHIOR-1'].displayName).toBe('证据 评估');
+    expect(restored['BALTHASAR-2'].displayName).toBe('BALTHASAR-2');
+    expect(restored['CASPER-3'].displayName).toBeUndefined();
+    expect(restored['MELCHIOR-1'].role).toBe('证据 审查');
+    expect(restored['BALTHASAR-2'].role).toBe('母性論理');
+    expect(restored['CASPER-3'].role).toBe('女性論理');
   });
 
   it('ignores unknown connection values and oversized fields', () => {

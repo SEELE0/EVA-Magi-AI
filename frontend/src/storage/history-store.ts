@@ -33,6 +33,7 @@ function isAgentResult(value: unknown): value is AgentHistoryResult {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<AgentHistoryResult>;
   return typeof candidate.agentId === 'string'
+    && (candidate.displayName === undefined || typeof candidate.displayName === 'string')
     && typeof candidate.role === 'string'
     && typeof candidate.response === 'string'
     && typeof candidate.connection === 'string'

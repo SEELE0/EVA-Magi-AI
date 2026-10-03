@@ -54,7 +54,10 @@ export function HistoryList({ entries }: { entries: DecisionHistoryEntry[] }) {
                   {entry.status === 'failed' ? t('history.failed') : t(`verdict.${entry.verdict}`)}
                 </span>
                 <span className="magi-home__history-votes" aria-label={t('history.votes')}>
-                  {AGENT_IDS.map((agentId) => <i key={agentId} title={agentId} aria-label={`${agentId}: ${voteLabel(entry.votes[agentId])}`} data-vote={entry.votes[agentId]}>{agentId[0]} · {voteLabel(entry.votes[agentId])}</i>)}
+                  {AGENT_IDS.map((agentId) => {
+                    const name = entry.agents[agentId].displayName ?? agentId;
+                    return <i key={agentId} title={name} aria-label={`${name}: ${voteLabel(entry.votes[agentId])}`} data-vote={entry.votes[agentId]}>{Array.from(name)[0]} · {voteLabel(entry.votes[agentId])}</i>;
+                  })}
                 </span>
               </a>
             </li>
@@ -120,7 +123,7 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
             <section key={agentId} className="magi-home__agent-output" aria-labelledby={`history-agent-${agentId}`}>
               <header>
                 <div>
-                  <h3 id={`history-agent-${agentId}`}>{result.agentId} <span>/ {result.role}</span></h3>
+                  <h3 id={`history-agent-${agentId}`}>{result.displayName ?? result.agentId} <span>/ {result.role}</span></h3>
                   <strong>{t('history.vote')}：{voteLabel(result.vote)}</strong>
                 </div>
               </header>

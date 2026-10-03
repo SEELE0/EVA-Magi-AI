@@ -10,6 +10,7 @@ export type AgentConnectionMode = 'mock' | 'openai-compatible' | 'local-compatib
 
 export interface AgentRuntimeConfig {
   agentId: AgentId;
+  displayName?: string;
   role: string;
   connection: AgentConnectionMode;
   baseUrl: string;
@@ -20,6 +21,18 @@ export interface AgentRuntimeConfig {
 }
 
 export type AgentConfigMap = Record<AgentId, AgentRuntimeConfig>;
+
+export const MAX_AGENT_NAME_LENGTH = 32;
+export const MAX_AGENT_ROLE_LENGTH = 32;
+
+/** Names are presentation only; the three routing IDs remain stable. */
+export function agentDisplayName(config: { displayName?: string }, agentId: AgentId): string {
+  return Array.from(config.displayName?.trim().replace(/\s+/g, ' ') ?? '').slice(0, MAX_AGENT_NAME_LENGTH).join('') || agentId;
+}
+
+export function agentRole(config: { role: string }, agentId: AgentId): string {
+  return Array.from(config.role.trim().replace(/\s+/g, ' ')).slice(0, MAX_AGENT_ROLE_LENGTH).join('') || defaultAgentConfigs[agentId].role;
+}
 
 export interface AgentPublicMetadata {
   connection: AgentConnectionMode | 'unknown';

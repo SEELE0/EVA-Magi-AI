@@ -3,7 +3,7 @@
 import type { AgentProvider, ProviderResult } from '../application/agent-provider';
 import { waitFor } from '../application/abort';
 import { AGENT_IDS, type DecisionRequest } from '../domain/decision';
-import type { AgentRuntimeConfig } from '../domain/agent-config';
+import { agentDisplayName, type AgentRuntimeConfig } from '../domain/agent-config';
 
 export class MockProvider implements AgentProvider {
   constructor(private readonly delayMs = 520, private readonly random: () => number = Math.random) {}
@@ -16,7 +16,7 @@ export class MockProvider implements AgentProvider {
     const vote = votes[Math.floor(this.random() * votes.length)];
     return {
       vote,
-      response: `【模拟输出 / MOCK】${config.agentId}\n\n【议题】${request.subject}\n\n【结论】${vote}\n\n【说明】这是随机生成的模拟投票，未调用模型，也不构成对议题的实际分析。`
+      response: `【模拟输出 / MOCK】${agentDisplayName(config, config.agentId)}\n\n【议题】${request.subject}\n\n【结论】${vote}\n\n【说明】这是随机生成的模拟投票，未调用模型，也不构成对议题的实际分析。`
     };
   }
 }

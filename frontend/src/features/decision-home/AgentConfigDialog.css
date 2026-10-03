@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
+.magi-home__config-dialog,
+.magi-home__config-dialog * { box-sizing: border-box; }
+
 .magi-home__config-dialog {
   --config-accent: var(--home-sodium, #ffad42);
   --config-phosphor: var(--home-sodium, #ffad42);
@@ -49,7 +52,7 @@
   outline-offset: 3px;
 }
 
-.magi-home__config-form { display: grid; gap: 18px; padding: 24px 28px; }
+.magi-home__config-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 24px 28px; }
 .magi-home__config-header { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid #885810; }
 .magi-home__config-header p,
 .magi-home__config-header h2 { margin: 0; }
@@ -60,18 +63,55 @@
 .magi-home__dialog-close:hover span:first-child,
 .magi-home__dialog-close:focus-visible span:first-child { color: #ffd18a; filter: drop-shadow(0 0 6px rgba(255, 173, 66, .82)); transform: scale(1.16); }
 .magi-home__dialog-close:active span:first-child { transform: scale(.84); }
+.magi-home__config-header-actions { display: flex; flex: 0 0 auto; gap: 4px; }
+.magi-home__config-header-actions button { position: relative; }
+.magi-home__config-header-actions button::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+  width: max-content;
+  max-width: min(210px, calc(100vw - 32px));
+  padding: 6px 9px;
+  border: 1px solid #805511;
+  color: #ffd18a;
+  background: #080b08;
+  font: 11px/1.5 var(--font-eva-data);
+  text-align: start;
+  white-space: normal;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.magi-home__config-header-actions button:is(:hover, :focus-visible, :active)::after {
+  visibility: visible;
+  opacity: 1;
+}
+@media (hover: none) {
+  .magi-home__config-header-actions button:focus::after { visibility: visible; opacity: 1; }
+}
+.magi-home__dialog-reset svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: color 140ms ease, filter 140ms ease; }
+.magi-home__dialog-reset:hover svg,
+.magi-home__dialog-reset:focus-visible svg { color: #ffd18a; filter: drop-shadow(0 0 6px rgba(255, 173, 66, .82)); }
+.magi-home__dialog-reset svg.is-turning { animation: config-reset-turn 450ms ease-out; transform-origin: center; }
+@keyframes config-reset-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
 
 .magi-home__config-identity {
   display: grid;
-  grid-template-columns: auto minmax(150px, 1fr) auto minmax(180px, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 10px 16px;
   align-items: baseline;
   padding-bottom: 14px;
   border-bottom: 1px dashed #78500f;
 }
 
-.magi-home__config-identity span { color: #8f672b; font-size: 10px; }
+.magi-home__config-identity > span { color: #8f672b; font-size: 10px; }
 .magi-home__config-identity strong { color: var(--config-phosphor); font-size: 13px; }
+.magi-home__role-editor { justify-self: start; }
 
 .magi-home__connection-options { min-width: 0; margin: 0; padding: 0 0 15px; border: 0; border-bottom: 1px dashed #78500f; }
 .magi-home__connection-options legend { margin-bottom: 8px; color: #b97b2d; font-size: 11px; }
@@ -91,6 +131,29 @@
   background: rgba(3, 7, 5, 0.94);
 }
 .magi-home__config-field input { min-height: 46px; padding: 0 12px; }
+.magi-home__config-header > div { min-width: 0; }
+.magi-home__config-header h2 { overflow-wrap: anywhere; }
+.magi-home__editable-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25em; }
+.magi-home__name-editor { position: relative; display: inline-block; min-width: 1ch; max-width: 100%; }
+.magi-home__name-editor > span { display: block; overflow: hidden; visibility: hidden; white-space: pre; }
+.magi-home__name-editor input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: text;
+}
+.magi-home__name-editor input::placeholder { color: inherit; opacity: 0.55; }
+.magi-home__name-editor input:hover { border-bottom-color: #825011; }
+.magi-home__name-editor input:focus { border-bottom-color: var(--config-accent); outline: none; }
+.magi-home__name-help { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .magi-home__api-key-control { position: relative; min-width: 0; }
 .magi-home__config-field .magi-home__api-key-input { padding-right: 48px; }
 .magi-home__api-key-toggle {
@@ -140,6 +203,8 @@
 .magi-home__config-actions button:hover { background: rgba(255, 173, 66, 0.07); }
 
 @media (prefers-reduced-motion: reduce) {
+  .magi-home__dialog-reset svg,
+  .magi-home__dialog-reset svg.is-turning { transition: none; animation: none; transform: none; }
   .magi-home__dialog-close span:first-child { transition: none; }
   .magi-home__dialog-close:hover span:first-child,
   .magi-home__dialog-close:focus-visible span:first-child,

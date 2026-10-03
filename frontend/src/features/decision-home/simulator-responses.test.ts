@@ -26,6 +26,18 @@ const completedDecision: Decision = {
 };
 
 describe('decision history', () => {
+  it('retains execution names for both successful and failed nodes after renaming settings', () => {
+    const configs = cloneAgentConfigs();
+    configs['MELCHIOR-1'].displayName = 'renamed later';
+    const entry = createDecisionHistoryEntry({ ...completedDecision, status: 'failed', agentNames: {
+      'MELCHIOR-1': '科学判断', 'BALTHASAR-2': '生命照护', 'CASPER-3': '关系评估'
+    }, agentRoles: { 'MELCHIOR-1': '执行时角色', 'BALTHASAR-2': '照护角色', 'CASPER-3': '关系角色' }, failures: { 'MELCHIOR-1': 'connection failed' } }, 'review', defaultAgents, configs);
+    expect(entry.agents['MELCHIOR-1'].displayName).toBe('科学判断');
+    expect(entry.agents['BALTHASAR-2'].displayName).toBe('生命照护');
+    expect(entry.agents['MELCHIOR-1'].agentId).toBe('MELCHIOR-1');
+    expect(entry.agents['MELCHIOR-1'].role).toBe('执行时角色');
+    expect(entry.agents['MELCHIOR-1'].response).toBe('connection failed');
+  });
   it('does not invent missing provider responses or metadata', () => {
     const entry = createDecisionHistoryEntry(completedDecision, 'review', defaultAgents, cloneAgentConfigs());
     for (const id of AGENT_IDS) {

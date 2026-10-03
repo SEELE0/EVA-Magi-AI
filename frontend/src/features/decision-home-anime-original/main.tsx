@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { createRoot } from 'react-dom/client';
 import { TerminalMotionInput } from './TerminalMotionInput';
 import { type AgentId, type Decision, type DecisionRequest } from '../../domain/decision';
+import { agentDisplayName, type AgentConfigMap } from '../../domain/agent-config';
 import { HistoryArchive } from './HistoryArchive';
 import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from '../decision-home/history-store';
 import { useDecisionRuntime } from '../decision-home/use-decision-runtime';
@@ -44,6 +45,7 @@ interface DecisionHomeAnimeOriginalProps {
 
 interface MagiTerminalGraphicProps {
   decision: Decision | null;
+  configs: AgentConfigMap;
   layoutMode: AnimeOriginalLayoutMode;
   phase: AnimeOriginalPhase;
   subject: string;
@@ -364,6 +366,10 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
           state={networkState}
           transform={networkTransform}
           votes={props.decision?.votes ?? DEFAULT_VOTES}
+          names={Object.fromEntries(Object.entries(props.configs).map(([id, config]) => {
+            const name = props.decision?.agentNames?.[config.agentId] ?? props.decision?.outputs?.[config.agentId]?.displayName ?? agentDisplayName(config, config.agentId);
+            return [id, name === id ? undefined : name];
+          }))}
         />
       </svg>
     </div>
@@ -534,7 +540,7 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
       </p>
       <div className="direct-link-workspace">
         <section className="terminal-screen" aria-label={t('original.terminal')}>
-          <MagiTerminalGraphic decision={decision} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
+          <MagiTerminalGraphic decision={decision} configs={configs} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
           {archiveWarning || storageWarning ? <p className="direct-history-warning" role="status">{t('original.storageWarning')}</p> : null}
         </section>
         <MotionComposer
