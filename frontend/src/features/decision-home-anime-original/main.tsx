@@ -5,23 +5,29 @@
  */
 import {
   useEffect,
+  useId,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
   type FormEvent,
+  type ReactNode,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createRoot } from 'react-dom/client';
 import { TerminalMotionInput } from './TerminalMotionInput';
-import { AGENT_IDS, type AgentId, type Decision, type DecisionRequest } from '../../domain/decision';
+import { type AgentId, type Decision, type DecisionRequest } from '../../domain/decision';
+import { agentDisplayName, type AgentConfigMap } from '../../domain/agent-config';
 import { HistoryArchive } from './HistoryArchive';
 import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from '../decision-home/history-store';
-import { createDecisionService } from '../../services/create-decision-service';
+import { useDecisionRuntime } from '../decision-home/use-decision-runtime';
+import { createDecisionHistoryEntry } from '../decision-home/simulator-responses';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
-import { AgentConfigDialog } from '../decision-home/AgentConfigDialog';
-import { verdictCopy } from '../decision-console/console-config';
-import { cloneAgentConfigs } from '../decision-home/simulator-config';
-import type { AgentConfigMap, AgentRuntimeConfig, DecisionHistoryEntry } from '../decision-home/simulator-types';
+import { RuntimeSettings } from '../decision-home/RuntimeSettings';
+import { LanguageSelector } from '../../components/LanguageSelector';
+import '../../components/magi-select.css';
+import { localizeError } from '../../i18n-error';
 import {
   ANIME_ORIGINAL_LAYOUT_PRESETS,
   TERMINAL_MODULE_LAYOUT,
@@ -41,6 +47,7 @@ interface DecisionHomeAnimeOriginalProps {
 
 interface MagiTerminalGraphicProps {
   decision: Decision | null;
+  configs: AgentConfigMap;
   layoutMode: AnimeOriginalLayoutMode;
   phase: AnimeOriginalPhase;
   subject: string;
@@ -55,7 +62,7 @@ const DEFAULT_VOTES: Decision['votes'] = {
 const TRANSITION_DURATION_MS = 520;
 const ORIENTATION_QUERY = '(orientation: landscape)';
 const WIDE_PORTRAIT_QUERY = '(orientation: portrait) and (min-width: 720px)';
-const defaultService = createDecisionService();
+
 
 function shortDecisionCode(id?: string) {
   if (!id) return 'WAIT';
@@ -74,22 +81,14 @@ function systemMode(phase: AnimeOriginalPhase) {
   return 'IDLE';
 }
 
-function consensusLabel(decision: Decision | null) {
-  if (!decision || decision.verdict === 'pending') return '00 / 03';
-  if (decision.verdict === 'review') return 'NO MAJORITY';
-  const targetVote = decision.verdict === 'approved' ? 'approve' : 'reject';
-  const count = Object.values(decision.votes).filter((vote) => vote === targetVote).length;
-  return `${String(count).padStart(2, '0')} / 03`;
-}
-
-function animeOriginalStatus(phase: AnimeOriginalPhase, decision: Decision | null, error: string | null) {
-  if (phase === 'error') return `SIGNAL FAILURE. ${error ?? '判定回線に障害が発生しました。'}`;
-  if (phase === 'transitioning') return 'DIRECT LINK TRANSITIONING.';
-  if (phase === 'deliberation') return 'DELIBERATION IN PROGRESS. 三人格の投票を受信中。';
+function animeOriginalStatus(phase: AnimeOriginalPhase, decision: Decision | null, error: string | null, t: ReturnType<typeof useTranslation>['t']) {
+  if (phase === 'error') return t('original.failedStatus', { message: error ?? t('original.networkError') });
+  if (phase === 'transitioning') return t('original.transitioning');
+  if (phase === 'deliberation') return t('original.deliberation');
   if (phase === 'final' && decision) {
-    return `FINAL VERDICT: ${verdictCopy[decision.verdict].label}. CONSENSUS ${consensusLabel(decision)}.`;
+    return t('original.final', { verdict: t(`verdict.${decision.verdict}`) });
   }
-  return 'AWAITING MOTION.';
+  return t('original.awaiting');
 }
 
 function subscribeToLayout(callback: () => void) {
@@ -131,27 +130,6 @@ function waitForTransition(signal: AbortSignal) {
   });
 }
 
-function motionLines(subject: string) {
-  const normalized = subject.trim().replace(/\s+/g, ' ') || 'AWAITING INPUT';
-  const takeByVisualUnits = (value: string, maximum: number) => {
-    let units = 0;
-    let index = 0;
-    for (const character of value) {
-      const nextUnits = /[\u3000-\u9fff\uf900-\ufaff]/.test(character) ? 2 : 1;
-      if (units + nextUnits > maximum) break;
-      units += nextUnits;
-      index += character.length;
-    }
-    return [value.slice(0, index), value.slice(index)] as const;
-  };
-  const [first, remainder] = takeByVisualUnits(normalized, 18);
-  if (!remainder) return [`MOTION : ${first}`];
-
-  const [secondChunk, overflow] = takeByVisualUnits(remainder, 28);
-  const second = overflow ? `${secondChunk}…` : secondChunk;
-  return [`MOTION : ${first}`, second];
-}
-
 function TerminalHeader({ placement }: { readonly placement: AnimeOriginalPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.header;
 
@@ -167,33 +145,69 @@ function TerminalHeader({ placement }: { readonly placement: AnimeOriginalPanelP
 }
 
 function MotionResult({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: AnimeOriginalPanelPlacement }) {
+  const clipId = useId();
+  const resultGlowId = useId();
+  const contentRef = useRef<SVGGElement>(null);
   const layout = TERMINAL_MODULE_LAYOUT.motion;
+  const contentWidth = placement.width - layout.contentInset * 2;
   const secondRailX = layout.railWidth + layout.railGap;
   const rightRailX = placement.width - layout.railWidth;
   const rightSecondRailX = rightRailX - layout.railWidth - layout.railGap;
-  const lines = motionLines(subject);
+  const caption = 'RESULT OF THE DELIBERATION';
+  const motion = `MOTION:${subject.trim().replace(/\s+/g, ' ') || '--'}`;
   const verdict = decision?.verdict ?? 'pending';
-  const result = phase === 'error'
-    ? 'SIGNAL FAILURE / RETRY ENABLED'
-    : phase === 'compose'
-      ? 'AWAITING MOTION'
-    : phase === 'final'
-      ? `FINAL VERDICT : ${verdictCopy[verdict].label} / ${consensusLabel(decision)}`
-      : 'DELIBERATION IN PROGRESS';
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const agenda = content.querySelector<SVGTextElement>('.motion-title');
+    if (!agenda || typeof agenda.getComputedTextLength !== 'function') return;
+    const fit = () => {
+      agenda.removeAttribute('textLength');
+      agenda.textContent = motion;
+      // Keep the film's single, tall agenda line legible. The title and history retain the full input.
+      const minimumScale = 0.72;
+      if (agenda.getComputedTextLength() > contentWidth / minimumScale) {
+        const characters = Array.from(motion);
+        let low = 0;
+        let high = characters.length;
+        while (low < high) {
+          const middle = Math.ceil((low + high) / 2);
+          agenda.textContent = `${characters.slice(0, middle).join('')}…`;
+          if (agenda.getComputedTextLength() <= contentWidth / minimumScale) low = middle;
+          else high = middle - 1;
+        }
+        agenda.textContent = `${characters.slice(0, low).join('')}…`;
+      }
+      if (agenda.getComputedTextLength() > contentWidth) agenda.setAttribute('textLength', String(contentWidth));
+    };
+    fit();
+    let active = true;
+    void document.fonts?.ready.then(() => { if (active) fit(); });
+    document.fonts?.addEventListener('loadingdone', fit);
+    return () => {
+      active = false;
+      document.fonts?.removeEventListener('loadingdone', fit);
+    };
+  }, [motion, contentWidth]);
 
   return (
     <g className={`motion-result is-${phase === 'error' ? 'error' : verdict}`} transform={toSvgTranslate(placement.origin)}>
-      <title>{subject.trim() || '议题等待输入'}</title>
-      <g className="terminal-orange motion-result__rails">
-        <rect width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
-        <rect x={secondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
-        <rect x={rightSecondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
-        <rect x={rightRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+      <title>{subject.trim() || 'AWAITING MOTION'}</title>
+      <defs>
+        <clipPath id={clipId}><rect x={layout.contentInset - 4} width={contentWidth + 8} height={placement.height} /></clipPath>
+        <ResultRailGlowFilter id={resultGlowId} />
+      </defs>
+      <g className="motion-result__rails">
+        <rect className="terminal-orange motion-result__rail--outer" width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+        <rect className="terminal-orange motion-result__rail--inner" style={phase === 'final' ? { filter: `url(#${resultGlowId})` } : undefined} x={secondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+        <rect className="terminal-orange motion-result__rail--inner" style={phase === 'final' ? { filter: `url(#${resultGlowId})` } : undefined} x={rightSecondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+        <rect className="terminal-orange motion-result__rail--outer" x={rightRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
       </g>
-      <text x={layout.contentInset} y="27" className="terminal-orange motion-copy">{result}</text>
-      <text x={layout.contentInset} y={lines.length === 1 ? 70 : 55} className="terminal-orange motion-title">
-        {lines.map((line, index) => <tspan x={layout.contentInset} dy={index === 0 ? 0 : 24} key={line}>{line}</tspan>)}
-      </text>
+      <g ref={contentRef} clipPath={`url(#${clipId})`}>
+        <text x={layout.contentInset} y="33" textLength={contentWidth} lengthAdjust="spacingAndGlyphs" className="terminal-orange motion-copy">{caption}</text>
+        <text x={layout.contentInset} y="69" lengthAdjust="spacingAndGlyphs" className="terminal-orange motion-title">{motion}</text>
+      </g>
     </g>
   );
 }
@@ -306,6 +320,21 @@ function OrangeGlowFilter({ id }: { readonly id: string }) {
   );
 }
 
+function ResultRailGlowFilter({ id }: { readonly id: string }) {
+  // Blur the rail's own color so a green/yellow result never inherits the orange halo.
+  return (
+    <filter id={id} x="-60%" y="-60%" width="220%" height="220%" colorInterpolationFilters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="near" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.8" result="mid" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="far" />
+      <feComponentTransfer in="near" result="near-hot"><feFuncA type="linear" slope="1.55" /></feComponentTransfer>
+      <feComponentTransfer in="mid" result="mid-soft"><feFuncA type="linear" slope="0.85" /></feComponentTransfer>
+      <feComponentTransfer in="far" result="far-soft"><feFuncA type="linear" slope="0.42" /></feComponentTransfer>
+      <feMerge><feMergeNode in="far-soft" /><feMergeNode in="mid-soft" /><feMergeNode in="near-hot" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+  );
+}
+
 function NetworkGlowFilters() {
   // Flat polylines (e.g. BALTHASAR's horizontal shared edge) have a zero-height
   // bounding box, which collapses an objectBoundingBox filter region to nothing
@@ -321,11 +350,12 @@ function NetworkGlowFilters() {
 }
 
 function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
+  const { t } = useTranslation();
   const preset = ANIME_ORIGINAL_LAYOUT_PRESETS[props.layoutMode];
   const isRunning = props.phase === 'transitioning' || props.phase === 'deliberation';
   const networkState = isRunning || props.phase === 'final' ? 'active' : 'compose';
   const networkTransform = resolveMagiNetworkPosition(preset.network, networkState);
-  const accessibleSubject = props.subject.trim() || '等待输入议题';
+  const accessibleSubject = props.subject.trim() || t('original.awaiting');
   const viewBox = `0 0 ${preset.viewBox.width} ${preset.viewBox.height}`;
 
   return (
@@ -350,7 +380,7 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
           <ConnectionData decision={props.decision} phase={props.phase} placement={preset.information.connectionData} />
         </g>
       </svg>
-      <svg className="terminal-network-layer" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="group" aria-label={`MAGI direct link deliberation terminal. Motion: ${accessibleSubject}`}>
+      <svg className="terminal-network-layer" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="group" aria-label={`${t('original.terminal')}. ${t('history.subject')}: ${accessibleSubject}`}>
         <defs><NetworkGlowFilters /></defs>
         <MagiNetwork
           disabled={isRunning}
@@ -359,50 +389,76 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
           state={networkState}
           transform={networkTransform}
           votes={props.decision?.votes ?? DEFAULT_VOTES}
+          names={Object.fromEntries(Object.entries(props.configs).map(([id, config]) => {
+            const name = props.decision?.agentNames?.[config.agentId] ?? props.decision?.outputs?.[config.agentId]?.displayName ?? agentDisplayName(config, config.agentId);
+            return [id, name === id ? undefined : name];
+          }))}
         />
       </svg>
     </div>
   );
 }
 
-function MotionComposer({ collapsed, error, isExecuting, subject, onChange, onSubmit, onOpenHistory }: {
+function MotionComposer({ collapsed, completed, error, isExecuting, subject, toolbar, onChange, onNewMotion, onSubmit }: {
   collapsed: boolean;
+  completed: boolean;
   error: string | null;
   isExecuting: boolean;
   subject: string;
+  toolbar: ReactNode;
   onChange: (value: string) => void;
-  onOpenHistory: () => void;
+  onNewMotion: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <form aria-hidden={collapsed || undefined} className={`motion-composer${collapsed ? ' is-collapsed' : ''}`} inert={collapsed || undefined} onSubmit={onSubmit}>
-      <fieldset disabled={isExecuting}>
-        <legend>NEW MOTION</legend>
-        <label htmlFor="direct-link-motion">AGENDA</label>
-        <div className="motion-composer__controls">
-          <div className="motion-composer__input">
-            <span aria-hidden="true">&gt;</span>
-            <TerminalMotionInput value={subject} onChange={onChange} />
-            <button className="direct-history-trigger" type="button" aria-label="历史记录" title="历史记录" aria-haspopup="dialog" onClick={onOpenHistory}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 4v5h5" /><path d="M3.7 8a9 9 0 1 1-.4 7" /><path d="M12 7v5l3 2" /></svg>
-            </button>
-            <small>{subject.length} / 240</small>
-          </div>
-          <button type="submit">EXECUTE MOTION</button>
-        </div>
-        {error ? <p className="motion-composer__error" role="alert">{error}</p> : null}
-      </fieldset>
-    </form>
+    <div className={`motion-composer${collapsed ? ' is-collapsed' : ''}`}>
+      <div className="motion-composer__header">
+        {completed
+          ? <button className="direct-link-new-motion" type="button" onClick={onNewMotion}>{t('original.newMotion')}</button>
+          : <h2 className="motion-composer__heading">{t('original.newMotion')}</h2>}
+        {toolbar}
+      </div>
+      {!collapsed ? (
+        <form className="motion-composer__form" onSubmit={onSubmit}>
+          <fieldset disabled={isExecuting}>
+            <legend className="motion-composer__legend">{t('original.newMotion')}</legend>
+            <label htmlFor="direct-link-motion">{t('original.agenda')}</label>
+            <div className="motion-composer__controls">
+              <div className="motion-composer__input">
+                <span aria-hidden="true">&gt;</span>
+                <TerminalMotionInput value={subject} onChange={onChange} placeholder={t('decision.agendaPlaceholder')} />
+                <small>{subject.length} / 240</small>
+              </div>
+              <button type="submit">{t('original.execute')}</button>
+            </div>
+            {error ? <p className="motion-composer__error" role="alert">{error}</p> : null}
+          </fieldset>
+        </form>
+      ) : null}
+    </div>
   );
 }
 
-export function DecisionHomeAnimeOriginal({ service = defaultService }: DecisionHomeAnimeOriginalProps = {}) {
+function DirectControlIcon({ name }: { name: 'history' | 'settings' | 'book' }) {
+  const paths = {
+    history: <><path d="M3 4v5h5" /><path d="M3.7 8a9 9 0 1 1-.4 7" /><path d="M12 7v5l3 2" /></>,
+    settings: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none" /><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" /><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none" /></>,
+    book: <><path d="M12 5c-2-1.5-5-2-9-1v15c4-1 7-.5 9 1.5 2-2 5-2.5 9-1.5V4c-4-1-7-.5-9 1Z" /><path d="M12 5v15.5" /></>,
+  };
+  return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
+}
+
+export function DecisionHomeAnimeOriginal({ service: suppliedService }: DecisionHomeAnimeOriginalProps = {}) {
+  const { t } = useTranslation();
   const layoutMode = useAnimeOriginalLayoutMode();
   const [phase, setPhase] = useState<AnimeOriginalPhase>('compose');
   const [subject, setSubject] = useState('');
   const [decision, setDecision] = useState<Decision | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [configs, setConfigs] = useState<AgentConfigMap>(() => cloneAgentConfigs());
+  const runtime = useDecisionRuntime();
+  const { configs, service: runtimeService, storageWarning } = runtime;
+  const service = suppliedService ?? runtimeService;
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [history, setHistory] = useState(loadDecisionHistory);
@@ -420,9 +476,6 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
     };
   }, []);
 
-  function saveAgentConfig(config: AgentRuntimeConfig) {
-    setConfigs((current) => ({ ...current, [config.agentId]: config }));
-  }
 
   function resetMotion() {
     activeController.current?.abort();
@@ -434,12 +487,17 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
     setIsExecuting(false);
   }
 
+  function openHistory() {
+    if (!archiveWarning) setHistory(loadDecisionHistory());
+    setHistoryOpen(true);
+  }
+
   async function runDecision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isExecuting) return;
     const normalizedSubject = subject.trim();
     if (!normalizedSubject) {
-      setError('MAGIに送信する議題を入力してください。');
+      setError(t('original.emptyMotion'));
       setPhase('error');
       return;
     }
@@ -460,7 +518,7 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       setPhase('deliberation');
 
       const options = { signal: controller.signal };
-      const created = await service.createDecision({ subject: normalizedSubject, priority: 'normal', simulationHint: 'standard' }, options);
+      const created = await service.createDecision({ subject: normalizedSubject, priority: 'normal' }, options);
       if (!mounted.current || controller.signal.aborted) return;
       setDecision(created);
 
@@ -474,32 +532,20 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
       await polling.catch(() => undefined);
       if (!mounted.current) return;
       setDecision(completed);
-      if (completed.status === 'completed') {
-        // This service returns votes, not agent responses or provider metadata.
-        // Do not manufacture reasoning from the local configuration dialog.
-        const entry: DecisionHistoryEntry = {
-          id: completed.id, subject: completed.subject, scenario: 'standard',
-          priority: completed.priority, createdAt: completed.createdAt,
-          completedAt: completed.completedAt ?? new Date().toISOString(),
-          verdict: completed.verdict, votes: { ...completed.votes },
-          agents: Object.fromEntries(AGENT_IDS.map((id) => [id, {
-            agentId: id, role: configs[id].role, vote: completed.votes[id],
-            response: '本次服务仅返回投票结果，未提供独立论证或模型信息。',
-            connection: 'unknown', baseUrl: '', model: '',
-          }])) as DecisionHistoryEntry['agents'],
-        };
+      {
+        const entry = createDecisionHistoryEntry(completed, 'standard', [], configs);
         const next = prependDecisionHistory(archiveWarning ? history : loadDecisionHistory(), entry);
         setHistory(next);
         setArchiveWarning(!saveDecisionHistory(next));
       }
       setPhase(completed.status === 'failed' ? 'error' : 'final');
-      if (completed.status === 'failed') setError('MAGI 判定が失敗しました。入力内容を確認して再試行してください。');
+      if (completed.status === 'failed') setError(t('original.failed'));
     } catch (cause) {
       const shouldReport = mounted.current && activeController.current === controller;
       controller.abort();
       await polling?.catch(() => undefined);
       if (shouldReport) {
-        setError(cause instanceof Error ? cause.message : '判定回線に障害が発生しました。');
+        setError(localizeError(cause, t));
         setPhase('error');
       }
     } finally {
@@ -509,25 +555,41 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
   }
 
   const composerCollapsed = phase === 'transitioning' || phase === 'deliberation' || phase === 'final';
-  const selectedAgentConfig = selectedAgentId ? configs[selectedAgentId] : null;
 
   return (
     <main className={`direct-link-page phase-${phase}`} data-layout={layoutMode} data-phase={phase}>
       <p className="direct-link-live-status" aria-live={phase === 'error' ? 'assertive' : 'polite'}>
-        {animeOriginalStatus(phase, decision, error)}
+        {animeOriginalStatus(phase, decision, error, t)}
       </p>
       <div className="direct-link-workspace">
-        <section className="terminal-screen" aria-label="MAGI direct link terminal screen">
-          <MagiTerminalGraphic decision={decision} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
-          {archiveWarning ? <p className="direct-history-warning" role="status">本机存储不可用，记录仅保留在当前页面。</p> : null}
-          {phase === 'final' ? <button className="direct-link-new-motion" type="button" onClick={resetMotion}>NEW MOTION</button> : null}
+        <section className="terminal-screen" aria-label={t('original.terminal')}>
+          <MagiTerminalGraphic decision={decision} configs={configs} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
+          {archiveWarning || storageWarning ? <p className="direct-history-warning" role="status">{t('original.storageWarning')}</p> : null}
         </section>
         <MotionComposer
-          onOpenHistory={() => { if (!archiveWarning) setHistory(loadDecisionHistory()); setHistoryOpen(true); }}
           collapsed={composerCollapsed}
+          completed={phase === 'final'}
           error={error}
           isExecuting={isExecuting}
           subject={subject}
+          onNewMotion={resetMotion}
+          toolbar={
+            <nav className="direct-link-controls" aria-label={t('nav.label')}>
+              <button className="direct-link-control-button direct-history-trigger" type="button" aria-label={t('common.history')} title={t('common.history')} aria-haspopup="dialog" onClick={openHistory}><DirectControlIcon name="history" /></button>
+              <span className="direct-link-controls__separator" aria-hidden="true" />
+              <RuntimeSettings
+                runtime={runtime}
+                selectedAgentId={selectedAgentId}
+                onCloseNode={() => setSelectedAgentId(null)}
+                variant="original"
+                renderEntry={({ openOverall, openSettingBook }) => <>
+                  <button className="direct-link-control-button" type="button" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openOverall}><DirectControlIcon name="settings" /></button>
+                  <button className="direct-link-control-button" type="button" aria-label={t('common.settingBook')} title={t('common.settingBook')} onClick={openSettingBook}><DirectControlIcon name="book" /></button>
+                </>}
+              />
+              <LanguageSelector variant="original" />
+            </nav>
+          }
           onChange={(value) => {
             setSubject(value);
             if (error) {
@@ -539,7 +601,6 @@ export function DecisionHomeAnimeOriginal({ service = defaultService }: Decision
         />
       </div>
 
-      <AgentConfigDialog config={selectedAgentConfig} onClose={() => setSelectedAgentId(null)} onSave={saveAgentConfig} variant="original" />
       {historyOpen ? <HistoryArchive entries={history} onClose={() => setHistoryOpen(false)} /> : null}
     </main>
   );

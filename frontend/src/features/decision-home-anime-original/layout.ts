@@ -203,7 +203,7 @@ export const TERMINAL_MODULE_LAYOUT = {
     railWidth: 7,
     railHeight: 83,
     railRadius: 0,
-    railGap: 4,
+    railGap: 5,
     contentInset: 28,
     contentWidth: 329,
     firstBaseline: 37,

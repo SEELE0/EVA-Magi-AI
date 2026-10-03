@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * License: https://www.gnu.org/licenses/agpl-3.0.html
+ */
+.magi-home__telemetry .readout.readout--clock { align-items: center; }
+
+.nixie-clock {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: #ffae61;
+}
+
+.nixie-clock__accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.nixie-clock__digits { display: inline-flex; align-items: center; gap: 2px; }
+
+.nixie-clock__digit-slot {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.nixie-clock__digit-slot svg { display: block; width: 100%; height: 100%; }
+.nixie-clock__cathodes {
+  position: absolute;
+  inset: 0;
+  color: #b9733d;
+  opacity: 0.1;
+  pointer-events: none;
+}
+.nixie-clock__numeral {
+  position: absolute;
+  inset: 0;
+  color: #ffc18a;
+  filter: drop-shadow(0 0 1px #ff6c24) drop-shadow(0 0 4px rgba(239, 72, 17, 0.6));
+  animation: nixie-clock-ignite 180ms ease-out;
+}
+.nixie-clock__separator {
+  width: 4px;
+  flex: 0 0 auto;
+  font: 13px/1 var(--font-eva-data);
+  text-align: center;
+  text-shadow: 0 0 4px rgba(255, 101, 28, 0.65);
+}
+
+@keyframes nixie-clock-ignite {
+  from { filter: brightness(1.3) drop-shadow(0 0 2px #ff6c24) drop-shadow(0 0 5px rgba(239, 72, 17, 0.7)); }
+  to { filter: brightness(1) drop-shadow(0 0 1px #ff6c24) drop-shadow(0 0 4px rgba(239, 72, 17, 0.6)); }
+}
+
+@media (max-width: 760px) {
+  .nixie-clock__digits { gap: 1px; }
+  .nixie-clock__digit-slot { width: 14px; height: 22px; }
+  .nixie-clock__separator { width: 3px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nixie-clock__numeral { animation: none; }
+}

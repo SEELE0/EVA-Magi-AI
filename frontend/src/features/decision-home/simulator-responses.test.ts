@@ -25,30 +25,37 @@ const completedDecision: Decision = {
   completedAt: '2026-08-14T09:00:02.000Z'
 };
 
-describe('simulated agent history responses', () => {
-  it('stores complete user-visible outputs and safe connection metadata for every agent', () => {
+describe('decision history', () => {
+  it('retains execution names for both successful and failed nodes after renaming settings', () => {
+    const configs = cloneAgentConfigs();
+    configs['MELCHIOR-1'].displayName = 'renamed later';
+    const entry = createDecisionHistoryEntry({ ...completedDecision, status: 'failed', agentNames: {
+      'MELCHIOR-1': '科学判断', 'BALTHASAR-2': '生命照护', 'CASPER-3': '关系评估'
+    }, agentRoles: { 'MELCHIOR-1': '执行时角色', 'BALTHASAR-2': '照护角色', 'CASPER-3': '关系角色' }, failures: { 'MELCHIOR-1': 'connection failed' } }, 'review', defaultAgents, configs);
+    expect(entry.agents['MELCHIOR-1'].displayName).toBe('科学判断');
+    expect(entry.agents['BALTHASAR-2'].displayName).toBe('生命照护');
+    expect(entry.agents['MELCHIOR-1'].agentId).toBe('MELCHIOR-1');
+    expect(entry.agents['MELCHIOR-1'].role).toBe('执行时角色');
+    expect(entry.agents['MELCHIOR-1'].response).toBe('connection failed');
+  });
+  it('does not invent missing provider responses or metadata', () => {
+    const entry = createDecisionHistoryEntry(completedDecision, 'review', defaultAgents, cloneAgentConfigs());
+    for (const id of AGENT_IDS) {
+      expect(entry.agents[id].connection).toBe('unknown');
+      expect(entry.agents[id].response).toContain('未提供独立论证');
+    }
+  });
+  it('preserves long results and their execution metadata while removing echoed credentials', () => {
     const configs = cloneAgentConfigs();
     configs['MELCHIOR-1'].apiKey = 'sk-never-history';
-    configs['MELCHIOR-1'].prompt = '\n  カスタム科学検証カード：停止条件を優先する。  \nこの行は要約に含めない。';
-    const entry = createDecisionHistoryEntry(completedDecision, 'review', defaultAgents, configs);
-
-    expect(entry.subject).toBe(completedDecision.subject);
-    expect(entry.verdict).toBe('review');
-    for (const agentId of AGENT_IDS) {
-      expect(entry.agents[agentId].response).toContain('【結論】');
-      expect(entry.agents[agentId].response).toContain('【役割カード】');
-      expect(entry.agents[agentId].response).toContain('【理由】');
-      expect(entry.agents[agentId].response).toContain('【主要リスク】');
-      expect(entry.agents[agentId].response).toContain('【提案】');
-      expect(entry.agents[agentId].response.length).toBeGreaterThan(150);
-      expect(entry.agents[agentId].model).toContain('MAGI-SIM');
-    }
-
-    expect(entry.agents['MELCHIOR-1'].response).toContain('【役割カード】カスタム科学検証カード：停止条件を優先する。');
-    expect(entry.agents['MELCHIOR-1'].response).not.toContain('この行は要約に含めない。');
-
-    const serialized = JSON.stringify(entry);
-    expect(serialized).not.toContain('sk-never-history');
-    expect(serialized).not.toContain('apiKey');
+    const response = 'long reason '.repeat(500) + 'sk-never-history';
+    const entry = createDecisionHistoryEntry({ ...completedDecision, outputs: {
+      'MELCHIOR-1': { agentId: 'MELCHIOR-1', role: 'role at execution', vote: 'approve', response,
+        connection: 'openai-compatible', baseUrl: 'https://example.com/v1', model: 'execution-model', latencyMs: 10 }
+    } }, 'review', defaultAgents, configs);
+    expect(entry.agents['MELCHIOR-1'].response.length).toBeGreaterThan(5000);
+    expect(entry.agents['MELCHIOR-1'].model).toBe('execution-model');
+    expect(JSON.stringify(entry)).not.toContain('sk-never-history');
+    expect(JSON.stringify(entry)).not.toContain('apiKey');
   });
 });

@@ -1,20 +1,11 @@
-/*
- * Copyright (C) 2026 SEELE0
- * SPDX-License-Identifier: AGPL-3.0-or-later
- * License: https://www.gnu.org/licenses/agpl-3.0.html
- */
-import type { ConnectionMode } from '../domain/decision';
+/* Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later */
 import type { DecisionService } from './decision-service';
 import { HttpDecisionService } from './http-decision-service';
 import { MockDecisionService } from './mock-decision-service';
-import { ResilientDecisionService } from './resilient-decision-service';
 
+/** Main delegates execution to its backend. Mock is an explicit preview option. */
 export function createDecisionService(): DecisionService {
-  const mode = (import.meta.env.VITE_API_MODE ?? 'mock') as ConnectionMode;
-  const mock = new MockDecisionService();
-  if (mode !== 'remote') return mock;
-  return new ResilientDecisionService(
-    new HttpDecisionService(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'),
-    mock
-  );
+  if (import.meta.env.VITE_API_MODE === 'mock') return new MockDecisionService();
+  return new HttpDecisionService(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000');
 }

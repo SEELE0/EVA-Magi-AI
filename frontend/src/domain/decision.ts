@@ -15,6 +15,7 @@ export type ConnectionMode = 'mock' | 'remote';
 
 export interface Agent {
   id: AgentId;
+  displayName?: string;
   role: string;
   health: AgentHealth;
   latencyMs: number;
@@ -34,7 +35,20 @@ export interface SystemStatus {
 export interface DecisionRequest {
   subject: string;
   priority: 'low' | 'normal' | 'critical';
+  /** Legacy request metadata retained for the isolated design testbed. */
   simulationHint?: 'standard' | 'reject' | 'review';
+}
+
+export interface AgentResult {
+  agentId: AgentId;
+  displayName?: string;
+  role: string;
+  vote: Exclude<Vote, 'pending'>;
+  response: string;
+  connection: 'mock' | 'openai-compatible' | 'local-compatible';
+  baseUrl: string;
+  model: string;
+  latencyMs: number;
 }
 
 export interface Decision {
@@ -44,8 +58,15 @@ export interface Decision {
   status: DecisionStatus;
   verdict: Verdict;
   votes: Record<AgentId, Vote>;
+  /** Display names captured when execution starts, including failed nodes. */
+  agentNames?: Record<AgentId, string>;
+  agentRoles?: Record<AgentId, string>;
   createdAt: string;
   completedAt?: string;
+  /** 外部 API 接続ノードが返した本文。模擬ノードには存在しない。 */
+  responses?: Partial<Record<AgentId, string>>;
+  outputs?: Partial<Record<AgentId, AgentResult>>;
+  failures?: Partial<Record<AgentId, string>>;
 }
 
 export interface DecisionEvent {

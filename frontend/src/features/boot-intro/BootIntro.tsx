@@ -4,6 +4,7 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DEFAULT_HOME_MODE, type HomeMode } from '../../domain/home-mode';
 import { MAGI_BOOT_ANIMATION_DURATION_MS, MagiBoot } from '../magi-boot';
 import './boot-intro.css';
@@ -176,15 +177,15 @@ const BOOT_PHASE_STEP: Record<BootPhase, string> = {
   reveal: '07'
 };
 
-const BOOT_PHASE_LABEL: Record<BootPhase, string> = {
-  'power-on': 'POWER ON',
-  'post-header': 'POWER-ON SELF TEST',
-  magi: 'INITIAL PROGRAM LOAD',
-  'post-stream': 'SYSTEM READY',
-  'mode-select': 'DISPLAY MODE SELECTION',
-  exit: 'DISPLAY DRIVER HANDOFF',
-  resync: 'VIDEO RESYNCHRONIZATION',
-  reveal: 'SELECTED INTERFACE'
+const BOOT_PHASE_KEY: Record<BootPhase, string> = {
+  'power-on': 'boot.phasePower',
+  'post-header': 'boot.phasePost',
+  magi: 'boot.phaseMagi',
+  'post-stream': 'boot.phaseReady',
+  'mode-select': 'boot.phaseMode',
+  exit: 'boot.phaseExit',
+  resync: 'boot.phaseResync',
+  reveal: 'boot.phaseReveal'
 };
 
 export function shouldShowBootIntro() {
@@ -215,10 +216,10 @@ const bootNodes = [
 ];
 
 const firmwareChecks = [
-  { address: '0000', label: 'SYSTEM MEMORY', value: '65536K', state: 'OK' },
-  { address: '0001', label: 'DISPLAY ADAPTER', value: 'CRT 3279', state: 'OK' },
-  { address: '0002', label: 'TERMINAL ADDRESS', value: '00-01', state: 'OK' },
-  { address: '0003', label: 'DIRECT ACCESS LINK', value: 'MAGI_01', state: 'ESTABLISHED' }
+  { address: '0000', label: 'memory', value: '65536K', state: 'ok' },
+  { address: '0001', label: 'display', value: 'CRT 3279', state: 'ok' },
+  { address: '0002', label: 'terminal', value: '00-01', state: 'ok' },
+  { address: '0003', label: 'directLink', value: 'MAGI_01', state: 'established' }
 ];
 
 const homeModeOptions: ReadonlyArray<{
@@ -230,7 +231,7 @@ const homeModeOptions: ReadonlyArray<{
   {
     mode: 'original',
     code: '01',
-    title: 'ORIGINAL / DIRECT LINK',
+    title: 'ORIGINAL / ANIME STYLE',
     detail: 'MAGI DIRECT LINK CONNECTION'
   },
   {
@@ -249,8 +250,11 @@ export function BootScene({
   onModeConfirm,
   onSkip
 }: BootSceneProps) {
+  const { t } = useTranslation();
   const flags = BOOT_PHASE_FLAGS[phase];
   const stage = useBootStageLayout();
+  const terminalText = (key: string, options?: { index: number }) => t(key, { lng: 'en-US', ...options }).toUpperCase();
+  const modeLabel = (mode: HomeMode) => terminalText(mode === 'original' ? 'boot.modeOriginal' : 'boot.modeModern');
   const selectedOption = homeModeOptions.find((option) => option.mode === selectedMode)
     ?? homeModeOptions[0];
   const className = ['boot-intro', flags.post ? 'boot-post' : '']
@@ -265,7 +269,7 @@ export function BootScene({
 
   return (
     <div
-      aria-label="MAGI 系统启动"
+      aria-label={t('boot.dialog')}
       aria-modal="true"
       className={className}
       data-boot-layout={stage.mode}
@@ -281,7 +285,7 @@ export function BootScene({
           <header className="boot-terminal-header">
             <div className="boot-machine-mark">
               <strong>MAGI/01</strong>
-              <span>PERSONAL COMPUTER</span>
+              <span>{terminalText('boot.personalComputer')}</span>
             </div>
             <div className="boot-ipl-register">
               <span>MAGI SYSTEM UNIT · TYPE M-01</span>
@@ -302,9 +306,9 @@ export function BootScene({
                     style={{ '--boot-line-index': index } as CSSProperties}
                   >
                     <span className="boot-address">{check.address}</span>
-                    <span className="boot-check-name">{check.label}</span>
+                    <span className="boot-check-name">{terminalText(`boot.${check.label}`)}</span>
                     <span className="boot-check-value">{check.value}</span>
-                    <b>{check.state}</b>
+                    <b>{terminalText(`boot.${check.state}`)}</b>
                   </div>
                 ))}
               </div>
@@ -323,12 +327,12 @@ export function BootScene({
                       <span className="boot-check-name">
                         {node.name}<small>{node.role}</small>
                       </span>
-                      <span className="boot-check-value">CHANNEL {index + 1}</span>
-                      <b aria-label={flags.stream ? 'ONLINE' : 'WAITING'}>
-                        {flags.stream ? 'ONLINE' : (
+                      <span className="boot-check-value">{terminalText('boot.channel', { index: index + 1 })}</span>
+                      <b aria-label={flags.stream ? terminalText('boot.online') : terminalText('boot.waiting')}>
+                        {flags.stream ? terminalText('boot.online') : (
                           <>
                             <span aria-hidden="true" className="boot-wait-marker">&gt;</span>
-                            <span>WAIT</span>
+                            <span>{terminalText('boot.waiting')}</span>
                             <span aria-hidden="true" className="boot-wait-dots" />
                           </>
                         )}
@@ -340,8 +344,8 @@ export function BootScene({
 
               {flags.stream ? (
                 <div className="boot-ready-block">
-                  <p>THREE INDEPENDENT SYSTEMS ONLINE</p>
-                  <strong>MAGI SYSTEM READY</strong>
+                  <p>{terminalText('boot.systemsOnline')}</p>
+                  <strong>{terminalText('boot.ready')}</strong>
                   <p className="boot-command boot-final-command">
                     A:\&gt; START DECISION_CONSOLE
                     {phase === 'post-stream' ? (
@@ -352,8 +356,8 @@ export function BootScene({
                   </p>
                   {phase === 'mode-select' ? (
                     <div className="boot-mode-selector">
-                      <p className="boot-mode-selector__title">SELECT DISPLAY MODE</p>
-                      <div aria-label="选择主页显示模式" className="boot-mode-options" role="radiogroup">
+                      <p className="boot-mode-selector__title">{terminalText('boot.selectMode')}</p>
+                      <div aria-label={t('boot.chooseMode')} className="boot-mode-options" role="radiogroup">
                         {homeModeOptions.map((option) => {
                           const selected = option.mode === selectedMode;
                           return (
@@ -368,42 +372,42 @@ export function BootScene({
                               <span aria-hidden="true" className="boot-mode-cursor">{selected ? '>' : '\u00a0'}</span>
                               <span className="boot-mode-code">{option.code}</span>
                               <strong>{option.title}</strong>
-                              <small>{option.detail}</small>
+                              <small>{modeLabel(option.mode)}</small>
                             </button>
                           );
                         })}
                       </div>
-                      <div aria-label="使用上下键选择，按回车键确认模式" className="boot-mode-help boot-mode-help--keyboard">
-                        <span><kbd>↑</kbd> / <kbd>↓</kbd> SELECT</span>
+                      <div aria-label={t('boot.keyboard')} className="boot-mode-help boot-mode-help--keyboard">
+                        <span><kbd>↑</kbd> / <kbd>↓</kbd> {t('boot.select')}</span>
                         <i aria-hidden="true">|</i>
-                        <span>PRESS <kbd>ENTER</kbd> TO CHOOSE MODE</span>
+                        <span>{t('boot.pressEnter')}</span>
                       </div>
-                      <div aria-label="点击选项进行选择" className="boot-mode-help boot-mode-help--touch">
-                        <span>TAP AN OPTION TO SELECT</span>
+                      <div aria-label={t('boot.touch')} className="boot-mode-help boot-mode-help--touch">
+                        <span>{t('boot.touch')}</span>
                       </div>
                       <button
-                        aria-label={`确认进入 ${selectedOption.title} 模式`}
+                        aria-label={t('boot.confirm', { mode: modeLabel(selectedOption.mode) })}
                         className="boot-mode-confirm"
                         onClick={onModeConfirm}
                         type="button"
                       >
                         <span aria-hidden="true">&gt;</span>
-                        <strong>CONFIRM {selectedOption.title}</strong>
+                        <strong>{t('boot.confirm', { mode: modeLabel(selectedOption.mode) })}</strong>
                         <kbd>[ENTER]</kbd>
                       </button>
                     </div>
                   ) : null}
                   {phase === 'exit' ? (
-                    <div aria-label="正在切换至图形决策终端" className="boot-handoff-block">
+                    <div aria-label={t('boot.switching')} className="boot-handoff-block">
                       <div className="boot-handoff-line" style={{ '--boot-line-index': 0 } as CSSProperties}>
                         <span>
                           {selectedMode === 'original'
-                            ? 'LOADING DIRECT LINK DISPLAY DRIVER'
-                            : 'LOADING DECISION HOME DISPLAY DRIVER'}
-                        </span><b>OK</b>
+                            ? terminalText('boot.loadingOriginal')
+                            : terminalText('boot.loadingModern')}
+                        </span><b>{terminalText('boot.ok')}</b>
                       </div>
                       <div className="boot-handoff-line" style={{ '--boot-line-index': 1 } as CSSProperties}>
-                        <span>MOUNTING SELECTED INTERFACE</span><b>OK</b>
+                        <span>{terminalText('boot.mounting')}</span><b>{terminalText('boot.ok')}</b>
                       </div>
                     </div>
                   ) : null}
@@ -414,7 +418,7 @@ export function BootScene({
             <div className="boot-magi-slot">
               {flags.magi ? (
                 <>
-                  <span className="boot-coprocessor-label">COPROCESSOR DISPLAY</span>
+                  <span className="boot-coprocessor-label">{terminalText('boot.coprocessor')}</span>
                   <MagiBoot
                     animationComplete={animationSkipped}
                     background="transparent"
@@ -425,19 +429,19 @@ export function BootScene({
                     size="min(100%, 430px)"
                   />
                   <span className={`boot-coprocessor-state${flags.stream ? ' is-online' : ''}`}>
-                    {flags.stream ? 'ONLINE' : 'EXECUTING'}
+                    {flags.stream ? terminalText('boot.online') : terminalText('boot.executing')}
                   </span>
                 </>
               ) : null}
             </div>
           </main>
 
-              <footer className="boot-terminal-footer" aria-label={`启动阶段：${BOOT_PHASE_LABEL[phase]}`}>
-                <span>KEYBOARD LOCK: OFF</span>
-                <strong>{BOOT_PHASE_LABEL[phase]}</strong>
+              <footer className="boot-terminal-footer" aria-label={terminalText(BOOT_PHASE_KEY[phase])}>
+                <span>{terminalText('boot.keyboardLock')}</span>
+                <strong>{terminalText(BOOT_PHASE_KEY[phase])}</strong>
                 <button className="boot-skip" onClick={onSkip} type="button">
                   <kbd>ESC</kbd>
-                  <span>BYPASS AUTO-IPL</span>
+                  <span>{t('boot.bypass')}</span>
                 </button>
               </footer>
             </div>

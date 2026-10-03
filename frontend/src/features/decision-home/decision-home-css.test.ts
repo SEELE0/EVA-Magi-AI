@@ -22,7 +22,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   it('defines the standby-to-deliberation layout and subject transform', () => {
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="deliberation"\][\s\S]*?\.magi-home__deliberation-grid\s*\{[^}]*grid-template-columns:\s*minmax\(150px,\s*0\.22fr\)/);
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.3\)/);
-    expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.04\)/);
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*translate:\s*none;[^}]*transform:\s*scale\(1\)/);
   });
 
   it('defines the screenshot-inspired terminal information layers', () => {
@@ -36,7 +36,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   it('exposes failure, calibration, and live telemetry as instrument states', () => {
     expect(css).toMatch(/\.magi-home__failure-banner\s*\{[^}]*border:\s*2px solid rgba\(255, 88, 77, 0\.82\)/);
     expect(css).toMatch(/\.magi-home__instrument-overlay\s*\{[^}]*pointer-events:\s*none;/);
-    expect(css).toMatch(/\.magi-home__threshold-bar::after,\s*\.magi-home__latency-rail::after\s*\{[^}]*width:\s*var\(--magi-level\)/);
+    expect(css).toMatch(/\.magi-home__threshold-bar::after\s*\{[^}]*width:\s*var\(--magi-level\)/);
     expect(css).toMatch(/\.magi-home__simulator\.phase-final \.magi-home__motion-result\s*\{/);
   });
 
@@ -45,7 +45,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   });
 
   it('adds subtle scanlines and renders the reused nodes as transparent outlines', () => {
-    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.12;[^}]*repeating-linear-gradient/);
+    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*1;[^}]*repeating-linear-gradient[\s\S]*?rgba\(0, 0, 0, 0\.12\)/);
     expect(css).toMatch(/\.magi-home__decision-stage \.agent-node\s*\{[^}]*background:\s*transparent;/);
     expect(css).toMatch(/\.magi-home__decision-stage \.vote-state\s*\{[^}]*min-height:\s*34px;[^}]*font-size:\s*clamp\(16px,/);
     expect(css).toMatch(/\.magi-home__decision-stage \.network-topology,[\s\S]*?stroke:\s*#69dca0;/);
@@ -87,7 +87,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   it('maps each invisible config hotspot hover and keyboard focus to its visible node', () => {
     for (const position of ['top', 'left', 'right']) {
       expect(css).toContain(
-        `.magi-home__node-hotspot.is-${position} button:not(:disabled):is(:hover, :focus-visible)) .agent-node.${position}`
+        `.magi-home__node-hotspot.is-${position} button:not(:disabled):is(:hover, :focus-visible, :active)) .agent-node.${position}`
       );
     }
     expect(css).toMatch(/\.agent-node\.right\s*\{[\s\S]*?drop-shadow\(0 0 14px/);

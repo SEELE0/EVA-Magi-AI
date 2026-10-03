@@ -4,10 +4,15 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import i18n from '../../i18n';
 import { BOOT_STAGE_PRESETS, BootScene, getBootStageLayout } from './BootIntro';
 
 describe('BootScene', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-CN');
+  });
+
   it('renders the POST transcript and sizes the embedded MAGI in the IPL phase', () => {
     const markup = renderToStaticMarkup(<BootScene phase="magi" />);
 
@@ -19,6 +24,8 @@ describe('BootScene', () => {
     expect(markup).toContain('MAGI BASIC Decision-making SYSTEM');
     expect(markup).toContain('COPYRIGHT (C) NERV');
     expect(markup).toContain('SYSTEM MEMORY');
+    expect(markup).toContain('SCIENTIST / LOGIC');
+    expect(markup).not.toContain('系统内存');
     expect(markup).toContain('&gt; IPL 00C0,MAGI_EXEC');
     expect(markup).toContain('--magi-boot-size:min(100%, 430px)');
     expect(markup).toContain('--magi-boot-background:transparent');
@@ -56,17 +63,38 @@ describe('BootScene', () => {
 
     expect(markup).toContain('data-boot-phase="mode-select"');
     expect(markup).toContain('SELECT DISPLAY MODE');
-    expect(markup).toContain('ORIGINAL / DIRECT LINK');
+    expect(markup).toContain('ORIGINAL / ANIME STYLE');
     expect(markup).toContain('MODERN / DECISION HOME');
     expect(markup.match(/role="radio"/g)).toHaveLength(2);
     expect(markup).toContain('aria-checked="true" class="boot-mode-option is-selected"');
     expect(markup).toMatch(/boot-mode-options[\s\S]*boot-mode-help/);
-    expect(markup).toContain('<kbd>↑</kbd> / <kbd>↓</kbd> SELECT');
-    expect(markup).toContain('PRESS <kbd>ENTER</kbd> TO CHOOSE MODE');
-    expect(markup).toContain('TAP AN OPTION TO SELECT');
-    expect(markup).toContain('CONFIRM ORIGINAL / DIRECT LINK');
-    expect(markup).toContain('启动阶段：DISPLAY MODE SELECTION');
+    expect(markup).toContain('MAGI DIRECT-LINK INTERFACE');
+    expect(markup).toContain('<kbd>↑</kbd> / <kbd>↓</kbd> 选择');
+    expect(markup).toContain('按回车键确认模式');
+    expect(markup).toContain('点击选项进行选择');
+    expect(markup).toContain('进入 MAGI DIRECT-LINK INTERFACE');
+    expect(markup).toContain('aria-label="DISPLAY MODE SELECTION"');
     expect(markup).not.toContain('LOADING DIRECT LINK DISPLAY DRIVER');
+  });
+
+  it.each([
+    ['zh-CN', '选择', '按回车键确认模式', '进入 MAGI DIRECT-LINK INTERFACE'],
+    ['zh-TW', '選擇', '按 Enter 確認模式', '進入 MAGI DIRECT-LINK INTERFACE'],
+    ['en-US', 'SELECT', 'PRESS ENTER TO CHOOSE MODE', 'ENTER MAGI DIRECT-LINK INTERFACE'],
+    ['ja-JP', '選択', 'Enter キーでモードを確定', 'MAGI DIRECT-LINK INTERFACE に入る']
+  ])('keeps the terminal English and localizes only controls for %s', async (locale, select, enter, confirm) => {
+    await i18n.changeLanguage(locale);
+    const markup = renderToStaticMarkup(<BootScene phase="mode-select" selectedMode="original" />);
+
+    expect(markup).toContain('SYSTEM MEMORY');
+    expect(markup).toContain('CHANNEL 1');
+    expect(markup).toContain('ONLINE');
+    expect(markup).toContain('MAGI SYSTEM READY');
+    expect(markup).toContain('SELECT DISPLAY MODE');
+    expect(markup).toContain('MAGI DIRECT-LINK INTERFACE');
+    expect(markup).toContain(`<kbd>↓</kbd> ${select}`);
+    expect(markup).toContain(enter);
+    expect(markup).toContain(confirm);
   });
 
   it('renders the MAGI graphic at its completed frame after animation fast-forward', () => {
@@ -82,7 +110,7 @@ describe('BootScene', () => {
 
     expect(markup).toContain('data-boot-phase="exit"');
     expect(markup).toContain('[ENTER]');
-    expect(markup).toContain('LOADING DIRECT LINK DISPLAY DRIVER');
+    expect(markup).toContain('LOADING DIRECT-LINK DISPLAY DRIVER');
     expect(markup).toContain('MOUNTING SELECTED INTERFACE');
     expect(markup).not.toContain('boot-block-cursor');
   });

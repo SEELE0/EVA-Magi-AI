@@ -9,6 +9,8 @@ import {
   createDecisionNetworkLayout,
   toDecisionNetworkCssVariables,
   toDecisionNetworkTopologyPath,
+  toDecisionNetworkFramePath,
+  toDecisionNetworkConnectorPath,
 } from './decision-network-layout';
 
 describe('decision network geometry', () => {
@@ -84,8 +86,9 @@ describe('decision network geometry', () => {
       '--decision-node-top-y': '-4%',
       '--decision-node-top-width': '40%',
       '--decision-node-top-height': '46%',
+      '--decision-node-left-x': '2.5%',
       '--decision-node-left-y': '49.52%',
-      '--decision-node-right-x': '54%',
+      '--decision-node-right-x': '54.5%',
       '--decision-core-x': '50%',
       '--decision-core-y': '55%',
     });
@@ -96,7 +99,13 @@ describe('decision network geometry', () => {
     const path = toDecisionNetworkTopologyPath(layout);
 
     expect(path.match(/Z/g)).toHaveLength(3);
-    expect(path).toContain('M259.2 176.4L193.2 207.98');
-    expect(path).toContain('M276 333.79L324 333.79');
+    expect(path).toContain('M259.2 176.4L195.6 207.98');
+    expect(path).toContain('M273 333.79L327 333.79');
+    const framePath = toDecisionNetworkFramePath(layout);
+    const connectorPath = toDecisionNetworkConnectorPath(layout);
+    expect(framePath.match(/Z/g)).toHaveLength(3);
+    expect(connectorPath.match(/M/g)).toHaveLength(3);
+    expect(connectorPath).not.toContain('Z');
+    expect(path).toBe(framePath + connectorPath);
   });
 });

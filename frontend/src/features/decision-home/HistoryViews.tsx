@@ -4,19 +4,12 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import { AGENT_IDS, type DecisionRequest, type Verdict } from '../../domain/decision';
-import { verdictCopy, voteCopy } from '../decision-console/console-config';
+import { useTranslation } from 'react-i18next';
 import { historyDetailHref } from './hash-route';
-import { connectionModeCopy } from './simulator-config';
 import type { DecisionHistoryEntry } from './simulator-types';
 
-const priorityCopy: Record<DecisionRequest['priority'], string> = {
-  low: '低',
-  normal: '通常',
-  critical: '最優先'
-};
-
-function formatHistoryTime(value: string) {
-  return new Intl.DateTimeFormat('ja-JP', {
+function formatHistoryTime(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -32,34 +25,39 @@ function verdictTone(verdict: Verdict) {
 }
 
 export function HistoryList({ entries }: { entries: DecisionHistoryEntry[] }) {
+  const { t, i18n } = useTranslation();
+  const voteLabel = (vote: DecisionHistoryEntry['votes'][typeof AGENT_IDS[number]]) => t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`);
   return (
     <section className="magi-home__history" aria-labelledby="magi-home-history-title">
       <header className="magi-home__page-heading">
         <div>
-          <p>DECISION ARCHIVE</p>
-          <h2 id="magi-home-history-title">判定履歴</h2>
+          <p>{t('history.archive')}</p>
+          <h2 id="magi-home-history-title">{t('history.title')}</h2>
         </div>
-        <span>{entries.length.toString().padStart(2, '0')} RECORDS</span>
+        <span>{entries.length.toString().padStart(2, '0')} {t('history.records')}</span>
       </header>
 
       {entries.length === 0 ? (
         <div className="magi-home__empty-state">
-          <strong>記録された判定はありません</strong>
-          <p>判定画面で議題を実行すると、三人格の投票と完全出力がここに保存されます。</p>
-          <a href="#/">最初の判定を開始</a>
+          <strong>{t('history.empty')}</strong>
+          <p>{t('history.emptyHelp')}</p>
+          <a href="#/">{t('history.start')}</a>
         </div>
       ) : (
         <ol className="magi-home__history-list">
           {entries.map((entry) => (
             <li key={entry.id}>
               <a href={historyDetailHref(entry.id)}>
-                <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt)}</time>
+                <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt, i18n.language)}</time>
                 <span className="magi-home__history-subject">{entry.subject}</span>
                 <span className={`magi-home__history-verdict is-${verdictTone(entry.verdict)}`}>
-                  {verdictCopy[entry.verdict].label}
+                  {entry.status === 'failed' ? t('history.failed') : t(`verdict.${entry.verdict}`)}
                 </span>
-                <span className="magi-home__history-votes" aria-label="三人格の投票">
-                  {AGENT_IDS.map((agentId) => <i key={agentId} title={agentId} aria-label={`${agentId}: ${voteCopy[entry.votes[agentId]]}`} data-vote={entry.votes[agentId]}>{agentId[0]} · {voteCopy[entry.votes[agentId]]}</i>)}
+                <span className="magi-home__history-votes" aria-label={t('history.votes')}>
+                  {AGENT_IDS.map((agentId) => {
+                    const name = entry.agents[agentId].displayName ?? agentId;
+                    return <i key={agentId} title={name} aria-label={`${name}: ${voteLabel(entry.votes[agentId])}`} data-vote={entry.votes[agentId]}>{Array.from(name)[0]} · {voteLabel(entry.votes[agentId])}</i>;
+                  })}
                 </span>
               </a>
             </li>
@@ -71,13 +69,21 @@ export function HistoryList({ entries }: { entries: DecisionHistoryEntry[] }) {
 }
 
 export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
+  const { t, i18n } = useTranslation();
+  const priorityCopy: Record<DecisionRequest['priority'], string> = {
+    low: t('decision.low'), normal: t('decision.normal'), critical: t('decision.critical')
+  };
+  const voteLabel = (vote: DecisionHistoryEntry['votes'][typeof AGENT_IDS[number]]) => t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`);
+  const connectionLabel = (connection: string) => connection === 'unknown' ? t('common.unavailable')
+    : connection === 'mock' ? t('settings.mock')
+      : connection === 'openai-compatible' ? t('settings.openai') : t('settings.local');
   if (!entry) {
     return (
       <section className="magi-home__history magi-home__history-detail" aria-labelledby="magi-home-missing-title">
         <div className="magi-home__empty-state">
-          <strong id="magi-home-missing-title">指定された判定記録が見つかりません</strong>
-          <p>記録が削除されたか、URL が正しくない可能性があります。</p>
-          <a href="#/history">履歴一覧を確認</a>
+          <strong id="magi-home-missing-title">{t('history.missing')}</strong>
+          <p>{t('history.missingHelp')}</p>
+          <a href="#/history">{t('history.backList')}</a>
         </div>
       </section>
     );
@@ -85,27 +91,27 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
 
   return (
     <article className="magi-home__history magi-home__history-detail">
-      <a className="magi-home__back-link" href="#/history">← 履歴に戻る</a>
+      <a className="magi-home__back-link" href="#/history">← {t('history.back')}</a>
 
       <header className="magi-home__detail-heading">
         <div className="magi-home__detail-subject">
-          <span>質問</span>
+          <span>{t('history.subject')}</span>
           <h2>{entry.subject}</h2>
         </div>
         <div>
-          <span>最終判定</span>
-          <strong className={`is-${verdictTone(entry.verdict)}`}>{verdictCopy[entry.verdict].label}</strong>
+          <span>{t('history.final')}</span>
+          <strong className={`is-${verdictTone(entry.verdict)}`}>{entry.status === 'failed' ? t('history.failed') : t(`verdict.${entry.verdict}`)}</strong>
         </div>
         <div>
-          <span>三人格の投票</span>
-          <strong>{AGENT_IDS.filter((id) => entry.votes[id] === 'approve').length} 承認 / {AGENT_IDS.filter((id) => entry.votes[id] === 'reject').length} 否決 / {AGENT_IDS.filter((id) => entry.votes[id] === 'abstain').length} 保留</strong>
+          <span>{t('history.votes')}</span>
+          <strong>{AGENT_IDS.filter((id) => entry.votes[id] === 'approve').length} {t('status.approve')} / {AGENT_IDS.filter((id) => entry.votes[id] === 'reject').length} {t('status.reject')} / {AGENT_IDS.filter((id) => entry.votes[id] === 'abstain').length} {t('status.abstain')}</strong>
         </div>
         <div>
-          <span>日時</span>
-          <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt)}</time>
+          <span>{t('history.dateTime')}</span>
+          <time dateTime={entry.completedAt}>{formatHistoryTime(entry.completedAt, i18n.language)}</time>
         </div>
         <div>
-          <span>優先度</span>
+          <span>{t('decision.priority')}</span>
           <strong>{priorityCopy[entry.priority]}</strong>
         </div>
       </header>
@@ -117,18 +123,18 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
             <section key={agentId} className="magi-home__agent-output" aria-labelledby={`history-agent-${agentId}`}>
               <header>
                 <div>
-                  <h3 id={`history-agent-${agentId}`}>{result.agentId} <span>/ {result.role}</span></h3>
-                  <strong>投票：{voteCopy[result.vote]}</strong>
+                  <h3 id={`history-agent-${agentId}`}>{result.displayName ?? result.agentId} <span>/ {result.role}</span></h3>
+                  <strong>{t('history.vote')}：{voteLabel(result.vote)}</strong>
                 </div>
               </header>
               <div className="magi-home__response-copy">
                 {result.response.split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}
               </div>
               <details className="magi-home__connection-details">
-                <summary>接続情報 · {result.connection === 'unknown' ? '未提供' : connectionModeCopy[result.connection]}</summary>
+                <summary>{t('settings.connection')} · {connectionLabel(result.connection)}</summary>
                 <dl>
-                  <div><dt>接続</dt><dd>{result.connection === 'unknown' ? '未提供' : connectionModeCopy[result.connection]}</dd></div>
-                  <div><dt>使用モデル</dt><dd>{result.model}</dd></div>
+                  <div><dt>{t('settings.connection')}</dt><dd>{connectionLabel(result.connection)}</dd></div>
+                  <div><dt>{t('settings.model')}</dt><dd>{result.model}</dd></div>
                   <div><dt>BASE URL</dt><dd>{result.baseUrl}</dd></div>
                 </dl>
               </details>

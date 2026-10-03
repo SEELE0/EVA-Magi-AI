@@ -4,7 +4,7 @@
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
 import type { Agent, Vote } from '../../domain/decision';
-import { healthCopy, voteCopy } from './console-config';
+import { useTranslation } from 'react-i18next';
 
 export function Readout({ label, value, tone }: { label: string; value: string; tone: string }) {
   return <div className={`readout ${tone}`}><span>{label}</span><strong>{value}</strong></div>;
@@ -23,13 +23,14 @@ export function Telemetry({ label, value, level }: { label: string; value: strin
   );
 }
 
-export function AgentNode({ agent, vote, position }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right' }) {
+export function AgentNode({ agent, vote, position, showTelemetry = true, voteLabel }: { agent: Agent; vote: Vote; position: 'top' | 'left' | 'right'; showTelemetry?: boolean; voteLabel?: string }) {
+  const { t } = useTranslation();
   return (
     <article className={`agent-node ${position} vote-${vote}`}>
-      <div className="agent-tag">{agent.role}</div>
-      <strong>{agent.id}</strong>
-      <span className="vote-state">{voteCopy[vote]}</span>
-      <small>{healthCopy[agent.health]} / {agent.latencyMs}ms</small>
+      <div className="agent-tag" title={agent.role}>{agent.role}</div>
+      <strong title={agent.displayName ?? agent.id}>{agent.displayName ?? agent.id}</strong>
+      <span className="vote-state">{voteLabel ?? t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`)}</span>
+      {showTelemetry ? <small>{t(`status.${agent.health}`)} / {agent.latencyMs}ms</small> : null}
     </article>
   );
 }

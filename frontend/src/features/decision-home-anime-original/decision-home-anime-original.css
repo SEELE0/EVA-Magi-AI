@@ -3,6 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/Oswald-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+}
+
 .direct-link-page {
   --direct-orange: #f7871e;
   --direct-orange-dark: #8d4e16;
@@ -18,19 +26,6 @@
 .direct-link-page,
 .direct-link-page * { box-sizing: border-box; }
 
-.direct-history-trigger {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 0;
-  color: var(--direct-orange);
-  background: transparent;
-  cursor: pointer;
-}
-.direct-history-trigger:hover { color: #ffb65c; background: #26170a; }
-.direct-history-trigger:focus-visible { outline: 1px solid var(--direct-orange); outline-offset: -2px; }
 .direct-history-warning { position: absolute; bottom: 48px; left: 18px; color: #f2ce52; font-size: 12px; }
 .direct-history {
   position: fixed;
@@ -53,6 +48,9 @@
 .direct-history h2 { margin: 8px 0 0; color: #f7871e; font-size: 24px; }
 .direct-history h2 span { font-size: 14px; margin-left: 8px; }
 .direct-history button { padding: 8px 10px; color: #f7871e; background: transparent; border: 1px solid #835124; font: inherit; cursor: pointer; }
+.direct-history .direct-history__close { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; padding: 0; border: 0; font-size: 27px; line-height: 1; }
+.direct-history .direct-history__close:hover { color: #ffc078; background: transparent; }
+.direct-history .direct-history__close:focus-visible { outline: 2px solid #72ffc5; outline-offset: 2px; }
 .direct-history__notice { font-size: 12px; color: #9b987f; }
 .direct-history__empty { padding: 56px 0; line-height: 2; }
 .direct-history ol { list-style: none; padding: 0; margin: 24px 0; }
@@ -109,6 +107,47 @@ body:has(.direct-link-page) {
   transition: width 520ms cubic-bezier(0.22, 0.78, 0.22, 1);
 }
 
+.direct-link-controls {
+  display: flex;
+  width: auto;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  padding: 0;
+  background: transparent;
+}
+.direct-link-controls__separator { width: 1px; height: 24px; margin: 0 2px; background: #73502c; }
+.direct-link-control-button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  color: var(--direct-orange);
+  background: transparent;
+  cursor: pointer;
+}
+.direct-link-control-button:hover { color: #ffbc6f; background: #26170a; }
+.direct-link-control-button:focus-visible { outline: 1px solid var(--direct-orange); outline-offset: -2px; }
+.direct-link-page .magi-language-selector--icon .magi-language-selector__trigger {
+  display: grid;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  place-items: center;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 0;
+  color: var(--direct-orange);
+  background: transparent;
+}
+.direct-link-page .magi-language-selector--icon .magi-language-selector__trigger:hover,
+.direct-link-page .magi-language-selector--icon .magi-language-selector__trigger[data-popup-open] { color: #ffbc6f; background: transparent; box-shadow: none; }
+.direct-link-page .magi-language-selector--icon .magi-select__icon { display: none; }
 .direct-link-page .terminal-screen {
   position: relative;
   width: 100%;
@@ -199,6 +238,18 @@ body:has(.direct-link-page) {
 
 .direct-link-page .terminal-header__divider { stroke-width: 2.25px; stroke-linecap: round; }
 
+.direct-link-page.phase-final .motion-result.is-approved .motion-result__rail--inner {
+  stroke: var(--direct-green);
+}
+
+.direct-link-page.phase-final .motion-result.is-rejected .motion-result__rail--inner {
+  stroke: var(--direct-red);
+}
+
+.direct-link-page.phase-final .motion-result.is-review .motion-result__rail--inner {
+  stroke: var(--direct-amber);
+}
+
 .direct-link-page .header-line,
 .direct-link-page .motion-copy,
 .direct-link-page .motion-title,
@@ -212,30 +263,17 @@ body:has(.direct-link-page) {
 .direct-link-page .header-line--small { font-size: 26px; }
 .direct-link-page .header-line--access { font-size: 34px; }
 .direct-link-page .header-line--superuser { font-size: 39px; }
-.direct-link-page .motion-copy { font-size: 23px; letter-spacing: 0.045em; }
-.direct-link-page .motion-title { font-size: 23px; letter-spacing: 0.015em; }
+.direct-link-page .motion-copy,
+.direct-link-page .motion-title {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+.direct-link-page .motion-copy { font-size: 26px; }
+.direct-link-page .motion-title { font-size: 38px; }
 .direct-link-page .system-data { font-size: 24px; letter-spacing: 0.45px; }
 .direct-link-page .connection-data { font-size: 19px; letter-spacing: 0; }
 .direct-link-page .connection-data__small { font-size: 17px; }
-
-.direct-link-page .motion-result.is-approved .motion-copy {
-  fill: var(--direct-green);
-  stroke: var(--direct-green);
-  filter: drop-shadow(0 0 3px rgba(114, 255, 197, 0.72));
-}
-
-.direct-link-page .motion-result.is-rejected .motion-copy,
-.direct-link-page .motion-result.is-error .motion-copy {
-  fill: var(--direct-red);
-  stroke: var(--direct-red);
-  filter: drop-shadow(0 0 3px rgba(255, 44, 37, 0.74));
-}
-
-.direct-link-page .motion-result.is-review .motion-copy {
-  fill: var(--direct-amber);
-  stroke: var(--direct-amber);
-  filter: drop-shadow(0 0 3px rgba(242, 206, 82, 0.66));
-}
 
 .direct-link-page .magi-network {
   color: var(--direct-green);
@@ -342,7 +380,15 @@ body:has(.direct-link-page) {
   filter: url(#red-glow);
 }
 
-.direct-link-page .agent-module.vote-abstain { color: var(--direct-amber); filter: url(#amber-glow); }
+.direct-link-page .vote-box--abstain {
+  stroke: var(--direct-amber);
+  filter: url(#amber-glow);
+}
+
+.direct-link-page .vote-text--abstain {
+  fill: var(--direct-amber);
+  filter: url(#amber-glow);
+}
 
 .direct-link-live-status {
   position: fixed;
@@ -385,9 +431,9 @@ body:has(.direct-link-page) {
   position: relative;
   z-index: 4;
   width: 100%;
-  max-height: 170px;
-  padding: 14px 8px max(8px, env(safe-area-inset-bottom));
-  border-top: 1px solid #34433b;
+  max-height: 180px;
+  padding: 5px 8px max(8px, env(safe-area-inset-bottom));
+  border-top: 0;
   background: #040a07;
   overflow: hidden;
   opacity: 1;
@@ -399,16 +445,33 @@ body:has(.direct-link-page) {
     transform 520ms cubic-bezier(0.22, 0.78, 0.22, 1);
 }
 
-.motion-composer.is-collapsed {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(18px);
+.motion-composer__header {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
 }
 
-.motion-composer fieldset {
+.motion-composer__heading {
+  min-width: 0;
+  margin: 0;
+  color: var(--direct-orange);
+  font: 700 17px/1 var(--font-eva-ui);
+  letter-spacing: 0.11em;
+}
+
+.motion-composer.is-collapsed {
+  max-height: 100px;
+  padding-top: 5px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.motion-composer__form fieldset {
   min-width: 0;
   margin: 0;
   padding: 8px;
@@ -416,14 +479,18 @@ body:has(.direct-link-page) {
   background: rgba(2, 7, 5, 0.96);
 }
 
-.motion-composer legend {
-  padding: 0 10px;
-  color: var(--direct-orange);
-  font: 700 17px/1 var(--font-eva-ui);
-  letter-spacing: 0.11em;
+.motion-composer__form legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.motion-composer label {
+.motion-composer__form label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -439,7 +506,7 @@ body:has(.direct-link-page) {
   position: relative;
   display: grid;
   min-width: 0;
-  grid-template-columns: 1.6ch minmax(0, 1fr) 40px;
+  grid-template-columns: 1.6ch minmax(0, 1fr);
   font: var(--prompt-size)/1.35 var(--font-eva-ui);
   font-size: var(--prompt-size);
   line-height: 1.35;
@@ -462,10 +529,10 @@ body:has(.direct-link-page) {
   letter-spacing: 0.055em;
 }
 
-.motion-composer textarea {
+.motion-composer__form textarea {
   width: 100%;
   min-height: 48px;
-  padding: 7px 62px 7px 2px;
+  padding: 7px 54px 7px 2px;
   resize: none;
   border: 0;
   outline: 0;
@@ -478,10 +545,10 @@ body:has(.direct-link-page) {
   letter-spacing: 0.055em;
 }
 
-.motion-composer textarea::placeholder { color: #659b7e; opacity: 1; }
-.motion-composer textarea:focus::placeholder { opacity: 0; }
+.motion-composer__form textarea::placeholder { color: #659b7e; opacity: 1; }
+.motion-composer__form textarea:focus::placeholder { opacity: 0; }
 /* The enclosing terminal field carries the visible keyboard focus indicator. */
-.motion-composer textarea:focus-visible { outline: none; box-shadow: none; }
+.motion-composer__form textarea:focus-visible { outline: none; box-shadow: none; }
 
 .motion-composer__editor { position: relative; min-width: 0; overflow: hidden; }
 .motion-composer__editor textarea { display: block; caret-color: transparent; }
@@ -508,7 +575,7 @@ body:has(.direct-link-page) {
 
 .motion-composer__input small {
   position: absolute;
-  right: 50px;
+  right: 10px;
   bottom: 8px;
   color: #80a58e;
   pointer-events: none;
@@ -516,7 +583,7 @@ body:has(.direct-link-page) {
   font: 9px var(--font-eva-data);
 }
 
-.motion-composer button[type="submit"],
+.motion-composer__form button[type="submit"],
 .direct-link-new-motion {
   --direct-button-stripe: #050504;
   position: relative;
@@ -537,7 +604,7 @@ body:has(.direct-link-page) {
     box-shadow 160ms ease-out;
 }
 
-.motion-composer button[type="submit"]::before,
+.motion-composer__form button[type="submit"]::before,
 .direct-link-new-motion::before {
   position: absolute;
   z-index: -1;
@@ -566,8 +633,8 @@ body:has(.direct-link-page) {
   pointer-events: none;
 }
 
-.motion-composer button[type="submit"]:not(:disabled):hover,
-.motion-composer button[type="submit"]:focus-visible,
+.motion-composer__form button[type="submit"]:not(:disabled):hover,
+.motion-composer__form button[type="submit"]:focus-visible,
 .direct-link-new-motion:hover,
 .direct-link-new-motion:focus-visible {
   --direct-button-stripe: var(--direct-orange);
@@ -578,14 +645,14 @@ body:has(.direct-link-page) {
   outline-offset: 2px;
 }
 
-.motion-composer button[type="submit"]:not(:disabled):hover::before,
-.motion-composer button[type="submit"]:focus-visible::before,
+.motion-composer__form button[type="submit"]:not(:disabled):hover::before,
+.motion-composer__form button[type="submit"]:focus-visible::before,
 .direct-link-new-motion:hover::before,
 .direct-link-new-motion:focus-visible::before {
   animation: direct-link-command-stripes 850ms linear infinite;
 }
 
-.motion-composer button[type="submit"]:disabled { cursor: wait; }
+.motion-composer__form button[type="submit"]:disabled { cursor: wait; }
 
 .motion-composer__error {
   margin: 8px 0 0;
@@ -594,15 +661,14 @@ body:has(.direct-link-page) {
 }
 
 .direct-link-new-motion {
-  position: absolute;
-  z-index: 4;
-  right: 16px;
-  bottom: 16px;
+  flex: 0 0 auto;
   min-width: 154px;
   min-height: 44px;
   padding: 0 14px;
   font-size: 15px;
 }
+
+.motion-composer__header .direct-link-new-motion { min-height: 40px; }
 
 @keyframes direct-link-scan {
   0%, 100% { opacity: 0.28; }
@@ -634,45 +700,49 @@ body:has(.direct-link-page) {
 @media (orientation: landscape) {
   .motion-composer {
     max-height: 104px;
-    padding: 14px 12px 10px;
+    padding: 0 12px 8px;
   }
 
-  .motion-composer fieldset { padding: 5px 10px 6px; }
-  .motion-composer label { margin: 1px 0 4px; font-size: 12px; }
+  .motion-composer__form fieldset { padding: 5px 10px 6px; }
+  .motion-composer__form label { margin: 1px 0 4px; font-size: 12px; }
   .motion-composer__controls { grid-template-columns: minmax(0, 1fr) minmax(180px, 220px); gap: 10px; }
-  .motion-composer textarea { min-height: 40px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
+  .motion-composer__form textarea { min-height: 40px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
   .motion-composer__input { --prompt-top: 3px; --prompt-size: 15px; }
-  .motion-composer button[type="submit"] { min-height: 44px; font-size: 17px; }
+  .motion-composer__form button[type="submit"] { min-height: 44px; font-size: 17px; }
   .motion-composer__error { position: absolute; right: 32px; bottom: 14px; }
 }
 
 @media (orientation: landscape) and (max-height: 430px) {
   .motion-composer { max-height: 96px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; }
-  .motion-composer legend { font-size: 14px; }
-  .motion-composer fieldset { padding: 5px 10px 6px; }
-  .motion-composer textarea { min-height: 36px; font-size: 13px; }
+  .motion-composer__heading { font-size: 14px; }
+  .motion-composer__form fieldset { padding: 3px 10px 4px; }
+  .motion-composer__form textarea { min-height: 36px; font-size: 13px; }
   .motion-composer__input { --prompt-size: 13px; }
-  .motion-composer button[type="submit"] { min-height: 42px; font-size: 16px; }
+  .motion-composer__form button[type="submit"] { min-height: 42px; font-size: 16px; }
   .motion-composer__error { bottom: 8px; font-size: 9px; }
-  .direct-link-new-motion { right: 10px; bottom: 10px; min-height: 38px; }
+  .motion-composer__header .direct-link-new-motion { min-height: 38px; }
 }
 
 @media (max-width: 480px) and (orientation: portrait) {
   .motion-composer { padding-right: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); padding-left: 8px; }
-  .motion-composer fieldset { padding: 8px; }
-  .motion-composer legend { font-size: 15px; }
-  .motion-composer textarea { min-height: 48px; font-size: 15px; }
+  .motion-composer__header { gap: 4px; padding-right: 4px; padding-left: 4px; }
+  .motion-composer__header .direct-link-new-motion { min-width: 0; padding-right: 8px; padding-left: 8px; font-size: 13px; }
+  .direct-link-controls .direct-link-control-button { width: 34px; height: 36px; }
+  .direct-link-page .magi-language-selector--icon .magi-language-selector__trigger { width: 34px; min-width: 34px; height: 36px; min-height: 36px; }
+  .motion-composer__form fieldset { padding: 8px; }
+  .motion-composer__heading { font-size: 15px; }
+  .motion-composer__form textarea { min-height: 48px; font-size: 15px; }
   .motion-composer__input { --prompt-size: 15px; }
-  .motion-composer button[type="submit"] { min-height: 46px; font-size: 18px; }
+  .motion-composer__form button[type="submit"] { min-height: 46px; font-size: 18px; }
 }
 
 @media (min-width: 481px) and (orientation: portrait) {
-  .motion-composer fieldset { padding: 7px; }
-  .motion-composer legend { font-size: 16px; }
-  .motion-composer label { margin-bottom: 4px; font-size: 13px; }
+  .motion-composer__form fieldset { padding: 7px; }
+  .motion-composer__heading { font-size: 16px; }
+  .motion-composer__form label { margin-bottom: 4px; font-size: 13px; }
   .motion-composer__controls { gap: 6px; }
-  .motion-composer textarea { font-size: 16px; }
-  .motion-composer button[type="submit"] { font-size: 18px; }
+  .motion-composer__form textarea { font-size: 16px; }
+  .motion-composer__form button[type="submit"] { font-size: 18px; }
 }
 
 @media (min-width: 720px) and (orientation: portrait) {
@@ -683,15 +753,15 @@ body:has(.direct-link-page) {
     padding-left: 12px;
   }
 
-  .motion-composer fieldset { padding: 6px 8px 7px; }
-  .motion-composer label { margin: 0 0 4px; font-size: 12px; }
+  .motion-composer__form fieldset { padding: 6px 8px 7px; }
+  .motion-composer__form label { margin: 0 0 4px; font-size: 12px; }
   .motion-composer__controls {
     grid-template-columns: minmax(0, 1fr) minmax(190px, 220px);
     gap: 10px;
   }
-  .motion-composer textarea { min-height: 42px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
+  .motion-composer__form textarea { min-height: 42px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
   .motion-composer__input { --prompt-top: 3px; --prompt-size: 15px; }
-  .motion-composer button[type="submit"] { min-height: 44px; font-size: 17px; }
+  .motion-composer__form button[type="submit"] { min-height: 44px; font-size: 17px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

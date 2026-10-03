@@ -6,7 +6,7 @@
 import { useLayoutEffect, useRef } from 'react';
 
 /** Native editing/IME, with a decorative underline caret measured in matching typography. */
-export function TerminalMotionInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function TerminalMotionInput({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
   const input = useRef<HTMLTextAreaElement>(null);
   const mirror = useRef<HTMLDivElement>(null);
   const prefix = useRef<HTMLSpanElement>(null);
@@ -48,7 +48,7 @@ export function TerminalMotionInput({ value, onChange }: { value: string; onChan
     <div className="motion-composer__editor" data-empty={value.length === 0}>
       <textarea
         ref={input} id="direct-link-motion" value={value} maxLength={240} rows={2}
-        placeholder="ENTER MOTION FOR DELIBERATION..."
+        placeholder={placeholder}
         onChange={(event) => { onChange(event.target.value); syncCaret(); }}
         onSelect={syncCaret} onScroll={syncCaret} onFocus={syncCaret} onKeyUp={syncCaret}
         onCompositionStart={() => input.current?.parentElement?.classList.add('is-composing')}
