@@ -21,7 +21,7 @@
 
 .magi-home__masthead .brand-block { gap: 16px; }
 .magi-home__masthead .brand-mark { width: 48px; height: 48px; flex-basis: 48px; }
-.magi-home__masthead .brand-block h1 { text-shadow: none; }
+.magi-home__masthead .brand-block h1 { text-shadow: 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
 
 .magi-home__primary-nav {
   display: flex;

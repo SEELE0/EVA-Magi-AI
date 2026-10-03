@@ -45,7 +45,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   });
 
   it('adds subtle scanlines and renders the reused nodes as transparent outlines', () => {
-    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*0\.12;[^}]*repeating-linear-gradient/);
+    expect(css).toMatch(/\.magi-home__scanlines\s*\{[^}]*opacity:\s*1;[^}]*repeating-linear-gradient[\s\S]*?rgba\(0, 0, 0, 0\.12\)/);
     expect(css).toMatch(/\.magi-home__decision-stage \.agent-node\s*\{[^}]*background:\s*transparent;/);
     expect(css).toMatch(/\.magi-home__decision-stage \.vote-state\s*\{[^}]*min-height:\s*34px;[^}]*font-size:\s*clamp\(16px,/);
     expect(css).toMatch(/\.magi-home__decision-stage \.network-topology,[\s\S]*?stroke:\s*#69dca0;/);
