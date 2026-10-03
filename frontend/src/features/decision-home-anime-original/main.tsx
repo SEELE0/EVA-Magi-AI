@@ -5,6 +5,8 @@
  */
 import {
   useEffect,
+  useId,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -79,20 +81,12 @@ function systemMode(phase: AnimeOriginalPhase) {
   return 'IDLE';
 }
 
-function consensusLabel(decision: Decision | null) {
-  if (!decision || decision.verdict === 'pending') return '00 / 03';
-  if (decision.verdict === 'review') return 'NO MAJORITY';
-  const targetVote = decision.verdict === 'approved' ? 'approve' : 'reject';
-  const count = Object.values(decision.votes).filter((vote) => vote === targetVote).length;
-  return `${String(count).padStart(2, '0')} / 03`;
-}
-
 function animeOriginalStatus(phase: AnimeOriginalPhase, decision: Decision | null, error: string | null, t: ReturnType<typeof useTranslation>['t']) {
   if (phase === 'error') return t('original.failedStatus', { message: error ?? t('original.networkError') });
   if (phase === 'transitioning') return t('original.transitioning');
   if (phase === 'deliberation') return t('original.deliberation');
   if (phase === 'final' && decision) {
-    return t('original.final', { verdict: t(`verdict.${decision.verdict}`), count: consensusLabel(decision) });
+    return t('original.final', { verdict: t(`verdict.${decision.verdict}`) });
   }
   return t('original.awaiting');
 }
@@ -136,27 +130,6 @@ function waitForTransition(signal: AbortSignal) {
   });
 }
 
-function motionLines(subject: string, motionLabel: string, emptySubject: string) {
-  const normalized = subject.trim().replace(/\s+/g, ' ') || emptySubject;
-  const takeByVisualUnits = (value: string, maximum: number) => {
-    let units = 0;
-    let index = 0;
-    for (const character of value) {
-      const nextUnits = /[\u3000-\u9fff\uf900-\ufaff]/.test(character) ? 2 : 1;
-      if (units + nextUnits > maximum) break;
-      units += nextUnits;
-      index += character.length;
-    }
-    return [value.slice(0, index), value.slice(index)] as const;
-  };
-  const [first, remainder] = takeByVisualUnits(normalized, 18);
-  if (!remainder) return [`${motionLabel} ${first}`];
-
-  const [secondChunk, overflow] = takeByVisualUnits(remainder, 28);
-  const second = overflow ? `${secondChunk}…` : secondChunk;
-  return [`${motionLabel} ${first}`, second];
-}
-
 function TerminalHeader({ placement }: { readonly placement: AnimeOriginalPanelPlacement }) {
   const layout = TERMINAL_MODULE_LAYOUT.header;
 
@@ -172,34 +145,69 @@ function TerminalHeader({ placement }: { readonly placement: AnimeOriginalPanelP
 }
 
 function MotionResult({ decision, phase, placement, subject }: Pick<MagiTerminalGraphicProps, 'decision' | 'phase' | 'subject'> & { readonly placement: AnimeOriginalPanelPlacement }) {
-  const { t } = useTranslation();
+  const clipId = useId();
+  const resultGlowId = useId();
+  const contentRef = useRef<SVGGElement>(null);
   const layout = TERMINAL_MODULE_LAYOUT.motion;
+  const contentWidth = placement.width - layout.contentInset * 2;
   const secondRailX = layout.railWidth + layout.railGap;
   const rightRailX = placement.width - layout.railWidth;
   const rightSecondRailX = rightRailX - layout.railWidth - layout.railGap;
-  const lines = motionLines(subject, t('decision.motion'), t('decision.emptySubject'));
+  const caption = 'RESULT OF THE DELIBERATION';
+  const motion = `MOTION:${subject.trim().replace(/\s+/g, ' ') || '--'}`;
   const verdict = decision?.verdict ?? 'pending';
-  const result = phase === 'error'
-    ? `${t('decision.failure', { code: 'WAIT' })} / ${t('decision.retry')}`
-    : phase === 'compose'
-      ? t('original.awaiting')
-    : phase === 'final'
-      ? t('original.final', { verdict: t(`verdict.${verdict}`), count: consensusLabel(decision) })
-      : t('original.deliberation');
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const agenda = content.querySelector<SVGTextElement>('.motion-title');
+    if (!agenda || typeof agenda.getComputedTextLength !== 'function') return;
+    const fit = () => {
+      agenda.removeAttribute('textLength');
+      agenda.textContent = motion;
+      // Keep the film's single, tall agenda line legible. The title and history retain the full input.
+      const minimumScale = 0.72;
+      if (agenda.getComputedTextLength() > contentWidth / minimumScale) {
+        const characters = Array.from(motion);
+        let low = 0;
+        let high = characters.length;
+        while (low < high) {
+          const middle = Math.ceil((low + high) / 2);
+          agenda.textContent = `${characters.slice(0, middle).join('')}…`;
+          if (agenda.getComputedTextLength() <= contentWidth / minimumScale) low = middle;
+          else high = middle - 1;
+        }
+        agenda.textContent = `${characters.slice(0, low).join('')}…`;
+      }
+      if (agenda.getComputedTextLength() > contentWidth) agenda.setAttribute('textLength', String(contentWidth));
+    };
+    fit();
+    let active = true;
+    void document.fonts?.ready.then(() => { if (active) fit(); });
+    document.fonts?.addEventListener('loadingdone', fit);
+    return () => {
+      active = false;
+      document.fonts?.removeEventListener('loadingdone', fit);
+    };
+  }, [motion, contentWidth]);
 
   return (
     <g className={`motion-result is-${phase === 'error' ? 'error' : verdict}`} transform={toSvgTranslate(placement.origin)}>
-      <title>{subject.trim() || t('original.awaiting')}</title>
-      <g className="terminal-orange motion-result__rails">
-        <rect width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
-        <rect x={secondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
-        <rect x={rightSecondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
-        <rect x={rightRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+      <title>{subject.trim() || 'AWAITING MOTION'}</title>
+      <defs>
+        <clipPath id={clipId}><rect x={layout.contentInset - 4} width={contentWidth + 8} height={placement.height} /></clipPath>
+        <ResultRailGlowFilter id={resultGlowId} />
+      </defs>
+      <g className="motion-result__rails">
+        <rect className="terminal-orange motion-result__rail--outer" width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+        <rect className="terminal-orange motion-result__rail--inner" style={phase === 'final' ? { filter: `url(#${resultGlowId})` } : undefined} x={secondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+        <rect className="terminal-orange motion-result__rail--inner" style={phase === 'final' ? { filter: `url(#${resultGlowId})` } : undefined} x={rightSecondRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
+        <rect className="terminal-orange motion-result__rail--outer" x={rightRailX} width={layout.railWidth} height={layout.railHeight} rx={layout.railRadius} />
       </g>
-      <text x={layout.contentInset} y="27" className="terminal-orange motion-copy">{result}</text>
-      <text x={layout.contentInset} y={lines.length === 1 ? 70 : 55} className="terminal-orange motion-title">
-        {lines.map((line, index) => <tspan x={layout.contentInset} dy={index === 0 ? 0 : 24} key={line}>{line}</tspan>)}
-      </text>
+      <g ref={contentRef} clipPath={`url(#${clipId})`}>
+        <text x={layout.contentInset} y="33" textLength={contentWidth} lengthAdjust="spacingAndGlyphs" className="terminal-orange motion-copy">{caption}</text>
+        <text x={layout.contentInset} y="69" lengthAdjust="spacingAndGlyphs" className="terminal-orange motion-title">{motion}</text>
+      </g>
     </g>
   );
 }
@@ -308,6 +316,21 @@ function OrangeGlowFilter({ id }: { readonly id: string }) {
       <feComponentTransfer in="orange-mid" result="orange-mid-soft"><feFuncA type="linear" slope="0.85" /></feComponentTransfer>
       <feComponentTransfer in="orange-far" result="orange-far-soft"><feFuncA type="linear" slope="0.42" /></feComponentTransfer>
       <feMerge><feMergeNode in="orange-far-soft" /><feMergeNode in="orange-mid-soft" /><feMergeNode in="orange-near-hot" /><feMergeNode in="orange-hot-core" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+  );
+}
+
+function ResultRailGlowFilter({ id }: { readonly id: string }) {
+  // Blur the rail's own color so a green/yellow result never inherits the orange halo.
+  return (
+    <filter id={id} x="-60%" y="-60%" width="220%" height="220%" colorInterpolationFilters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="near" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.8" result="mid" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="far" />
+      <feComponentTransfer in="near" result="near-hot"><feFuncA type="linear" slope="1.55" /></feComponentTransfer>
+      <feComponentTransfer in="mid" result="mid-soft"><feFuncA type="linear" slope="0.85" /></feComponentTransfer>
+      <feComponentTransfer in="far" result="far-soft"><feFuncA type="linear" slope="0.42" /></feComponentTransfer>
+      <feMerge><feMergeNode in="far-soft" /><feMergeNode in="mid-soft" /><feMergeNode in="near-hot" /><feMergeNode in="SourceGraphic" /></feMerge>
     </filter>
   );
 }

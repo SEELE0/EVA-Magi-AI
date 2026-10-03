@@ -248,7 +248,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(loadDecisionHistory()[0].agents['MELCHIOR-1'].connection).toBe('unknown');
     expect(JSON.stringify(loadDecisionHistory())).not.toContain('apiKey');
     expect([...container.querySelectorAll('.vote-text')].map((node) => node.textContent)).toEqual(['承認', '否決', '承認']);
-    expect(container.querySelector('.motion-copy')?.textContent).toBe('最終判定：承認。合意 02 / 03。');
+    expect(container.querySelector('.motion-copy')?.textContent).toBe('RESULT OF THE DELIBERATION');
     const newMotionButton = container.querySelector<HTMLButtonElement>('.motion-composer__header .direct-link-new-motion');
     expect(newMotionButton).not.toBeNull();
     expect(container.querySelector('.terminal-screen .direct-link-new-motion')).toBeNull();
@@ -266,6 +266,23 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(container.querySelector<HTMLTextAreaElement>('#direct-link-motion')?.value).toBe('');
   });
 
+  it.each(['zh-CN', 'zh-TW', 'en-US', 'ja-JP'])('keeps the film labels in English and the original agenda in %s', async (locale) => {
+    await i18n.changeLanguage(locale);
+    installMatchMedia(true);
+    for (const verdict of ['approved', 'rejected', 'review'] as const) {
+      const { container } = renderOrigin(serviceStub({ executeDecision: vi.fn().mockResolvedValue({ ...completed, verdict }) }));
+      fillTextarea(container.querySelector('textarea')!, draft.subject);
+      act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')!.click());
+      await flush();
+      const result = container.querySelector('.motion-result');
+      expect(result?.querySelector('.motion-copy')?.textContent).toBe('RESULT OF THE DELIBERATION');
+      expect(result?.querySelector('.motion-copy__verdict')).toBeNull();
+      expect(result?.querySelector('.motion-title')?.textContent).toBe(`MOTION:${draft.subject}`);
+      expect(result?.querySelector('title')?.textContent).toBe(draft.subject);
+      expect(result?.textContent).not.toContain('03');
+    }
+  });
+
   it('restores the input and preserves the agenda when the service fails', async () => {
     const service = serviceStub({ createDecision: vi.fn().mockRejectedValue(new Error('REMOTE LINK LOST')) });
     const { container } = renderOrigin(service);
@@ -279,7 +296,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(phase(container)).toBe('error');
     expect(container.querySelector<HTMLTextAreaElement>('#direct-link-motion')?.value).toBe(draft.subject);
     expect(container.querySelector('[role="alert"]')?.textContent).toBe('REMOTE LINK LOST');
-    expect(container.querySelector('.motion-copy')?.textContent).toContain('信号異常 / WAIT / 再試行可能');
+    expect(container.querySelector('.motion-copy')?.textContent).toBe('RESULT OF THE DELIBERATION');
     expect(container.querySelector('.direct-link-live-status')?.textContent).toContain('信号異常。REMOTE LINK LOST');
   });
 

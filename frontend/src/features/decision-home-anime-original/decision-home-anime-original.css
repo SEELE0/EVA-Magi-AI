@@ -3,6 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/Oswald-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+}
+
 .direct-link-page {
   --direct-orange: #f7871e;
   --direct-orange-dark: #8d4e16;
@@ -230,6 +238,18 @@ body:has(.direct-link-page) {
 
 .direct-link-page .terminal-header__divider { stroke-width: 2.25px; stroke-linecap: round; }
 
+.direct-link-page.phase-final .motion-result.is-approved .motion-result__rail--inner {
+  stroke: var(--direct-green);
+}
+
+.direct-link-page.phase-final .motion-result.is-rejected .motion-result__rail--inner {
+  stroke: var(--direct-red);
+}
+
+.direct-link-page.phase-final .motion-result.is-review .motion-result__rail--inner {
+  stroke: var(--direct-amber);
+}
+
 .direct-link-page .header-line,
 .direct-link-page .motion-copy,
 .direct-link-page .motion-title,
@@ -243,30 +263,17 @@ body:has(.direct-link-page) {
 .direct-link-page .header-line--small { font-size: 26px; }
 .direct-link-page .header-line--access { font-size: 34px; }
 .direct-link-page .header-line--superuser { font-size: 39px; }
-.direct-link-page .motion-copy { font-size: 23px; letter-spacing: 0.045em; }
-.direct-link-page .motion-title { font-size: 23px; letter-spacing: 0.015em; }
+.direct-link-page .motion-copy,
+.direct-link-page .motion-title {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+.direct-link-page .motion-copy { font-size: 26px; }
+.direct-link-page .motion-title { font-size: 38px; }
 .direct-link-page .system-data { font-size: 24px; letter-spacing: 0.45px; }
 .direct-link-page .connection-data { font-size: 19px; letter-spacing: 0; }
 .direct-link-page .connection-data__small { font-size: 17px; }
-
-.direct-link-page .motion-result.is-approved .motion-copy {
-  fill: var(--direct-green);
-  stroke: var(--direct-green);
-  filter: drop-shadow(0 0 3px rgba(114, 255, 197, 0.72));
-}
-
-.direct-link-page .motion-result.is-rejected .motion-copy,
-.direct-link-page .motion-result.is-error .motion-copy {
-  fill: var(--direct-red);
-  stroke: var(--direct-red);
-  filter: drop-shadow(0 0 3px rgba(255, 44, 37, 0.74));
-}
-
-.direct-link-page .motion-result.is-review .motion-copy {
-  fill: var(--direct-amber);
-  stroke: var(--direct-amber);
-  filter: drop-shadow(0 0 3px rgba(242, 206, 82, 0.66));
-}
 
 .direct-link-page .magi-network {
   color: var(--direct-green);
