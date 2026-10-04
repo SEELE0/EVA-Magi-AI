@@ -55,6 +55,11 @@ function connectionSource(settings: SharedSettings, agentId: AgentId, trail = ne
   return connectionSource(settings, source, new Set([...trail, agentId]));
 }
 
+/** Return the saved connection profile before mock-mode runtime values are applied. */
+export function getAgentConnectionConfig(settings: SharedSettings, agentId: AgentId): AgentRuntimeConfig {
+  return connectionSource(settings, agentId);
+}
+
 export function resolveAgentConfigs(settings: SharedSettings): AgentConfigMap {
   const result = cloneAgentConfigs(settings.nodes);
   for (const id of AGENT_IDS) {

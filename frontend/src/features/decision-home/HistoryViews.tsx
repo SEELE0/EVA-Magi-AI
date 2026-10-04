@@ -76,7 +76,7 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
   const voteLabel = (vote: DecisionHistoryEntry['votes'][typeof AGENT_IDS[number]]) => t(`status.${vote === 'approve' ? 'approve' : vote === 'reject' ? 'reject' : vote === 'abstain' ? 'abstain' : 'waiting'}`);
   const connectionLabel = (connection: string) => connection === 'unknown' ? t('common.unavailable')
     : connection === 'mock' ? t('settings.mock')
-      : connection === 'openai-compatible' ? t('settings.openai') : t('settings.local');
+      : t('settings.openai');
   if (!entry) {
     return (
       <section className="magi-home__history magi-home__history-detail" aria-labelledby="magi-home-missing-title">

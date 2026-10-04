@@ -22,7 +22,7 @@ interface AgentConfigDialogProps {
   resolveTestConfig?: (draft: AgentRuntimeConfig) => AgentRuntimeConfig;
 }
 
-const connectionModes: AgentConnectionMode[] = ['mock', 'openai-compatible', 'local-compatible'];
+const connectionModes: AgentConnectionMode[] = ['mock', 'openai-compatible'];
 type ConnectionTestStatus = 'idle' | 'testing' | 'success' | 'failure';
 
 /** 模擬回線の既定値だけを実接続へ持ち込まず、既存の接続情報は維持する。 */
@@ -147,7 +147,7 @@ export function AgentConfigDialog({
   }
 
   const connectionLabel = (mode: AgentConnectionMode) => mode === 'mock'
-    ? t('settings.mock') : mode === 'openai-compatible' ? t('settings.openai') : t('settings.local');
+    ? t('settings.mock') : t('settings.openai');
 
   return (
     <dialog
@@ -235,7 +235,7 @@ export function AgentConfigDialog({
                       type="radio"
                       name={`agent-connection-${draft.agentId}`}
                       value={mode}
-                      checked={draft.connection === mode}
+                      checked={mode === 'mock' ? draft.connection === 'mock' : draft.connection !== 'mock'}
                       onChange={() => {
                         setDraft((current) => (current ? switchConnection(current, mode) : current));
                         setApiKeyVisible(false);

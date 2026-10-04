@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { AgentId } from '../../domain/decision';
-import { prepareNodeConfig, resolveAgentConfigs } from '../../domain/shared-settings';
+import { getAgentConnectionConfig, prepareNodeConfig, resolveAgentConfigs } from '../../domain/shared-settings';
 import { AgentConfigDialog } from './AgentConfigDialog';
 import { SettingBookDialog } from './SettingBookDialog';
 import type { useDecisionRuntime } from './use-decision-runtime';
@@ -23,6 +23,13 @@ export function RuntimeSettings({ runtime, selectedAgentId, onCloseNode, variant
   const { t } = useTranslation();
   const [view, setView] = useState<SettingsView>(null);
   const { settings, configs } = runtime;
+  const selectedNodeConfig = selectedAgentId ? configs[selectedAgentId] : null;
+  const selectedConnectionConfig = selectedAgentId ? getAgentConnectionConfig(settings, selectedAgentId) : null;
+  const nodeDialogConfig = selectedNodeConfig && selectedConnectionConfig ? {
+    ...selectedNodeConfig,
+    baseUrl: selectedConnectionConfig.baseUrl,
+    model: selectedConnectionConfig.model
+  } : null;
 
   function open(next: Exclude<SettingsView, null>) {
     onCloseNode();
@@ -38,7 +45,7 @@ export function RuntimeSettings({ runtime, selectedAgentId, onCloseNode, variant
 
   const dialogs = <>
     <AgentConfigDialog
-      config={view === 'overall' ? settings.global : selectedAgentId ? configs[selectedAgentId] : null}
+      config={view === 'overall' ? settings.global : nodeDialogConfig}
       overall={view === 'overall'}
       variant={variant}
       resolveTestConfig={(config) => {
@@ -55,9 +62,10 @@ export function RuntimeSettings({ runtime, selectedAgentId, onCloseNode, variant
         } else if (selectedAgentId) {
           // 连接参数未被修改时保持原有配置来源，避免仅查看/保存 Prompt 就脱离全局继承。
           const before = configs[selectedAgentId];
+          const savedConnection = getAgentConnectionConfig(settings, selectedAgentId);
           const untouched = before.connection === config.connection
-            && before.baseUrl === config.baseUrl
-            && before.model === config.model
+            && savedConnection.baseUrl === config.baseUrl
+            && savedConnection.model === config.model
             && before.apiKey === config.apiKey;
           runtime.saveAgentConfig(config, untouched ? settings.sources[selectedAgentId] ?? selectedAgentId : selectedAgentId);
         }

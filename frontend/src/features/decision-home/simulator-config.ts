@@ -25,5 +25,5 @@ export type {
 export const connectionModeCopy: Record<AgentConnectionMode, string> = {
   mock: '模擬',
   'openai-compatible': 'OpenAI互換',
-  'local-compatible': 'ローカル互換'
+  'local-compatible': 'OpenAI互換'
 };
