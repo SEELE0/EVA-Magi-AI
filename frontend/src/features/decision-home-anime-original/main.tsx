@@ -28,6 +28,7 @@ import { RuntimeSettings } from '../decision-home/RuntimeSettings';
 import { NodeOutputDialog } from '../decision-home/NodeOutputDialog';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { GitHubIcon } from '../../components/GitHubIcon';
+import { HomeModeSwitch } from '../../components/HomeModeSwitch';
 import '../../components/magi-select.css';
 import { localizeError } from '../../i18n-error';
 import {
@@ -45,6 +46,7 @@ export type AnimeOriginalPhase = 'compose' | 'transitioning' | 'deliberation' | 
 
 interface DecisionHomeAnimeOriginalProps {
   service?: DecisionService;
+  onSwitchMode?: () => void;
 }
 
 interface MagiTerminalGraphicProps {
@@ -452,7 +454,7 @@ function DirectControlIcon({ name }: { name: 'history' | 'settings' | 'book' }) 
   return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
-export function DecisionHomeAnimeOriginal({ service: suppliedService }: DecisionHomeAnimeOriginalProps = {}) {
+export function DecisionHomeAnimeOriginal({ service: suppliedService, onSwitchMode }: DecisionHomeAnimeOriginalProps = {}) {
   const { t } = useTranslation();
   const layoutMode = useAnimeOriginalLayoutMode();
   const [phase, setPhase] = useState<AnimeOriginalPhase>('compose');
@@ -597,6 +599,7 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
                 </>}
               />
               <a className="direct-link-control-button" href="https://github.com/SEELE0/EVA-Magi-AI" target="_blank" rel="noopener noreferrer" aria-label={t('nav.github')} title={t('nav.github')}><GitHubIcon /></a>
+              {onSwitchMode ? <HomeModeSwitch mode="original" variant="original" onSwitch={onSwitchMode} /> : null}
               <LanguageSelector variant="original" />
             </nav>
           }

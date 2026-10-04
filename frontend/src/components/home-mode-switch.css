@@ -1,0 +1,46 @@
+.home-mode-switch {
+  display: grid;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  color: var(--home-sodium, #ffad42);
+  background: transparent;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.home-mode-switch--original { color: var(--direct-orange, #f7871e); }
+.home-mode-switch__icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  -webkit-mask-image: url('../assets/home-mode-switch-icon.png');
+  mask-image: url('../assets/home-mode-switch-icon.png');
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+.home-mode-switch:hover,
+.home-mode-switch:focus-visible { color: #ffd595; background: transparent; outline: none; }
+.home-mode-switch--original:hover,
+.home-mode-switch--original:focus-visible { color: #ffbc6f; }
+
+@media (max-width: 480px) {
+  .home-mode-switch--original { width: 34px; min-width: 34px; height: 36px; min-height: 36px; flex-basis: 34px; }
+  .magi-home__nav-controls > .home-mode-switch { order: -2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-mode-switch { transition: none; }
+}

@@ -17,6 +17,7 @@ import { useDecisionRuntime } from './use-decision-runtime';
 import type { DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { GitHubIcon } from '../../components/GitHubIcon';
+import { HomeModeSwitch } from '../../components/HomeModeSwitch';
 import { NixieClock } from './NixieClock';
 import { NodeConnectionStatus } from './NodeConnectionStatus';
 import './decision-home.css';
@@ -24,7 +25,7 @@ import './decision-header.css';
 
 const nervLogoUrl = new URL('../../../asset/images-1.png', import.meta.url).href;
 
-export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: boolean }) {
+export function DecisionHome({ entryRevealReady = true, onSwitchMode }: { entryRevealReady?: boolean; onSwitchMode?: () => void }) {
   const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [agents, setAgents] = useState<Agent[]>(defaultAgents);
@@ -153,6 +154,7 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
                 <span className="magi-home__github-label">{t('nav.github')}</span>
               </a>
             </nav>
+            {onSwitchMode ? <HomeModeSwitch mode="modern" variant="modern" onSwitch={onSwitchMode} /> : null}
             <LanguageSelector onLocaleChange={() => setNavMenuOpen(false)} />
           </div>
         </div>

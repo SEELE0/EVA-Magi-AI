@@ -17,6 +17,7 @@ export default function App() {
     saveHomeMode(mode);
     setHomeMode(mode);
   };
+  const switchHomeMode = () => selectHomeMode(homeMode === 'original' ? 'modern' : 'original');
 
   return (
     <>
@@ -28,8 +29,8 @@ export default function App() {
       {/* inert keeps keyboard focus out of the console while the boot overlay is up. */}
       <div inert={introActive}>
         {homeMode === 'original'
-          ? <DecisionHomeAnimeOriginal />
-          : <DecisionHome entryRevealReady={!introActive} />}
+          ? <DecisionHomeAnimeOriginal onSwitchMode={switchHomeMode} />
+          : <DecisionHome entryRevealReady={!introActive} onSwitchMode={switchHomeMode} />}
       </div>
     </>
   );

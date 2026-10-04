@@ -156,7 +156,7 @@
     gap: 12px;
     padding: 4px 0 14px;
   }
-  .magi-home__masthead .brand-block { flex: 1 1 auto; max-width: calc(100% - 56px); }
+  .magi-home__masthead .brand-block { flex: 1 1 auto; max-width: calc(100% - 150px); }
   .magi-home__masthead .brand-block > div { min-width: 0; }
   .magi-home__masthead .brand-block h1 { max-width: 100%; overflow-wrap: anywhere; }
   .magi-home__nav-controls {
