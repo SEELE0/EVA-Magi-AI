@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { AgentId } from '../../domain/decision';
+import { prepareNodeConfig, resolveAgentConfigs } from '../../domain/shared-settings';
 import { AgentConfigDialog } from './AgentConfigDialog';
 import { SettingBookDialog } from './SettingBookDialog';
 import type { useDecisionRuntime } from './use-decision-runtime';
@@ -40,6 +41,13 @@ export function RuntimeSettings({ runtime, selectedAgentId, onCloseNode, variant
       config={view === 'overall' ? settings.global : selectedAgentId ? configs[selectedAgentId] : null}
       overall={view === 'overall'}
       variant={variant}
+      resolveTestConfig={(config) => {
+        if (view === 'overall' || !selectedAgentId) return config;
+        return resolveAgentConfigs({ ...settings,
+          nodes: { ...settings.nodes, [selectedAgentId]: prepareNodeConfig(settings, config) },
+          sources: { ...settings.sources, [selectedAgentId]: selectedAgentId }
+        })[selectedAgentId];
+      }}
       onClose={() => { setView(null); onCloseNode(); }}
       onSave={(config) => {
         if (view === 'overall') {

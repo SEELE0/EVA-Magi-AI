@@ -25,7 +25,9 @@ import { createDecisionHistoryEntry } from '../decision-home/simulator-responses
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { RuntimeSettings } from '../decision-home/RuntimeSettings';
+import { NodeOutputDialog } from '../decision-home/NodeOutputDialog';
 import { LanguageSelector } from '../../components/LanguageSelector';
+import { GitHubIcon } from '../../components/GitHubIcon';
 import '../../components/magi-select.css';
 import { localizeError } from '../../i18n-error';
 import {
@@ -383,7 +385,8 @@ function MagiTerminalGraphic(props: MagiTerminalGraphicProps) {
       <svg className="terminal-network-layer" viewBox={viewBox} preserveAspectRatio="xMidYMid meet" role="group" aria-label={`${t('original.terminal')}. ${t('history.subject')}: ${accessibleSubject}`}>
         <defs><NetworkGlowFilters /></defs>
         <MagiNetwork
-          disabled={isRunning}
+          disabled={false}
+          output={isRunning || props.phase === 'final'}
           onOpenConfig={props.onOpenConfig}
           scanning={isRunning}
           state={networkState}
@@ -424,6 +427,7 @@ function MotionComposer({ collapsed, completed, error, isExecuting, subject, too
           <fieldset disabled={isExecuting}>
             <legend className="motion-composer__legend">{t('original.newMotion')}</legend>
             <label htmlFor="direct-link-motion">{t('original.agenda')}</label>
+            {error ? <p className="motion-composer__error" role="alert">{error}</p> : null}
             <div className="motion-composer__controls">
               <div className="motion-composer__input">
                 <span aria-hidden="true">&gt;</span>
@@ -432,7 +436,6 @@ function MotionComposer({ collapsed, completed, error, isExecuting, subject, too
               </div>
               <button type="submit">{t('original.execute')}</button>
             </div>
-            {error ? <p className="motion-composer__error" role="alert">{error}</p> : null}
           </fieldset>
         </form>
       ) : null}
@@ -460,6 +463,7 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
   const { configs, service: runtimeService, storageWarning } = runtime;
   const service = suppliedService ?? runtimeService;
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
+  const [outputAgentId, setOutputAgentId] = useState<AgentId | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [history, setHistory] = useState(loadDecisionHistory);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -481,6 +485,7 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
     activeController.current?.abort();
     activeController.current = null;
     setDecision(null);
+    setOutputAgentId(null);
     setSubject('');
     setError(null);
     setPhase('compose');
@@ -504,6 +509,7 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
 
     setError(null);
     setDecision(null);
+    setOutputAgentId(null);
     setIsExecuting(true);
     setPhase('transitioning');
     activeController.current?.abort();
@@ -563,7 +569,10 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
       </p>
       <div className="direct-link-workspace">
         <section className="terminal-screen" aria-label={t('original.terminal')}>
-          <MagiTerminalGraphic decision={decision} configs={configs} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={setSelectedAgentId} />
+          <MagiTerminalGraphic decision={decision} configs={configs} layoutMode={layoutMode} phase={phase} subject={subject} onOpenConfig={(id) => {
+            if (phase === 'transitioning' || phase === 'deliberation' || phase === 'final') setOutputAgentId(id);
+            else { setOutputAgentId(null); setSelectedAgentId(id); }
+          }} />
           {archiveWarning || storageWarning ? <p className="direct-history-warning" role="status">{t('original.storageWarning')}</p> : null}
         </section>
         <MotionComposer
@@ -587,11 +596,14 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
                   <button className="direct-link-control-button" type="button" aria-label={t('common.settingBook')} title={t('common.settingBook')} onClick={openSettingBook}><DirectControlIcon name="book" /></button>
                 </>}
               />
+              <a className="direct-link-control-button" href="https://github.com/SEELE0/EVA-Magi-AI" target="_blank" rel="noopener noreferrer" aria-label={t('nav.github')} title={t('nav.github')}><GitHubIcon /></a>
               <LanguageSelector variant="original" />
             </nav>
           }
           onChange={(value) => {
             setSubject(value);
+            setDecision(null);
+            setOutputAgentId(null);
             if (error) {
               setError(null);
               setPhase('compose');
@@ -601,6 +613,9 @@ export function DecisionHomeAnimeOriginal({ service: suppliedService }: Decision
         />
       </div>
 
+      {outputAgentId ? <NodeOutputDialog agentId={outputAgentId} decision={decision}
+        name={agentDisplayName(configs[outputAgentId], outputAgentId)} error={error}
+        onClose={() => setOutputAgentId(null)} /> : null}
       {historyOpen ? <HistoryArchive entries={history} onClose={() => setHistoryOpen(false)} /> : null}
     </main>
   );

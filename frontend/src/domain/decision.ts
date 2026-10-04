@@ -65,6 +65,8 @@ export interface Decision {
   completedAt?: string;
   /** 外部 API 接続ノードが返した本文。模擬ノードには存在しない。 */
   responses?: Partial<Record<AgentId, string>>;
+  /** Unverified streamed answer previews; never interpreted as a vote or saved to history. */
+  partialResponses?: Partial<Record<AgentId, string>>;
   outputs?: Partial<Record<AgentId, AgentResult>>;
   failures?: Partial<Record<AgentId, string>>;
 }

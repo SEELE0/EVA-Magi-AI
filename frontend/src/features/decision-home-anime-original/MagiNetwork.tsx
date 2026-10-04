@@ -22,6 +22,7 @@ export interface MagiNetworkProps {
   readonly transform: MagiNetworkTransform;
   readonly votes: Decision['votes'];
   readonly names?: Partial<Record<AgentId, string>>;
+  readonly output?: boolean;
   readonly onOpenConfig: (agentId: AgentId) => void;
 }
 
@@ -67,7 +68,7 @@ function activateAgent(
   onOpenConfig(agentId);
 }
 
-export function MagiNetwork({ disabled, scanning, state, transform, votes, names, onOpenConfig }: MagiNetworkProps) {
+export function MagiNetwork({ disabled, scanning, state, transform, votes, names, output = false, onOpenConfig }: MagiNetworkProps) {
   const { t } = useTranslation();
   const layout = MAGI_NETWORK_LAYOUT;
   const [lowerStartX, lowerStartY] = layout.lowerConnector.start;
@@ -93,7 +94,8 @@ export function MagiNetwork({ disabled, scanning, state, transform, votes, names
         return (
           <g
             aria-disabled={disabled || undefined}
-            aria-label={`${name ?? agent.agentId} · ${t('decision.nodeConfig')}`}
+            aria-label={`${name ?? agent.agentId} · ${t(output ? 'stream.title' : 'decision.nodeConfig')}`}
+            aria-haspopup="dialog"
             className={`agent-module agent-module--${agent.id} vote-${voteClass[vote]}`}
             key={agent.id}
             onClick={() => { if (!disabled) onOpenConfig(agent.agentId); }}

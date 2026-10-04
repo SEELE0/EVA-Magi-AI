@@ -6,6 +6,7 @@ import { cloneAgentConfigs } from '../domain/agent-config';
 import { MockProvider } from '../providers/mock-provider';
 import type { AgentProvider } from './agent-provider';
 import { DecisionServiceError } from './decision-service';
+import { createDecisionHistoryEntry } from './decision-history';
 
 afterEach(() => vi.useRealTimers());
 const request = { subject: 'test motion', priority: 'normal' as const };
@@ -15,6 +16,46 @@ function setup(provider: AgentProvider) {
   return { configs, engine };
 }
 describe('browser decision lifecycle', () => {
+  it('publishes safe previews while votes remain pending, then replaces them with verified results', async () => {
+    const finish: Array<() => void> = [];
+    const { engine, configs } = setup({ validate() {}, invoke(config, _request, _signal, progress) {
+      progress?.('Preview / split-key-');
+      return new Promise(resolve => { finish.push(() => {
+        progress?.('Preview / split-key-secret / tail');
+        resolve({ vote: 'approve', response: 'Final / split-key-secret' });
+      }); });
+    } });
+    configs['MELCHIOR-1'].apiKey = 'split-key-secret';
+    const created = await engine.createDecision(request);
+    await engine.executeDecision(created.id);
+    const pending = await engine.getDecision(created.id);
+    expect(Object.values(pending.votes)).toEqual(['pending', 'pending', 'pending']);
+    expect(pending.verdict).toBe('pending');
+    expect(pending.partialResponses?.['MELCHIOR-1']).toBe('Preview / ');
+    expect(pending.outputs).toEqual({});
+    finish.forEach(resolve => resolve());
+    await vi.waitFor(async () => expect((await engine.getDecision(created.id)).status).toBe('completed'));
+    const result = await engine.getDecision(created.id);
+    expect(result.partialResponses).toEqual({});
+    expect(result.responses?.['MELCHIOR-1']).toBe('Final / [REDACTED]');
+    expect(result.verdict).toBe('approved');
+  });
+
+  it('retains a failed preview separately without creating a vote or final output', async () => {
+    const { engine, configs } = setup({ validate() {}, async invoke(_config, _request, _signal, progress) {
+      progress?.('Unfinished response');
+      throw new DecisionServiceError('Invalid streamed result', 'INVALID_AGENT_RESULT');
+    } });
+    const created = await engine.createDecision(request);
+    await engine.executeDecision(created.id);
+    await vi.waitFor(async () => expect((await engine.getDecision(created.id)).status).toBe('failed'));
+    const result = await engine.getDecision(created.id);
+    expect(result.partialResponses?.['MELCHIOR-1']).toBe('Unfinished response');
+    expect(result.votes['MELCHIOR-1']).toBe('pending');
+    expect(result.responses).toEqual({});
+    expect(result.outputs).toEqual({});
+    expect(JSON.stringify(createDecisionHistoryEntry(result, 'standard', [], configs))).not.toContain('Unfinished response');
+  });
   it('runs nodes concurrently, exposes partial votes and executes only once', async () => {
     vi.useFakeTimers();
     const provider = new MockProvider(100, () => 0);

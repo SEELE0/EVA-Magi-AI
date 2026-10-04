@@ -958,6 +958,11 @@
 .magi-home__execute span,
 .magi-home__execute small { display: block; }
 .magi-home__execute span { font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
+.magi-home__execute:lang(zh) span {
+  font-family: "Source Han Serif SC", serif;
+  font-weight: 600;
+  font-synthesis: none;
+}
 .magi-home__execute small { margin-top: 5px; color: inherit; font: 9px var(--font-eva-data); }
 .magi-home__execute:hover:not(:disabled),
 .magi-home__execute:focus-visible:not(:disabled) {

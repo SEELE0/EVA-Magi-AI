@@ -37,10 +37,19 @@ describe('portrait navigation menu', () => {
 
     expect(toggle.getAttribute('aria-controls')).toBe(nav.id);
     expect(nav.contains(language)).toBe(false);
+    const repositoryLink = nav.querySelector<HTMLAnchorElement>('.magi-home__github-link')!;
+    expect(repositoryLink.href).toBe('https://github.com/SEELE0/EVA-Magi-AI');
+    expect(repositoryLink.getAttribute('aria-label')).toBe('GitHub 仓库');
+    expect(repositoryLink.target).toBe('_blank');
+    expect(repositoryLink.rel).toBe('noopener noreferrer');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     act(() => toggle.click());
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(nav.getAttribute('data-menu-open')).toBe('true');
+
+    act(() => repositoryLink.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    act(() => toggle.click());
 
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(toggle.getAttribute('aria-expanded')).toBe('false');

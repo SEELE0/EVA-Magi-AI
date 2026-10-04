@@ -126,6 +126,7 @@ body:has(.direct-link-page) {
   place-items: center;
   padding: 0;
   border: 1px solid transparent;
+  text-decoration: none;
   color: var(--direct-orange);
   background: transparent;
   cursor: pointer;
@@ -604,6 +605,12 @@ body:has(.direct-link-page) {
     box-shadow 160ms ease-out;
 }
 
+.motion-composer__form button[type="submit"]:lang(zh) {
+  font-family: "Source Han Serif SC", serif;
+  font-weight: 600;
+  font-synthesis: none;
+}
+
 .motion-composer__form button[type="submit"]::before,
 .direct-link-new-motion::before {
   position: absolute;
@@ -654,8 +661,14 @@ body:has(.direct-link-page) {
 
 .motion-composer__form button[type="submit"]:disabled { cursor: wait; }
 
+.motion-composer:has(.motion-composer__error) {
+  max-height: min(280px, 60svh);
+  overflow-y: auto;
+}
+
 .motion-composer__error {
-  margin: 8px 0 0;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
   color: #ff5b4d;
   font: 11px/1.4 var(--font-eva-data);
 }
@@ -709,7 +722,6 @@ body:has(.direct-link-page) {
   .motion-composer__form textarea { min-height: 40px; padding-top: 3px; padding-bottom: 4px; font-size: 15px; }
   .motion-composer__input { --prompt-top: 3px; --prompt-size: 15px; }
   .motion-composer__form button[type="submit"] { min-height: 44px; font-size: 17px; }
-  .motion-composer__error { position: absolute; right: 32px; bottom: 14px; }
 }
 
 @media (orientation: landscape) and (max-height: 430px) {
@@ -719,7 +731,7 @@ body:has(.direct-link-page) {
   .motion-composer__form textarea { min-height: 36px; font-size: 13px; }
   .motion-composer__input { --prompt-size: 13px; }
   .motion-composer__form button[type="submit"] { min-height: 42px; font-size: 16px; }
-  .motion-composer__error { bottom: 8px; font-size: 9px; }
+  .motion-composer__error { font-size: 10px; }
   .motion-composer__header .direct-link-new-motion { min-height: 38px; }
 }
 

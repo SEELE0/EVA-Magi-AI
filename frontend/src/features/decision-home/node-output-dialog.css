@@ -1,0 +1,59 @@
+/* Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later */
+.node-output-dialog {
+  --node-output-font: Menlo, var(--font-eva-data, Consolas, "Liberation Mono", monospace);
+  box-sizing: border-box;
+  width: min(760px, calc(100vw - 32px));
+  height: min(800px, calc(100svh - 48px));
+  max-width: none;
+  max-height: none;
+  padding: 22px;
+  border: 1px solid #89612d;
+  color: #a9ebc4;
+  background: #030b08;
+  font-family: var(--node-output-font);
+  overflow: hidden;
+}
+.node-output-dialog[open] { display: grid; grid-template-rows: auto minmax(140px, 1fr) minmax(0, 38%); gap: 16px; }
+.node-output-dialog::backdrop { background: rgb(0 0 0 / 82%); }
+.node-output-dialog__heading { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.node-output-dialog__heading > div { flex: 1; min-width: 0; }
+.node-output-dialog__heading small { color: #d39b50; font-size: 12px; }
+.node-output-dialog__heading h2 { margin: 5px 0 0; font-size: clamp(18px, 3vw, 25px); overflow-wrap: anywhere; }
+.node-output-dialog__state { color: #d39b50; font-size: 14px; white-space: nowrap; }
+.node-output-dialog .vote-approve { color: #7df0b0; }
+.node-output-dialog .vote-reject { color: #ff6257; }
+.node-output-dialog .vote-abstain { color: #f5db63; }
+.node-output-dialog__heading button { flex-shrink: 0; width: 40px; height: 40px; border: 0; padding: 0; color: #ffb347; background: transparent; font: 30px/1 monospace; cursor: pointer; }
+.node-output-dialog__heading button:focus-visible { outline: 1px solid #ffb347; outline-offset: 2px; }
+.node-output-dialog__heading button:hover { color: #ffe1ac; }
+.node-output-dialog__terminal { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; border-block: 1px solid #28533d; background: repeating-linear-gradient(0deg, transparent 0 3px, #7df0b003 3px 4px), #020805; }
+.node-output-dialog__rail { padding: 8px 12px; color: #69937c; font-size: 11px; letter-spacing: .1em; }
+.node-output-dialog pre { margin: 0; padding: 10px 12px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 15px/1.75 var(--node-output-font); scrollbar-color: #37684d #030b08; }
+.node-output-dialog__cursor { color: #7df0b0; animation: node-output-cursor 1s steps(1) infinite; }
+.node-output-dialog__notice { margin: 0; padding: 8px 12px; border-top: 1px solid #193526; color: #b3955c; font-size: 12px; line-height: 1.5; }
+.node-output-dialog__waveform { min-height: 0; overflow: hidden; container-type: size; }
+.node-output-dialog__waveform .eva-waveform-scope, .node-output-dialog__waveform-placeholder { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+/* Instrument overlays scale with this waveform panel, rather than the viewport. */
+.node-output-dialog__waveform .eva-waveform-scope__timecode {
+  top: 1.2%;
+  right: 2%;
+  max-width: 94%;
+  font-size: clamp(10px, min(5cqw, 7.5cqh), 30px);
+  line-height: 1;
+  white-space: nowrap;
+}
+.node-output-dialog__waveform .eva-waveform-scope__top-rail,
+.node-output-dialog__waveform .eva-waveform-scope__bottom-rail { height: clamp(2px, 1cqh, 4px); }
+.node-output-dialog__waveform .eva-waveform-scope__axis-labels { font-size: clamp(8px, 1.8cqw, 12px); }
+.node-output-dialog__waveform .eva-waveform-scope__axis-labels::before { top: -4cqh; height: 3cqh; }
+.node-output-dialog__waveform .eva-waveform-scope__vertical-axis { width: clamp(8px, 2cqw, 14px); border-left-width: 1px; }
+.node-output-dialog__waveform .eva-waveform-scope__reticles i { width: clamp(8px, 2cqw, 14px); height: clamp(8px, 2cqw, 14px); }
+@keyframes node-output-cursor { 50% { opacity: 0; } }
+@media (max-width: 560px) {
+  .node-output-dialog { width: calc(100vw - 20px); height: calc(100svh - 24px); padding: 14px; }
+  .node-output-dialog[open] { gap: 12px; grid-template-rows: auto minmax(140px, 1fr) minmax(0, 30%); }
+  .node-output-dialog__heading { gap: 8px; }
+  .node-output-dialog pre { font-size: 14px; padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .node-output-dialog__cursor { animation: none; } }

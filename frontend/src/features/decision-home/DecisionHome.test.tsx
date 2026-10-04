@@ -18,7 +18,8 @@ describe('DecisionHome structure', () => {
     expect(markup).toContain('MAGI');
     expect(markup).toContain('System');
     expect(markup).toContain(i18n.t('settings.connection'));
-    expect(markup).not.toContain('系統');
+    expect(markup.match(/<h1>[\s\S]*?<\/h1>/)?.[0]).toBe('<h1>MAGI <span>System</span></h1>');
+    expect(markup).toContain('# EVA TV版とMAGI：共有背景');
     expect(markup).toContain('時刻');
     expect(markup).toContain('class="topbar"');
     expect(markup).toContain('class="brand-block"');

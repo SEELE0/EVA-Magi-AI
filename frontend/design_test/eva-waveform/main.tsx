@@ -6,6 +6,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EvaWaveformScope } from './EvaWaveformScope';
+import './eva-waveform-test-page.css';
 
 createRoot(document.getElementById('eva-waveform-test-root')!).render(
   <StrictMode>

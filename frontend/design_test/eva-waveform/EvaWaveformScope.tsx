@@ -32,6 +32,8 @@ import './eva-waveform.css';
 export interface EvaWaveformScopeProps {
   className?: string;
   paused?: boolean;
+  showTimecode?: boolean;
+  label?: string;
 }
 
 interface WaveformRuntime {
@@ -90,7 +92,7 @@ function formatScopeTime(elapsedSeconds: number) {
   return `10:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}${String(milliseconds).padStart(3, '0')}`;
 }
 
-export function EvaWaveformScope({ className = '', paused = false }: EvaWaveformScopeProps) {
+export function EvaWaveformScope({ className = '', paused = false, showTimecode = true, label = 'EVA NERV 红蓝相位信号示波器' }: EvaWaveformScopeProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<WaveformRuntime | null>(null);
   const timecodeRef = useRef<HTMLOutputElement>(null);
@@ -285,6 +287,7 @@ export function EvaWaveformScope({ className = '', paused = false }: EvaWaveform
           renderer.domElement.remove();
           renderer.dispose();
         }
+        composer?.passes.forEach(pass => pass.dispose());
         composer?.dispose();
         geometry.dispose();
         redMaterial.dispose();
@@ -307,7 +310,7 @@ export function EvaWaveformScope({ className = '', paused = false }: EvaWaveform
       data-paused={paused ? 'true' : 'false'}
       data-renderer={rendererOffline ? 'offline' : 'online'}
       role="img"
-      aria-label="EVA NERV 红蓝相位信号示波器"
+      aria-label={label}
     >
       <div className="eva-waveform-scope__render-host" ref={hostRef} aria-hidden="true" />
 
@@ -328,7 +331,7 @@ export function EvaWaveformScope({ className = '', paused = false }: EvaWaveform
           ))}
         </div>
 
-        <output className="eva-waveform-scope__timecode" ref={timecodeRef}>10:38:50909</output>
+        {showTimecode ? <output className="eva-waveform-scope__timecode" ref={timecodeRef}>10:38:50909</output> : null}
       </div>
 
       <div className="eva-waveform-scope__scanlines" aria-hidden="true" />

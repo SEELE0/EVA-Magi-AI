@@ -84,6 +84,9 @@
   box-shadow: 0 0 8px rgba(255, 173, 66, 0.5);
 }
 .magi-home__primary-nav a:focus-visible { outline: 2px solid #ffd595; outline-offset: 4px; }
+.magi-home__primary-nav .magi-home__github-link { min-width: 40px; justify-content: center; gap: 10px; }
+.magi-home__github-link svg { flex: 0 0 22px; }
+.magi-home__github-label { display: none; }
 
 @keyframes nav-selection-flicker {
   0%, 44%, 56%, 68%, 100% { opacity: 1; text-shadow: 0 0 10px #ffb34788; }
@@ -193,6 +196,8 @@
     font-size: 14px;
   }
   .magi-home__primary-nav[data-menu-open="true"] > a::after { display: none; }
+  .magi-home__primary-nav .magi-home__github-link { justify-content: flex-start; }
+  .magi-home__github-label { display: inline; }
   .magi-home__primary-nav[data-menu-open="true"] > a[aria-current="page"] {
     border-left: 2px solid var(--home-sodium);
     color: var(--home-sodium);

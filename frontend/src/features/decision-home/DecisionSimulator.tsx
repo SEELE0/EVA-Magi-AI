@@ -25,6 +25,7 @@ import type { AgentConfigMap, DecisionHistoryEntry } from './simulator-types';
 import { localizeError } from '../../i18n-error';
 import { NODE_VOTE_LABELS } from './vote-labels';
 import { agentDisplayName, agentRole } from '../../domain/agent-config';
+import { NodeOutputDialog } from './NodeOutputDialog';
 
 interface DecisionSimulatorProps {
   service: DecisionService;
@@ -261,7 +262,7 @@ function LayerStack({ agents, votes }: { agents: Agent[]; votes?: Decision['vote
   );
 }
 
-function NodeConfigHotspots({ agents, disabled, onOpen }: { agents: Agent[]; disabled: boolean; onOpen: (agentId: AgentId) => void }) {
+function NodeConfigHotspots({ agents, disabled, output, onOpen }: { agents: Agent[]; disabled: boolean; output: boolean; onOpen: (agentId: AgentId) => void }) {
   const { t } = useTranslation();
   const hotspots: Array<{ agentId: AgentId; position: 'top' | 'left' | 'right' }> = [
     { agentId: 'BALTHASAR-2', position: 'top' },
@@ -270,14 +271,15 @@ function NodeConfigHotspots({ agents, disabled, onOpen }: { agents: Agent[]; dis
   ];
 
   return (
-    <div className="magi-home__node-hotspots" aria-label={t('decision.nodeConfig')}>
+    <div className="magi-home__node-hotspots" aria-label={t(output ? 'stream.title' : 'decision.nodeConfig')}>
       {hotspots.map(({ agentId, position }) => (
         <div key={agentId} className={`magi-home__node-hotspot is-${position}`}>
           <button
             type="button"
             onClick={() => onOpen(agentId)}
             disabled={disabled}
-            aria-label={`${agents.find(agent => agent.id === agentId)?.displayName ?? agentId} · ${t('decision.nodeConfig')}`}
+            aria-label={`${agents.find(agent => agent.id === agentId)?.displayName ?? agentId} · ${t(output ? 'stream.title' : 'decision.nodeConfig')}`}
+            aria-haspopup="dialog"
           />
         </div>
       ))}
@@ -350,6 +352,7 @@ export function DecisionSimulator({
     critical: t('decision.critical')
   };
   const [decision, setDecision] = useState<Decision | null>(null);
+  const [outputAgentId, setOutputAgentId] = useState<AgentId | null>(null);
   const [subject, setSubject] = useState(defaultSubject);
   const priority = defaultPriority;
   const [isExecuting, setIsExecuting] = useState(false);
@@ -383,11 +386,13 @@ export function DecisionSimulator({
   function updateSubject(nextSubject: string) {
     setSubject(nextSubject);
     setDecision(null);
+    setOutputAgentId(null);
     setError(null);
   }
 
   function resetForNewMotion() {
     setDecision(null);
+    setOutputAgentId(null);
     setSubject('');
     setError(null);
   }
@@ -401,6 +406,8 @@ export function DecisionSimulator({
     }
 
     setError(null);
+    setDecision(null);
+    setOutputAgentId(null);
     setIsExecuting(true);
     cancelActiveRun();
 
@@ -491,7 +498,10 @@ export function DecisionSimulator({
                 voteLabel={NODE_VOTE_LABELS[votes?.[agent.id] ?? 'pending']}
               />
             ))}
-            <NodeConfigHotspots agents={displayAgents} disabled={isExecuting || isRevealing} onOpen={onOpenConfig} />
+            <NodeConfigHotspots agents={displayAgents} disabled={isRevealing} output={phase === 'deliberation' || phase === 'final'} onOpen={(id) => {
+              if (phase === 'deliberation' || phase === 'final') setOutputAgentId(id);
+              else { setOutputAgentId(null); onOpenConfig(id); }
+            }} />
           </div>
           {!showTerminal ? <TypedNodeHint text={t('decision.nodeHint')} /> : null}
           {isRevealing ? <HoneycombReveal onComplete={finishReveal} /> : null}
@@ -499,6 +509,10 @@ export function DecisionSimulator({
 
         {showTerminal ? <LayerStack agents={displayAgents} votes={votes} /> : null}
       </div>
+
+      {outputAgentId ? <NodeOutputDialog agentId={outputAgentId} decision={decision}
+        name={displayAgents.find(agent => agent.id === outputAgentId)?.displayName ?? outputAgentId}
+        error={error} onClose={() => setOutputAgentId(null)} /> : null}
 
       <section className="magi-home__input-dock" aria-labelledby="magi-home-input-title">
         {showTerminal ? (

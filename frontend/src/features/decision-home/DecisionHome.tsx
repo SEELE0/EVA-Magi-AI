@@ -16,6 +16,7 @@ import { loadDecisionHistory, prependDecisionHistory, saveDecisionHistory } from
 import { useDecisionRuntime } from './use-decision-runtime';
 import type { DecisionHistoryEntry, SimulatorRoute } from './simulator-types';
 import { LanguageSelector } from '../../components/LanguageSelector';
+import { GitHubIcon } from '../../components/GitHubIcon';
 import { NixieClock } from './NixieClock';
 import { NodeConnectionStatus } from './NodeConnectionStatus';
 import './decision-home.css';
@@ -147,6 +148,10 @@ export function DecisionHome({ entryRevealReady = true }: { entryRevealReady?: b
                   <button type="button" className="magi-home__nav-button" onClick={() => { setNavMenuOpen(false); openSettingBook(); }}>{t('common.settingBook')}</button>
                 </div>}
               />
+              <a className="magi-home__github-link" href="https://github.com/SEELE0/EVA-Magi-AI" target="_blank" rel="noopener noreferrer" aria-label={t('nav.github')} title={t('nav.github')} onClick={() => setNavMenuOpen(false)}>
+                <GitHubIcon />
+                <span className="magi-home__github-label">{t('nav.github')}</span>
+              </a>
             </nav>
             <LanguageSelector onLocaleChange={() => setNavMenuOpen(false)} />
           </div>

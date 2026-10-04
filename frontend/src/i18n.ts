@@ -18,10 +18,13 @@ export function normalizeLocale(value: string): MagiLocale {
 const resources = {
   'zh-CN': { translation: {
     connectionMode: { mock: '模拟', remote: 'API 接入' },
+    stream: {
+        close: '关闭节点输出', waveform: '红蓝相位波形（视觉效果）',
+        title: '节点输出', previewNotice: '答复正在生成，最终投票以完整结果为准。', waiting: '等待响应', receiving: '生成中', failed: '未完成', answer: '答复正文', waitingHint: '等待节点返回答复…', failedHint: '本节点未完成；部分答复不构成最终判定。', noAnswer: '本节点未提供答复正文。' },
     connectivity: { normal: '正常', timeout: '超时', test: '测试三个节点连接', unchecked: '尚未测试，点击检查三个节点连接', simulated: '模拟节点仅检查本地连接，不代表真实 API 接入。' },
     language: { label: '界面语言', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: '关闭', cancel: '取消', save: '保存', restore: '恢复默认', node: '节点{{index}}', global: '全局设定', setting: '整体设定', settingBook: '设定书', decision: '判定', history: '历史', unavailable: '不可用' },
-    nav: { label: 'MAGI 主导航', status: '系统状态', language: '选择界面语言', settings: '设置', openMenu: '打开导航菜单', closeMenu: '关闭导航菜单' },
+    nav: { github: 'GitHub 仓库', label: 'MAGI 主导航', status: '系统状态', language: '选择界面语言', settings: '设置', openMenu: '打开导航菜单', closeMenu: '关闭导航菜单' },
     errors: { timeout: '请求超时，请稍后重试。', cancelled: '请求已取消。', responseTooLarge: '模型响应超过允许大小。', busy: '当前有过多判定正在运行，请稍后重试。' },
     status: { connecting: '正在建立神经连接…', startupError: '启动序列已中断', online: '正常', degraded: '警戒', offline: '中断', starting: '启动中', mock: '模拟系统', remote: '外部系统', nominal: '正常', waiting: '待機', approve: '通过', reject: '否决', abstain: '弃权' },
     verdict: { pending: '等待输入', approved: '通过', rejected: '否决', review: '需要复核', pendingDetail: '等待议题数据', approvedDetail: '多数表决通过', rejectedDetail: '多数表决否决', reviewDetail: '未形成有效多数' },
@@ -34,10 +37,13 @@ const resources = {
   } },
   'zh-TW': { translation: {
     connectionMode: { mock: '模擬', remote: 'API 接入' },
+    stream: {
+        close: '關閉節點輸出', waveform: '紅藍相位波形（視覺效果）',
+        title: '節點輸出', previewNotice: '答覆正在產生，最終投票以完整結果為準。', waiting: '等待回應', receiving: '產生中', failed: '未完成', answer: '答覆正文', waitingHint: '等待節點回傳答覆…', failedHint: '此節點未完成；部分答覆不構成最終判定。', noAnswer: '此節點未提供答覆正文。' },
     connectivity: { normal: '正常', timeout: '逾時', test: '測試三個節點連線', unchecked: '尚未測試，點擊檢查三個節點連線', simulated: '模擬節點僅檢查本機連線，不代表實際 API 接入。' },
     language: { label: '介面語言', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: '關閉', cancel: '取消', save: '儲存', restore: '恢復預設', node: '節點{{index}}', global: '全域設定', setting: '整體設定', settingBook: '設定書', decision: '判定', history: '歷史', unavailable: '無法使用' },
-    nav: { label: 'MAGI 主導覽', status: '系統狀態', language: '選擇介面語言', settings: '設定', openMenu: '開啟導覽選單', closeMenu: '關閉導覽選單' },
+    nav: { github: 'GitHub 儲存庫', label: 'MAGI 主導覽', status: '系統狀態', language: '選擇介面語言', settings: '設定', openMenu: '開啟導覽選單', closeMenu: '關閉導覽選單' },
     errors: { timeout: '請求逾時，請稍後重試。', cancelled: '請求已取消。', responseTooLarge: '模型回應超過允許大小。', busy: '目前有過多判定正在執行，請稍後重試。' },
     status: { connecting: '正在建立神經連線…', startupError: '啟動程序已中斷', online: '正常', degraded: '警戒', offline: '中斷', starting: '啟動中', mock: '模擬系統', remote: '外部系統', nominal: '正常', waiting: '待機', approve: '通過', reject: '否決', abstain: '棄權' },
     verdict: { pending: '等待輸入', approved: '通過', rejected: '否決', review: '需要複核', pendingDetail: '等待議題資料', approvedDetail: '多數表決通過', rejectedDetail: '多數表決否決', reviewDetail: '尚未形成有效多數' },
@@ -50,10 +56,13 @@ const resources = {
   } },
   'en-US': { translation: {
     connectionMode: { mock: 'Simulation', remote: 'API access' },
+    stream: {
+        close: 'Close node output', waveform: 'Red and blue phase waveform (visual effect)',
+        title: 'Node output', previewNotice: 'Responses are being generated. Votes are confirmed after the full result is validated.', waiting: 'Awaiting response', receiving: 'Generating', failed: 'Incomplete', answer: 'Response text', waitingHint: 'Waiting for the node to respond…', failedHint: 'This node did not complete. Its partial response is not a final decision.', noAnswer: 'This node did not provide response text.' },
     connectivity: { normal: 'Normal', timeout: 'Timeout', test: 'Test all three node connections', unchecked: 'Not tested yet. Click to check all three node connections.', simulated: 'Simulated nodes only check local connections; this does not verify live API access.' },
     language: { label: 'Interface language', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: 'Close', cancel: 'Cancel', save: 'Save', restore: 'Restore defaults', node: 'Node {{index}}', global: 'Global settings', setting: 'Overall settings', settingBook: 'Setting book', decision: 'Decision', history: 'History', unavailable: 'Unavailable' },
-    nav: { label: 'MAGI primary navigation', status: 'System status', language: 'Select interface language', settings: 'Settings', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu' },
+    nav: { github: 'GitHub repository', label: 'MAGI primary navigation', status: 'System status', language: 'Select interface language', settings: 'Settings', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu' },
     errors: { timeout: 'The request timed out. Try again later.', cancelled: 'The request was cancelled.', responseTooLarge: 'The model response exceeded the allowed size.', busy: 'Too many decisions are running. Try again later.' },
     status: { connecting: 'Establishing neural link…', startupError: 'Startup sequence interrupted', online: 'Online', degraded: 'Degraded', offline: 'Offline', starting: 'Starting', mock: 'Simulation', remote: 'Remote', nominal: 'Nominal', waiting: '待機', approve: 'Approved', reject: 'Rejected', abstain: 'Abstained' },
     verdict: { pending: 'Awaiting input', approved: 'Approved', rejected: 'Rejected', review: 'Review required', pendingDetail: 'Waiting for agenda packet', approvedDetail: 'Majority approved execution', rejectedDetail: 'Majority rejected execution', reviewDetail: 'No valid majority reached' },
@@ -66,10 +75,13 @@ const resources = {
   } },
   'ja-JP': { translation: {
     connectionMode: { mock: '模擬', remote: 'API 接続' },
+    stream: {
+        close: 'ノード出力を閉じる', waveform: '赤青の位相波形（視覚効果）',
+        title: 'ノード出力', previewNotice: '応答を生成中です。投票は完全な結果の検証後に確定します。', waiting: '応答待ち', receiving: '生成中', failed: '未完了', answer: '応答本文', waitingHint: 'ノードからの応答を待っています…', failedHint: 'このノードは完了していません。途中の応答は最終判定ではありません。', noAnswer: 'このノードは応答本文を提供していません。' },
     connectivity: { normal: '正常', timeout: 'タイムアウト', test: '3ノードの接続をテスト', unchecked: '未テスト。クリックして3ノードの接続を確認', simulated: '模擬ノードはローカル接続のみ確認し、実際の API 接続は検証しません。' },
     language: { label: '表示言語', zhCN: '简体中文', zhTW: '繁體中文', en: 'English', ja: '日本語' },
     common: { close: '閉じる', cancel: 'キャンセル', save: '保存', restore: '初期設定に戻す', node: 'ノード{{index}}', global: '全体設定', setting: '全体設定', settingBook: '設定書', decision: '判定', history: '履歴', unavailable: '利用できません' },
-    nav: { label: 'MAGI メインナビゲーション', status: 'システム状態', language: '表示言語を選択', settings: '設定', openMenu: 'ナビゲーションメニューを開く', closeMenu: 'ナビゲーションメニューを閉じる' },
+    nav: { github: 'GitHub リポジトリ', label: 'MAGI メインナビゲーション', status: 'システム状態', language: '表示言語を選択', settings: '設定', openMenu: 'ナビゲーションメニューを開く', closeMenu: 'ナビゲーションメニューを閉じる' },
     errors: { timeout: 'リクエストがタイムアウトしました。後でもう一度お試しください。', cancelled: 'リクエストはキャンセルされました。', responseTooLarge: 'モデル応答が許容サイズを超えています。', busy: '実行中の判定が多すぎます。後でもう一度お試しください。' },
     status: { connecting: '神経接続を確立中…', startupError: '起動シーケンスが中断されました', online: '正常', degraded: '警戒', offline: '遮断', starting: '起動中', mock: '模擬系', remote: '外部系', nominal: '正常', waiting: '待機', approve: '承認', reject: '否決', abstain: '棄権' },
     verdict: { pending: '入力待機', approved: '承認', rejected: '否決', review: '要再審', pendingDetail: '議題パケットを待機中', approvedDetail: '多数決により実行を承認', rejectedDetail: '多数決により実行を否決', reviewDetail: '有効な多数決が成立せず' },

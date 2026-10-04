@@ -3,6 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * License: https://www.gnu.org/licenses/agpl-3.0.html
  */
+@font-face {
+  font-family: "Source Han Serif SC";
+  src: url("/fonts/SourceHanSerifSC-Heavy.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
 .magi-home__config-dialog,
 .magi-home__config-dialog * { box-sizing: border-box; }
 
@@ -183,6 +191,11 @@
   line-height: 1.7;
   letter-spacing: 0.015em;
 }
+.magi-home__config-prompt:not(.magi-home__setting-book-field) textarea:lang(zh) {
+  font-family: "Source Han Serif SC", serif;
+  font-weight: 900;
+  font-synthesis: none;
+}
 
 .magi-home__credential-note {
   margin: 0;
@@ -255,6 +268,12 @@
 .magi-home__connection-test p { flex: 1 1 220px; margin: 0; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .magi-home__connection-test-status[data-state='failure'] { color: #ff6b61; }
 .magi-home__restore-background { justify-self: start; }
+.magi-home__setting-book-dialog:lang(zh) .magi-home__restore-background,
+.magi-home__setting-book-dialog:lang(zh) .magi-home__config-actions button {
+  font-family: "Source Han Serif SC", serif;
+  font-weight: 600;
+  font-synthesis: none;
+}
 @media (max-width: 760px) {
   .magi-settings-entry { font-size: 11px; }
   .magi-home__nav-button { font-size: 12px; }

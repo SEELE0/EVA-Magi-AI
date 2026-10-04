@@ -18,6 +18,7 @@ interface AgentConfigDialogProps {
   onSave: (config: AgentRuntimeConfig) => void;
   overall?: boolean;
   variant?: 'modern' | 'original';
+  resolveTestConfig?: (draft: AgentRuntimeConfig) => AgentRuntimeConfig;
 }
 
 const connectionModes: AgentConnectionMode[] = ['mock', 'openai-compatible', 'local-compatible'];
@@ -44,7 +45,8 @@ export function AgentConfigDialog({
   onClose,
   onSave,
   variant = 'modern',
-  overall = false
+  overall = false,
+  resolveTestConfig
 }: AgentConfigDialogProps) {
   const { t, i18n } = useTranslation();
   const locale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language ?? 'zh-CN');
@@ -121,7 +123,7 @@ export function AgentConfigDialog({
     setTestStatus(t('settings.testing'));
     const start = performance.now();
     try {
-      await new ChatCompletionsProvider(15000).testConnection(draft, controller.signal);
+      await new ChatCompletionsProvider(15000).testConnection(resolveTestConfig?.(draft) ?? draft, controller.signal);
       if (testController.current === controller) {
         setTestStatusKind('success');
         setTestStatus(t('settings.testSuccess', { ms: Math.round(performance.now() - start) }));
@@ -141,7 +143,8 @@ export function AgentConfigDialog({
     if (!draft) return;
     try {
       validateAgentConfig(draft);
-      onSave(overall ? { ...draft } : { ...draft, displayName: agentDisplayName(draft, draft.agentId), role: agentRole(draft, draft.agentId) });
+      const next = overall ? { ...draft } : { ...draft, displayName: agentDisplayName(draft, draft.agentId), role: agentRole(draft, draft.agentId) };
+      onSave(next);
       closeDialog();
     } catch (cause) {
       setError(localizeError(cause, t));
@@ -303,7 +306,7 @@ export function AgentConfigDialog({
 
           {!overall ? <label className="magi-home__config-field magi-home__config-prompt">
             <span>{t('settings.prompt')}</span>
-            <textarea maxLength={12000} value={draft.prompt} onChange={(event) => setDraft({ ...draft, prompt: event.target.value })} rows={9} />
+            <textarea lang={locale} maxLength={12000} value={draft.prompt} onChange={(event) => setDraft({ ...draft, prompt: event.target.value })} rows={9} />
           </label> : null}
 
           {!overall && draft.connection !== 'mock' ? <p className="magi-home__credential-note">{t('settings.security')}</p> : null}

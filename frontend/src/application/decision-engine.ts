@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later */
 import { AGENT_IDS, type Decision, type DecisionEvent, type DecisionRequest } from '../domain/decision';
 import { agentDisplayName, agentRole, cloneAgentConfigs, type AgentConfigMap } from '../domain/agent-config';
-import { redactSecrets } from '../domain/redact-secrets';
+import { redactSecrets, redactStreamingSecrets } from '../domain/redact-secrets';
 import { aggregateVerdict } from '../domain/verdict';
 import { throwIfAborted } from './abort';
 import { DecisionServiceError, type DecisionService, type DecisionRequestOptions } from './decision-service';
@@ -89,6 +89,7 @@ export class DecisionEngine implements DecisionService {
     entry.decision.subject = redactSecrets(entry.decision.subject, secrets);
     entry.request.subject = entry.decision.subject;
     entry.decision.status = 'running';
+    entry.decision.partialResponses = {};
     this.latestId = id;
     this.event(entry, 'scan', 'ノード判定を開始しました。');
     const controller = new AbortController();
@@ -99,13 +100,17 @@ export class DecisionEngine implements DecisionService {
       const config = { ...configs[agentId], agentId };
       const start = Date.now();
       try {
-        const output = this.normalizeOutput(await this.providers[config.connection].invoke(config, entry.request, controller.signal));
+        const output = this.normalizeOutput(await this.providers[config.connection].invoke(config, entry.request, controller.signal, (response) => {
+          if (controller.signal.aborted || entry.decision.status !== 'running') return;
+          entry.decision.partialResponses![agentId] = redactStreamingSecrets(response.slice(0, 32_000), secrets);
+        }));
         throwIfAborted(controller.signal);
         const safe = redactSecrets({ agentId, displayName: entry.decision.agentNames![agentId], role: entry.decision.agentRoles![agentId], vote: output.vote, response: output.response,
           connection: config.connection, baseUrl: config.baseUrl, model: config.model, latencyMs: Date.now() - start }, secrets);
         entry.decision.outputs![agentId] = safe;
         entry.decision.responses![agentId] = safe.response;
         entry.decision.votes[agentId] = safe.vote;
+        delete entry.decision.partialResponses![agentId];
         this.event(entry, 'vote', `${agentId}: ${safe.vote}`, agentId);
       } catch (error) {
         const message = controller.signal.aborted ? '判定がキャンセルされました。' : error instanceof DecisionServiceError

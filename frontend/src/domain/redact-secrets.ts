@@ -11,3 +11,15 @@ export function redactSecrets<T>(value: T, secrets: string[]): T {
     return tokens.reduce((text, secret) => text.split(secret).join('[REDACTED]'), item);
   })) as T;
 }
+
+/** Withhold a trailing credential prefix until the next chunk can be redacted safely. */
+export function redactStreamingSecrets(text: string, secrets: string[]): string {
+  const tokens = secrets.map(key => key.trim()).filter(Boolean).flatMap(key => [key, encodeURIComponent(key)]);
+  let held = 0;
+  for (const token of tokens) {
+    for (let length = Math.min(token.length - 1, text.length); length > held; length--) {
+      if (text.endsWith(token.slice(0, length))) { held = length; break; }
+    }
+  }
+  return redactSecrets(held ? text.slice(0, -held) : text, secrets);
+}

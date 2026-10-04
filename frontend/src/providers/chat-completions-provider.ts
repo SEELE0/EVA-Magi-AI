@@ -5,9 +5,21 @@ import { DecisionServiceError } from '../application/decision-service';
 import { throwIfAborted } from '../application/abort';
 import type { AgentRuntimeConfig } from '../domain/agent-config';
 import type { DecisionRequest } from '../domain/decision';
+import { readChatCompletionStream } from './chat-completions-stream';
 
 export const MAX_REASON_LENGTH = 32_000;
 const MAX_BODY_BYTES = 256_000;
+const VOTE_RESPONSE_INSTRUCTIONS = '只返回一个 JSON 对象：{"vote":"approve|reject|abstain","reason":"面向用户的结论、理由、风险和建议"}。vote 必须是其中一个英文枚举。reason 使用议题的语言，不输出隐藏思考过程。';
+
+function buildDecisionMessages(config: Pick<AgentRuntimeConfig, 'prompt' | 'sharedBackground'>, subject: string) {
+  const background = config.sharedBackground?.trim();
+  const rolePrompt = config.prompt.trim();
+  const context = background ? `共同背景：\n${background}\n\n节点角色：\n${rolePrompt}` : rolePrompt;
+  return [
+    { role: 'system', content: `${context}\n\n${VOTE_RESPONSE_INSTRUCTIONS}` },
+    { role: 'user', content: `议题：${subject}` }
+  ];
+}
 
 function invalidResult(): DecisionServiceError {
   return new DecisionServiceError('模型未返回有效的 JSON 投票和答复，请检查模型及角色 Prompt。', 'INVALID_AGENT_RESULT');
@@ -81,16 +93,18 @@ export class ChatCompletionsProvider implements AgentProvider {
   constructor(private readonly timeoutMs = 90_000) {}
   validate = validateAgentConfig;
 
-  async invoke(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal): Promise<ProviderResult> {
-    return parseAgentVote(await this.complete(config, request, signal));
+  async invoke(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal,
+    onProgress?: (response: string) => void): Promise<ProviderResult> {
+    return parseAgentVote(await this.complete(config, request.subject, signal, false, onProgress));
   }
 
   async testConnection(config: AgentRuntimeConfig, signal: AbortSignal): Promise<void> {
     if (config.connection === 'mock') throw new DecisionServiceError('模擬回線不能验证真实 AI 接入，请先选择真实连接方式。', 'AGENT_CONFIG_INVALID');
-    await this.complete(config, { subject: 'Reply OK.', priority: 'normal' }, signal, true);
+    await this.complete(config, 'Reply OK.', signal, true);
   }
 
-  private async complete(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal, probe = false): Promise<string> {
+  private async complete(config: AgentRuntimeConfig, subject: string, signal: AbortSignal, probe = false,
+    onProgress?: (response: string) => void): Promise<string> {
     throwIfAborted(signal);
     this.validate(probe ? { ...config, prompt: 'Connection test' } : config);
     const controller = new AbortController();
@@ -108,11 +122,8 @@ export class ChatCompletionsProvider implements AgentProvider {
           ? { Authorization: `Bearer ${config.apiKey.trim()}` } : {}) },
         body: JSON.stringify({
           model: config.model.trim(),
-          stream: false,
-          messages: probe ? [{ role: 'user', content: 'Connection test. Reply only OK.' }] : [
-            { role: 'system', content: `${config.sharedBackground?.trim() ? `共同背景：\n${config.sharedBackground.trim()}\n\n节点角色：\n` : ''}${config.prompt.trim()}\n\n只返回一个 JSON 对象：{"vote":"approve|reject|abstain","reason":"面向用户的结论、理由、风险和建议"}。vote 必须是其中一个英文枚举。reason 使用议题的语言，不输出隐藏思考过程。` },
-            { role: 'user', content: `议题：${request.subject}\n优先级：${request.priority}` }
-          ]
+          stream: !probe,
+          messages: probe ? [{ role: 'user', content: 'Connection test. Reply only OK.' }] : buildDecisionMessages(config, subject)
         }),
         signal: controller.signal
       });
@@ -124,8 +135,11 @@ export class ChatCompletionsProvider implements AgentProvider {
           : '请检查接口地址、模型名称和服务状态。';
         throw new DecisionServiceError(`模型请求失败：HTTP ${response.status}。${hint}`, 'AGENT_HTTP_ERROR', { status: response.status });
       }
-      const payload = await readPayload(response) as { choices?: { message?: { content?: unknown } }[] } | null;
-      const content = payload?.choices?.[0]?.message?.content;
+      const streamed = response.headers.get('content-type')?.toLowerCase().includes('text/event-stream');
+      const payload = streamed ? null : await readPayload(response) as { choices?: { message?: { content?: unknown } }[] } | null;
+      const content = streamed
+        ? await readChatCompletionStream(response, controller.signal, onProgress)
+        : payload?.choices?.[0]?.message?.content;
       throwIfAborted(signal);
       if (controller.signal.aborted) throw new DecisionServiceError('模型响应超时，请稍后重新提交。', 'REQUEST_TIMEOUT');
       if (typeof content !== 'string' || !content.trim()) throw new DecisionServiceError('模型未返回有效的文本响应。', 'INVALID_AGENT_RESULT');

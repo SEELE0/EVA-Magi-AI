@@ -43,6 +43,41 @@ describe('strict chat completions adapter', () => {
     expect(init.body).not.toContain(config.apiKey);
     expect(init.headers.Authorization).toBe('Bearer test-secret');
     expect(init.redirect).toBe('error');
+    const messages = JSON.parse(init.body).messages;
+    expect(messages[0].content.startsWith(`${config.prompt.trim()}\n\n`)).toBe(true);
+    expect(messages[0].content).not.toContain('剧情推演规则：');
+    expect(messages[1]).toEqual({ role: 'user', content: '议题：test' });
+  });
+  it.each(['low', 'normal', 'critical'] as const)('sends only the original subject regardless of legacy priority %s', async priority => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: '{"vote":"abstain","reason":"uncertain"}' } }] })));
+    vi.stubGlobal('fetch', fetch);
+    const subject = '保留引用“优先级：最高”。\nOriginal prompt / 日本語';
+    const nodeConfig = { ...config, prompt: '  自定义角色 Prompt  ', sharedBackground: '  用户设定书 / original background  ' };
+    await new ChatCompletionsProvider().invoke(nodeConfig, { subject, priority }, new AbortController().signal);
+    const messages = JSON.parse(fetch.mock.calls[0][1].body).messages;
+    expect(messages).toHaveLength(2);
+    expect(messages[0].role).toBe('system');
+    expect(messages[0].content.startsWith('共同背景：\n用户设定书 / original background\n\n节点角色：\n自定义角色 Prompt\n\n')).toBe(true);
+    expect(messages[0].content).toContain('"vote":"approve|reject|abstain"');
+    expect(messages[0].content).toContain('reason 使用议题的语言');
+    expect(messages[0].content).not.toContain('剧情推演规则：');
+    expect(messages[1]).toEqual({ role: 'user', content: `议题：${subject}` });
+  });
+  it.each(['虚构世界设定 / fictional setting', '现实世界资料 / real-world context'])('does not inject story rules into custom prompts with %s', async background => {
+    const fetch = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"vote":"reject","reason":"剧情内的人格判断"}' } }] })));
+    vi.stubGlobal('fetch', fetch);
+    const sharedBackground = background;
+    const subject = '在设定书的 EoE 情境下，是否执行律子提出的总部自爆决议？';
+    for (const node of Object.values(cloneAgentConfigs())) {
+      const prompt = `${node.agentId} 的自定义人格，不覆盖原文。`;
+      await new ChatCompletionsProvider().invoke({ ...config, agentId: node.agentId, prompt, sharedBackground }, { ...request, subject }, new AbortController().signal);
+      const messages = JSON.parse(fetch.mock.calls.at(-1)![1].body).messages;
+      expect(messages[0].content).toContain(`共同背景：\n${sharedBackground}\n\n节点角色：\n${prompt}`);
+      expect(messages[0].content).not.toContain('剧情推演规则：');
+      expect(messages[0].content).not.toContain('以给定世界规则、当前剧情阶段、角色已知信息、人格动机与人物关系为依据');
+      expect(messages[0].content).toContain('"vote":"approve|reject|abstain"');
+      expect(messages[1]).toEqual({ role: 'user', content: `议题：${subject}` });
+    }
   });
   it('times out stalled requests without retaining timers', async () => {
     vi.useFakeTimers();

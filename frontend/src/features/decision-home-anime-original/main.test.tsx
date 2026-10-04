@@ -13,6 +13,7 @@ import i18n from '../../i18n';
 import { DecisionHomeAnimeOriginal } from './main';
 import { loadDecisionHistory } from '../decision-home/history-store';
 import { AGENT_CONFIG_STORAGE_KEY } from '../../storage/agent-config-store';
+import { defaultAgentPrompts } from '../../domain/agent-config';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -159,14 +160,21 @@ describe('DecisionHomeAnimeOriginal', () => {
     const workspace = container.querySelector('.direct-link-workspace');
     const composer = workspace?.querySelector('.motion-composer');
     const toolbar = composer?.querySelector('.direct-link-controls');
-    const iconButtons = [...(toolbar?.querySelectorAll<HTMLButtonElement>('.direct-link-control-button') ?? [])];
+    const iconButtons = [...(toolbar?.querySelectorAll<HTMLElement>('.direct-link-control-button') ?? [])];
 
     expect(workspace?.querySelector('.terminal-screen')?.nextElementSibling).toBe(composer);
     expect(toolbar?.parentElement).toBe(composer?.querySelector('.motion-composer__header'));
     expect(toolbar?.parentElement?.querySelector('.motion-composer__heading')).not.toBeNull();
-    expect(iconButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['履歴', '設定', '設定書']);
+    expect(iconButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['履歴', '設定', '設定書', 'GitHub リポジトリ']);
     expect(iconButtons.every((button) => button.querySelector('svg') !== null)).toBe(true);
     expect(toolbar?.querySelector('[role="combobox"]')).not.toBeNull();
+    const repositoryLink = toolbar?.querySelector<HTMLAnchorElement>('a.direct-link-control-button');
+    expect(repositoryLink?.getAttribute('href')).toBe('https://github.com/SEELE0/EVA-Magi-AI');
+    expect(repositoryLink?.getAttribute('aria-label')).toBe('GitHub リポジトリ');
+    expect(repositoryLink?.getAttribute('target')).toBe('_blank');
+    expect(repositoryLink?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(repositoryLink?.querySelector('svg')).not.toBeNull();
+    expect(repositoryLink?.nextElementSibling?.classList.contains('magi-language-selector')).toBe(true);
   });
 
   it('renders the three nodes, connectors, and core inside one positioned network component', () => {
@@ -230,7 +238,8 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(container.querySelector('.motion-composer')?.hasAttribute('inert')).toBe(false);
     expect(container.querySelector('.motion-composer__form')).toBeNull();
     expect(container.querySelector<HTMLButtonElement>('.direct-link-controls button[aria-label="設定"]')?.disabled).toBe(false);
-    expect(container.querySelector('.agent-module')?.getAttribute('aria-disabled')).toBe('true');
+    expect(container.querySelector('.agent-module')?.getAttribute('aria-disabled')).toBeNull();
+    expect(container.querySelector('.agent-module')?.getAttribute('aria-label')).toContain(i18n.t('stream.title'));
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.dataset.positionY).toBe('-81');
     expect(container.querySelector<SVGGElement>('[data-magi-network]')?.style.transform).toBe('translate(0px, -81px) scale(1)');
 
@@ -298,6 +307,20 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(container.querySelector('[role="alert"]')?.textContent).toBe('REMOTE LINK LOST');
     expect(container.querySelector('.motion-copy')?.textContent).toBe('RESULT OF THE DELIBERATION');
     expect(container.querySelector('.direct-link-live-status')?.textContent).toContain('信号異常。REMOTE LINK LOST');
+  });
+
+  it('opens node configuration after a failed decision rather than its output', async () => {
+    const failed: Decision = { ...draft, status: 'failed', verdict: 'review', failures: { 'MELCHIOR-1': 'provider failure' } };
+    const { container } = renderOrigin(serviceStub({ executeDecision: vi.fn().mockResolvedValue(failed), getDecision: vi.fn().mockResolvedValue(failed) }));
+    fillTextarea(container.querySelector<HTMLTextAreaElement>('#direct-link-motion')!, draft.subject);
+    act(() => container.querySelector<HTMLButtonElement>('.motion-composer__form button[type="submit"]')!.click());
+    await advance(520);
+    expect(phase(container)).toBe('error');
+    const node = container.querySelector<SVGGElement>('.agent-module')!;
+    expect(node.getAttribute('aria-label')).toContain(i18n.t('decision.nodeConfig'));
+    act(() => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(document.body.querySelector('.magi-home__config-dialog[open]')).not.toBeNull();
+    expect(document.body.querySelector('.node-output-dialog')).toBeNull();
   });
 
   it('opens all three node identities and persists public configuration without credentials', () => {
@@ -368,7 +391,7 @@ describe('DecisionHomeAnimeOriginal', () => {
     expect(dialog.querySelector<HTMLInputElement>('.magi-home__name-editor input')?.value).toBe('BALTHASAR-2');
     expect(dialog.querySelector<HTMLInputElement>('.magi-home__role-editor input')?.value).toBe('母性論理');
     expect(dialog.querySelector<HTMLInputElement>('input[value="mock"]')?.checked).toBe(true);
-    expect(dialog.querySelector<HTMLTextAreaElement>('textarea')?.value).toContain('あなたは母性論理');
+    expect(dialog.querySelector<HTMLTextAreaElement>('textarea')?.value).toBe(defaultAgentPrompts['ja-JP']['BALTHASAR-2']);
     expect(JSON.stringify(window.localStorage)).toBe(storedBeforeReset);
     act(() => dialog.querySelector<HTMLButtonElement>('.magi-home__config-actions button[type="button"]')?.click());
     act(() => nodeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true })));

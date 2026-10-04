@@ -10,7 +10,8 @@ export interface ProviderResult {
 
 export interface AgentProvider {
   validate(config: AgentRuntimeConfig): void;
-  invoke(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal): Promise<ProviderResult>;
+  invoke(config: AgentRuntimeConfig, request: DecisionRequest, signal: AbortSignal,
+    onProgress?: (response: string) => void): Promise<ProviderResult>;
 }
 
 export type AgentProviders = Record<AgentConnectionMode, AgentProvider>;

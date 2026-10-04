@@ -1,0 +1,33 @@
+/* Copyright (C) 2026 SEELE0
+ * SPDX-License-Identifier: AGPL-3.0-or-later */
+:root {
+  color-scheme: dark;
+  background: #000;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body,
+#eva-waveform-test-root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100svh;
+  overflow: hidden;
+  background: #000;
+}
+
+.eva-waveform-test-page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: clamp(8px, 2vw, 28px);
+  overflow: hidden;
+}
+
