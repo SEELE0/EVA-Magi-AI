@@ -52,6 +52,10 @@
 .magi-home__config-dialog textarea {
   font: inherit;
 }
+.magi-home__config-dialog button { font-family: var(--font-eva-display); }
+.magi-home__config-dialog:lang(zh) button { font-family: "Source Han Serif SC", var(--font-eva-display); }
+.magi-home__config-dialog:lang(ja) button { font-family: var(--font-eva-display); }
+.magi-home__config-dialog:lang(en) button { font-family: var(--font-eva-ui); }
 
 .magi-home__config-dialog button:focus-visible,
 .magi-home__config-dialog input:focus-visible,
@@ -270,7 +274,6 @@
 .magi-home__restore-background { justify-self: start; }
 .magi-home__setting-book-dialog:lang(zh) .magi-home__restore-background,
 .magi-home__setting-book-dialog:lang(zh) .magi-home__config-actions button {
-  font-family: "Source Han Serif SC", serif;
   font-weight: 600;
   font-synthesis: none;
 }

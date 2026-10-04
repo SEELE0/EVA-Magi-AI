@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { AgentId, Decision } from '../../domain/decision';
 import { NODE_VOTE_LABELS } from './vote-labels';
+import { isDialogBackdropClick } from './dialog-backdrop';
 import './node-output-dialog.css';
 
 // Load the existing experiment renderer only when a node output is opened.
@@ -46,10 +47,7 @@ export function NodeOutputDialog({ agentId, decision, name, error, onClose }: {
 
   return createPortal(<dialog ref={dialogRef} className="node-output-dialog" aria-labelledby={titleId}
     data-state={state} onCancel={event => { event.preventDefault(); onClose(); }}
-    onClick={event => { if (event.target === event.currentTarget) {
-      const box = event.currentTarget.getBoundingClientRect();
-      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) onClose();
-    } }}>
+    onClick={event => { if (isDialogBackdropClick(event)) onClose(); }}>
     <header className="node-output-dialog__heading">
       <div><small>{t('stream.title')}</small><h2 id={titleId}>{displayName}</h2></div>
       <span className={`node-output-dialog__state vote-${vote}`} role="status">

@@ -922,6 +922,8 @@
 .magi-home__execute {
   --command-orange: #f7871e;
   --command-stripe: #050504;
+  --execute-label-font-size: 22px;
+  --execute-label-font-weight: 900;
   position: relative;
   isolation: isolate;
   grid-area: execute;
@@ -957,12 +959,17 @@
 
 .magi-home__execute span,
 .magi-home__execute small { display: block; }
-.magi-home__execute span { font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
+.magi-home__execute span {
+  font-size: var(--execute-label-font-size);
+  font-weight: var(--execute-label-font-weight);
+  letter-spacing: 0.08em;
+}
 .magi-home__execute:lang(zh) span {
   font-family: "Source Han Serif SC", serif;
-  font-weight: 600;
   font-synthesis: none;
 }
+.magi-home__execute:lang(ja) span { font-family: var(--font-eva-display); }
+.magi-home__execute:lang(en) span { font-family: var(--font-eva-ui); }
 .magi-home__execute small { margin-top: 5px; color: inherit; font: 9px var(--font-eva-data); }
 .magi-home__execute:hover:not(:disabled),
 .magi-home__execute:focus-visible:not(:disabled) {

@@ -5,6 +5,7 @@
  */
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isDialogBackdropClick } from './dialog-backdrop';
 import { DEFAULT_SETTING_BOOKS, localizeDefaultSettingBook } from '../../domain/setting-book';
 import { normalizeLocale } from '../../i18n';
 import './AgentConfigDialog.css';
@@ -55,6 +56,7 @@ export function SettingBookDialog({ open, background, onClose, onSave, variant =
         event.preventDefault();
         closeDialog();
       }}
+      onClick={(event) => { if (isDialogBackdropClick(event)) closeDialog(); }}
       onClose={() => {
         if (open) onClose();
       }}

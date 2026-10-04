@@ -607,9 +607,10 @@ body:has(.direct-link-page) {
 
 .motion-composer__form button[type="submit"]:lang(zh) {
   font-family: "Source Han Serif SC", serif;
-  font-weight: 600;
   font-synthesis: none;
 }
+.motion-composer__form button[type="submit"]:lang(ja) { font-family: var(--font-eva-display); }
+.motion-composer__form button[type="submit"]:lang(en) { font-family: var(--font-eva-ui); }
 
 .motion-composer__form button[type="submit"]::before,
 .direct-link-new-motion::before {

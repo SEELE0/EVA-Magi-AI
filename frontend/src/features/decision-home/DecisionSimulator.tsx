@@ -538,7 +538,6 @@ export function DecisionSimulator({
 
         <button className="magi-home__execute" type="button" onClick={() => void runDecision()} disabled={isExecuting}>
           <span>{isExecuting ? t('decision.pending') : t('decision.execute')}</span>
-          <small>EXECUTE DECISION</small>
         </button>
 
         {phase === 'final' ? (

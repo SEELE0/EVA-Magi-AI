@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isDialogBackdropClick } from './dialog-backdrop';
 import { agentDisplayName, agentRole, defaultAgentConfigs, MAX_AGENT_NAME_LENGTH, MAX_AGENT_ROLE_LENGTH, localizeDefaultAgentPrompt, type AgentConnectionMode, type AgentRuntimeConfig } from '../../domain/agent-config';
 import { ChatCompletionsProvider, validateAgentConfig } from '../../providers/chat-completions-provider';
 import { MOCK_CONNECTION_BASE_URL, mockModelFor } from './simulator-config';
@@ -158,11 +159,13 @@ export function AgentConfigDialog({
     <dialog
       ref={dialogRef}
       className={`magi-home__config-dialog magi-home__config-dialog--${variant}`}
+      lang={locale}
       aria-labelledby="magi-home-config-title"
       onCancel={(event) => {
         event.preventDefault();
         closeDialog();
       }}
+      onClick={(event) => { if (isDialogBackdropClick(event)) closeDialog(); }}
       onClose={(event) => {
         // A queued close event from the previous visit must not close a reopened dialog.
         if (config && !event.currentTarget.open) onClose();
