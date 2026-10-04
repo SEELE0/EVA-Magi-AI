@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { isDialogBackdropClick } from './dialog-backdrop';
 import { agentDisplayName, agentRole, defaultAgentConfigs, MAX_AGENT_NAME_LENGTH, MAX_AGENT_ROLE_LENGTH, localizeDefaultAgentPrompt, type AgentConnectionMode, type AgentRuntimeConfig } from '../../domain/agent-config';
 import { ChatCompletionsProvider, validateAgentConfig } from '../../providers/chat-completions-provider';
-import { MOCK_CONNECTION_BASE_URL, mockModelFor } from './simulator-config';
+import { MOCK_CONNECTION_BASE_URL } from './simulator-config';
 import './AgentConfigDialog.css';
 import { localizeError } from '../../i18n-error';
 import { normalizeLocale } from '../../i18n';
@@ -25,16 +25,10 @@ interface AgentConfigDialogProps {
 const connectionModes: AgentConnectionMode[] = ['mock', 'openai-compatible', 'local-compatible'];
 type ConnectionTestStatus = 'idle' | 'testing' | 'success' | 'failure';
 
-/** 接続方式切替時に模擬回線の哨兵値と実接続の空欄を入れ替える。 */
+/** 模擬回線の既定値だけを実接続へ持ち込まず、既存の接続情報は維持する。 */
 function switchConnection(draft: AgentRuntimeConfig, mode: AgentConnectionMode): AgentRuntimeConfig {
   const next = { ...draft, connection: mode };
-  const wasMock = draft.connection === 'mock';
-  if (!wasMock && mode === 'mock') {
-    next.baseUrl = MOCK_CONNECTION_BASE_URL;
-    next.model = mockModelFor(draft.agentId);
-    return next;
-  }
-  if (wasMock && mode !== 'mock') {
+  if (draft.connection === 'mock' && mode !== 'mock') {
     if (!draft.baseUrl || draft.baseUrl === MOCK_CONNECTION_BASE_URL) next.baseUrl = '';
     if (!draft.model || draft.model.startsWith('MAGI-SIM')) next.model = '';
   }
