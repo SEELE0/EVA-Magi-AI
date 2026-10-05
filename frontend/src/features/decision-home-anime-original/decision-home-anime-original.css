@@ -65,6 +65,10 @@
 .direct-history__detail p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
 .direct-history dl div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; color: #8cc5a5; font-size: 13px; }
 .direct-history dd { margin: 0; }
+.direct-history dd.is-approve { color: var(--direct-green); }
+.direct-history dd.is-reject { color: #ff716a; }
+.direct-history dd.is-abstain,
+.direct-history dd.is-pending { color: var(--direct-amber); }
 @media (max-width: 600px) {
   .direct-history { width: 100vw; }
   .direct-history__panel { padding: 20px; }

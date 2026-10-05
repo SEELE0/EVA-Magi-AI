@@ -127,6 +127,86 @@
 .magi-home__telemetry .readout { display: flex; align-items: baseline; gap: 10px; min-width: 0; padding: 0 18px; border-left: 1px solid #49331c; }
 .magi-home__telemetry .readout:last-child { padding-right: 0; }
 
+@media (min-width: 1600px) and (orientation: landscape) {
+  .magi-home__masthead {
+    --header-brand-size: clamp(52px, 2.9vw, 64px);
+    --header-nav-size: clamp(15px, 0.8vw, 18px);
+    --header-icon-size: clamp(24px, 1.25vw, 28px);
+    --header-nav-gap: clamp(28px, 1.6vw, 36px);
+    --header-telemetry-size: clamp(13px, 0.65vw, 15px);
+    --header-readout-size: clamp(14px, 0.75vw, 17px);
+    --header-clock-width: clamp(18px, 0.9vw, 20px);
+  }
+
+  .magi-home__masthead > .topbar { padding-bottom: 22px; }
+  .magi-home__masthead .brand-block { gap: 20px; }
+  .magi-home__masthead .brand-mark {
+    width: var(--header-brand-size);
+    height: var(--header-brand-size);
+    flex-basis: var(--header-brand-size);
+  }
+  .magi-home__masthead .brand-block h1 { font-size: clamp(30px, 1.65vw, 36px); }
+  .magi-home__masthead .eyebrow { font-size: clamp(15px, 0.85vw, 17px); }
+
+  .magi-home__primary-nav,
+  .magi-home__nav-controls { gap: var(--header-nav-gap); }
+  .magi-home__primary-nav a,
+  .magi-home__masthead .magi-home__nav-button {
+    min-height: 48px;
+    font-size: var(--header-nav-size);
+  }
+  .magi-home__primary-nav .magi-home__github-link { min-width: 48px; }
+  .magi-home__github-link svg {
+    width: var(--header-icon-size);
+    height: var(--header-icon-size);
+    flex-basis: var(--header-icon-size);
+  }
+
+  .magi-home__masthead .home-mode-switch,
+  .magi-home__masthead .magi-language-selector__trigger {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    flex-basis: 48px;
+  }
+  .magi-home__masthead .home-mode-switch__icon,
+  .magi-home__masthead .magi-language-selector__translate-icon {
+    width: var(--header-icon-size);
+    height: var(--header-icon-size);
+    flex-basis: var(--header-icon-size);
+  }
+
+  .magi-home__telemetry { padding: 10px 0; }
+  .magi-home__telemetry .magi-home__system-status {
+    gap: 8px 12px;
+    min-height: 48px;
+    font-size: var(--header-telemetry-size);
+  }
+  .magi-home__telemetry .magi-home__system-status > span {
+    width: 8px;
+    height: 8px;
+    flex-basis: 8px;
+  }
+  .magi-home__telemetry .magi-home__system-status small { font-size: clamp(11px, 0.6vw, 13px); }
+  .magi-home__telemetry .readout {
+    gap: 12px;
+    padding: 0 22px;
+    font-size: var(--header-telemetry-size);
+  }
+  .magi-home__telemetry .readout:last-child { padding-right: 0; }
+  .magi-home__telemetry .readout strong { font-size: var(--header-readout-size); }
+  .magi-home__telemetry .nixie-clock__digits { gap: 3px; }
+  .magi-home__telemetry .nixie-clock__digit-slot {
+    width: var(--header-clock-width);
+    height: calc(var(--header-clock-width) * 1.5);
+  }
+  .magi-home__telemetry .nixie-clock__separator {
+    width: 5px;
+    font-size: clamp(15px, 0.8vw, 18px);
+  }
+}
+
 @media (max-width: 1020px) {
   .magi-home__telemetry .magi-home__system-status small { display: none; }
 }

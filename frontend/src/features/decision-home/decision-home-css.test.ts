@@ -21,7 +21,7 @@ describe('DecisionHome narrow viewport CSS', () => {
 
   it('defines the standby-to-deliberation layout and subject transform', () => {
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="deliberation"\][\s\S]*?\.magi-home__deliberation-grid\s*\{[^}]*grid-template-columns:\s*minmax\(150px,\s*0\.22fr\)/);
-    expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*transform:\s*scale\(1\.3\)/);
+    expect(css).toMatch(/\.magi-home__simulator\[data-phase="standby"\][\s\S]*?\.magi-network\s*\{[^}]*translate:\s*0 4%;[^}]*transform:\s*none;/);
     expect(css).toMatch(/\.magi-home__simulator\[data-phase="final"\][\s\S]*?\.magi-network\s*\{[^}]*translate:\s*none;[^}]*transform:\s*scale\(1\)/);
   });
 

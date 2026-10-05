@@ -27,7 +27,7 @@ export default function App() {
         onModeSelected={selectHomeMode}
       />
       {/* inert keeps keyboard focus out of the console while the boot overlay is up. */}
-      <div inert={introActive}>
+      <div className="magi-app" inert={introActive}>
         {homeMode === 'original'
           ? <DecisionHomeAnimeOriginal onSwitchMode={switchHomeMode} />
           : <DecisionHome entryRevealReady={!introActive} onSwitchMode={switchHomeMode} />}

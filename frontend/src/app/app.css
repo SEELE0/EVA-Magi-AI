@@ -29,6 +29,9 @@ body {
   font-family: var(--font-eva);
 }
 
+/* Contain the home screen margins instead of adding them to the body height. */
+.magi-app { display: flow-root; }
+
 svg,
 svg text { font-family: var(--font-eva); }
 
