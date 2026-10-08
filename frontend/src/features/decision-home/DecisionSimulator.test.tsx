@@ -205,12 +205,53 @@ describe('DecisionSimulator', () => {
     });
 
     expect(container.querySelector('.magi-home__simulator')?.getAttribute('data-phase')).toBe('error');
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain('DIRECT LINK INTERRUPTED');
+    expect(container.querySelector('[role="alert"]')?.textContent).not.toContain('DIRECT LINK INTERRUPTED');
+    expect(container.querySelector('.magi-home__failure-content > span')?.textContent).toBe(i18n.t('decision.failure', { code: 'ERRUPTED' }));
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('REMOTE LINK LOST');
+    expect(container.querySelector('.magi-home__failure-content > strong')?.textContent).toBe('REMOTE LINK LOST');
     expect(container.querySelector('.magi-home__motion-banner')).toBeNull();
     expect(container.querySelector('.magi-home__new-motion')).toBeNull();
 
     act(() => root.unmount());
+  });
+
+  it.each([true, false])('shows available node failure reasons with details=%s', async (withDetails) => {
+    const failed: Decision = {
+      ...draft,
+      status: 'failed',
+      verdict: 'review',
+      completedAt: '2026-08-29T00:00:01.000Z',
+      agentNames: { 'MELCHIOR-1': 'Scientific node', 'BALTHASAR-2': 'BALTHASAR-2', 'CASPER-3': 'CASPER-3' },
+      failures: withDetails ? {
+        'MELCHIOR-1': 'HTTP 429: Rate limit exceeded',
+        'BALTHASAR-2': 'HTTP 429: Rate limit exceeded',
+        'CASPER-3': 'HTTP 401: Invalid API key'
+      } : undefined
+    };
+    const service = serviceStub();
+    service.executeDecision = vi.fn().mockResolvedValue(failed);
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    try {
+      act(() => root.render(simulatorElement(false, service)));
+      await act(async () => { container.querySelector<HTMLButtonElement>('.magi-home__execute')?.click(); });
+      const alert = container.querySelector('[role="alert"]');
+      expect(container.querySelector('.magi-home__simulator')?.getAttribute('data-phase')).toBe('error');
+      if (withDetails) {
+        expect(alert?.textContent).toContain('Scientific node / BALTHASAR-2：HTTP 429: Rate limit exceeded');
+        expect(alert?.textContent).toContain('CASPER-3：HTTP 401: Invalid API key');
+        expect(alert?.textContent?.match(/Rate limit exceeded/g)).toHaveLength(1);
+        expect(alert?.textContent).not.toContain(i18n.t('decision.nodeFailed'));
+      } else {
+        expect(alert?.querySelector('strong')?.textContent).toBe(i18n.t('decision.nodeFailed'));
+      }
+      expect(alert?.textContent).not.toContain(i18n.t('decision.interrupted'));
+      expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1);
+      expect(container.querySelector('.magi-home__error')).toBeNull();
+    } finally {
+      act(() => root.unmount());
+    }
   });
 
   it('plays the honeycomb entry reveal on the first visit of a session', () => {

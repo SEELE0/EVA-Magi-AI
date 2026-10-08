@@ -26,7 +26,6 @@ describe('DecisionHome narrow viewport CSS', () => {
   });
 
   it('defines the screenshot-inspired terminal information layers', () => {
-    expect(css).toMatch(/\.magi-home__link-strip\s*\{/);
     expect(css).toMatch(/\.magi-home__motion-banner\s*\{/);
     expect(css).toMatch(/\.magi-home__system-stack\s*,\s*\.magi-home__layer-stack\s*\{/);
     expect(css).toMatch(/\.magi-home__motion-banner\.verdict-rejected[\s\S]*?--home-alert/);
@@ -34,7 +33,7 @@ describe('DecisionHome narrow viewport CSS', () => {
   });
 
   it('exposes failure, calibration, and live telemetry as instrument states', () => {
-    expect(css).toMatch(/\.magi-home__failure-banner\s*\{[^}]*border:\s*2px solid rgba\(255, 88, 77, 0\.82\)/);
+    expect(css).toMatch(/\.magi-home__failure-banner\s*\{[^}]*border:\s*1px solid rgba\(255, 88, 77, 0\.82\)/);
     expect(css).toMatch(/\.magi-home__instrument-overlay\s*\{[^}]*pointer-events:\s*none;/);
     expect(css).toMatch(/\.magi-home__threshold-bar::after\s*\{[^}]*width:\s*var\(--magi-level\)/);
     expect(css).toMatch(/\.magi-home__simulator\.phase-final \.magi-home__motion-result\s*\{/);

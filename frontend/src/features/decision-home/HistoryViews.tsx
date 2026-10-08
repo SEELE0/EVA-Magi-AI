@@ -123,7 +123,7 @@ export function HistoryDetail({ entry }: { entry?: DecisionHistoryEntry }) {
             <section key={agentId} className="magi-home__agent-output" aria-labelledby={`history-agent-${agentId}`}>
               <header>
                 <div>
-                  <h3 id={`history-agent-${agentId}`}>{result.displayName ?? result.agentId} <span>/ {result.role}</span></h3>
+                  <h3 id={`history-agent-${agentId}`} data-vote={result.vote}>{result.displayName ?? result.agentId} <span>/ {result.role}</span></h3>
                   <strong>{t('history.vote')}：{voteLabel(result.vote)}</strong>
                 </div>
               </header>

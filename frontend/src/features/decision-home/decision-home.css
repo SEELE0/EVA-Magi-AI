@@ -112,7 +112,6 @@
 
 .magi-home .readout,
 .magi-home__system-status,
-.magi-home__link-strip,
 .magi-home__stack-heading,
 .magi-home__system-stack,
 .magi-home__layer-stack,
@@ -172,37 +171,15 @@
 
 .magi-home__simulator[data-phase="deliberation"],
 .magi-home__simulator[data-phase="final"] {
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto auto;
 }
 
-.magi-home__link-strip,
 .magi-home__motion-banner,
 .magi-home__failure-banner,
 .magi-home__deliberation-grid,
 .magi-home__input-dock {
   position: relative;
   z-index: 1;
-}
-
-.magi-home__link-strip {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 173, 66, 0.48);
-  color: #e7832f;
-  background: rgba(10, 7, 4, 0.84);
-  font: 10px/1.3 SFMono-Regular, Consolas, monospace;
-  letter-spacing: 0.08em;
-  animation: magi-home-terminal-in 260ms ease-out both;
-}
-
-.magi-home__link-strip strong {
-  color: var(--home-sodium);
-  font-weight: 700;
 }
 
 .magi-home__motion-banner {
@@ -297,12 +274,11 @@
 .magi-home__failure-banner {
   display: grid;
   min-width: 0;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
+  grid-template-columns: 4px minmax(0, 1fr);
   align-items: stretch;
-  gap: 14px;
-  min-height: 76px;
-  padding: 10px 14px 10px 0;
-  border: 2px solid rgba(255, 88, 77, 0.82);
+  gap: 10px;
+  padding: 8px 12px 8px 0;
+  border: 1px solid rgba(255, 88, 77, 0.82);
   color: #ff8f84;
   background:
     linear-gradient(90deg, rgba(255, 44, 37, 0.13), transparent 46%),
@@ -314,17 +290,26 @@
   background: repeating-linear-gradient(-55deg, var(--home-alert) 0 6px, #2a0907 6px 12px);
 }
 
-.magi-home__failure-banner > div { display: grid; min-width: 0; align-content: center; gap: 3px; }
-.magi-home__failure-banner span,
-.magi-home__failure-banner small,
-.magi-home__failure-banner b {
-  font-family: var(--font-eva-data);
-  font-variant-numeric: tabular-nums;
+.magi-home__failure-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
-.magi-home__failure-banner span { color: #c94e44; font-size: 10px; letter-spacing: 0.12em; }
-.magi-home__failure-banner strong { font-size: clamp(17px, 2vw, 25px); letter-spacing: 0.05em; }
-.magi-home__failure-banner small { max-width: 80ch; overflow-wrap: anywhere; color: #d88176; font-size: 11px; }
-.magi-home__failure-banner b { align-self: center; color: #ffb056; font-size: 10px; letter-spacing: 0.1em; white-space: nowrap; }
+
+.magi-home__failure-content > span {
+  color: #c55b50;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.1em;
+}
+
+.magi-home__failure-content > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  font-size: 16px;
+  line-height: 1.5;
+}
 
 .magi-home__deliberation-grid {
   display: grid;
@@ -448,18 +433,18 @@
 
 .magi-home__simulator[data-phase="standby"] .magi-home__decision-stage {
   container-type: size;
-  min-height: 484px;
+  min-height: 0;
   padding: 24px 24px 40px;
 }
 
 .magi-home__simulator[data-phase="standby"] .magi-home__deliberation-grid {
-  min-height: 290px;
+  min-height: 0;
 }
 
 .magi-home__simulator[data-phase="standby"] .magi-home__decision-stage > .magi-network {
-  /* Preserve the desktop baseline, with some breathing room in taller slots. */
+  /* Fit the actual available height, including browser chrome and zoom. */
   container-type: inline-size;
-  width: min(100%, max(600px, calc(85cqb * 10 / 7)));
+  width: min(100%, calc(85cqb * 10 / 7));
   max-width: 1080px;
 }
 
@@ -611,6 +596,16 @@
 }
 
 @media (min-width: 761px) {
+  /* Keep every decision phase within the space left after the header. */
+  .magi-home:has(.magi-home__simulator) {
+    height: calc(100dvh - 32px);
+    min-height: 0;
+  }
+
+  .magi-home:has(.magi-home__simulator) .magi-home__masthead {
+    flex-shrink: 0;
+  }
+
   .magi-home__simulator[data-phase="standby"] .magi-home__input-dock {
     grid-template-areas: "subject execute";
   }
@@ -637,6 +632,27 @@
   translate: none;
   transform: scale(1);
   filter: drop-shadow(0 0 18px rgba(72, 245, 154, 0.2));
+}
+
+@media (min-width: 761px) and (max-height: 800px) {
+  .magi-home:has(.magi-home__simulator) { padding: 12px; }
+  .magi-home:has(.magi-home__simulator) .magi-home__masthead > .topbar { padding-bottom: 10px; gap: 16px; }
+  .magi-home:has(.magi-home__simulator) .brand-block { gap: 12px; }
+  .magi-home:has(.magi-home__simulator) .brand-mark { width: 40px; height: 40px; flex-basis: 40px; }
+  .magi-home:has(.magi-home__simulator) .brand-block h1 { font-size: 26px; }
+  .magi-home:has(.magi-home__simulator) .eyebrow { font-size: 12px; }
+  .magi-home:has(.magi-home__simulator) :is(.magi-home__primary-nav, .magi-home__nav-controls) { gap: 16px; }
+  .magi-home:has(.magi-home__simulator) .magi-home__telemetry { padding: 4px 0; }
+  .magi-home:has(.magi-home__simulator) .magi-home__system-status { min-height: 32px; }
+
+  .magi-home__simulator[data-phase="standby"] .magi-home__decision-stage { padding: 12px 20px 32px; }
+  .magi-home__simulator[data-phase="standby"] .magi-home__decision-stage > .magi-network { width: min(100%, calc(95cqb * 10 / 7)); }
+  .magi-home__simulator[data-phase="standby"] .magi-home__input-dock { padding: 10px 14px; }
+  .magi-home__simulator[data-phase="standby"] .magi-home__subject-field textarea { height: 64px; min-height: 64px; resize: none; }
+  .magi-home__simulator[data-phase="standby"] .magi-home__execute { min-height: 64px; padding: 12px; }
+  .magi-home__simulator[data-phase="standby"] .agent-tag { font-size: clamp(8px, 2.4cqw, 19px); }
+  .magi-home__simulator[data-phase="standby"] .agent-node strong { font-size: clamp(12px, 4cqw, 34px); }
+  .magi-home__simulator[data-phase="standby"] .vote-state { font-size: clamp(16px, 4.4cqw, 38px); }
 }
 
 /* The standby zoom must not overflow the smaller terminal during handoff. */
@@ -1120,11 +1136,60 @@
     "error error";
 }
 
-.magi-home__error {
-  grid-area: error;
-  margin: 0;
-  color: var(--home-alert);
-  font-size: 11px;
+@media (min-width: 761px) {
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__deliberation-grid {
+    min-height: 0;
+  }
+
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__decision-stage {
+    container-type: size;
+    min-height: 0;
+    padding: 20px 12px 12px;
+  }
+
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-network {
+    container-type: inline-size;
+    width: min(100%, calc(94cqb * 10 / 7));
+  }
+
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) :is(.magi-home__system-stack, .magi-home__layer-stack) {
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .magi-home__motion-banner h2 { max-height: 2.5em; overflow: auto; }
+
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .agent-node { padding: clamp(7px, 3cqw, 18px); }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .agent-tag { font-size: clamp(8px, 2.4cqw, 12px); }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .agent-node strong { margin: 4px 0; font-size: clamp(12px, 3.6cqw, 18px); }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .vote-state { min-height: 0; font-size: clamp(16px, 4.4cqw, 24px); padding: 3px 7px; }
+
+  .magi-home .magi-home__simulator[data-phase="deliberation"] .magi-home__input-dock { grid-template-areas: "summary execute"; }
+  .magi-home .magi-home__simulator[data-phase="final"] .magi-home__input-dock { grid-template-areas: "summary new"; }
+  .magi-home .magi-home__simulator[data-phase="error"] .magi-home__input-dock { grid-template-areas: "subject execute"; }
+  .magi-home .magi-home__simulator[data-phase="error"] .magi-home__decision-stage { padding: 24px 24px 40px; }
+  .magi-home .magi-home__simulator[data-phase="error"] .magi-network { translate: 0 4%; }
+}
+
+@media (min-width: 761px) and (max-height: 800px) {
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) { gap: 8px; padding-top: 8px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__motion-banner { padding: 8px 12px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__decision-stage { padding: 16px 12px 8px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) :is(.magi-home__system-stack, .magi-home__layer-stack) { padding: 10px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__stack-heading { padding-bottom: 8px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) :is(.magi-home__system-stack dl, .magi-home__layer-stack ol) { margin-top: 8px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) :is(.magi-home__system-stack dl div, .magi-home__layer-stack li) { padding: 7px 0; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__input-dock { padding: 8px 12px; }
+  .magi-home .magi-home__simulator:is([data-phase="deliberation"], [data-phase="final"], [data-phase="error"]) .magi-home__input-summary { align-content: center; padding: 0; border-top: 0; }
+  .magi-home .magi-home__simulator[data-phase="deliberation"] .magi-home__execute { min-height: 48px; padding: 10px; }
+  .magi-home .magi-home__simulator[data-phase="final"] .magi-home__new-motion { min-height: 44px; }
+  .magi-home .magi-home__simulator[data-phase="error"] .magi-home__decision-stage { padding: 12px 20px 32px; }
 }
 
 .magi-home__page-heading,
@@ -1273,10 +1338,13 @@
   max-width: 100%;
   margin: 0;
   overflow-wrap: anywhere;
-  color: var(--home-phosphor);
+  color: #8a918d;
   font-size: 17px;
 }
-.magi-home__agent-output h3 span { color: #65bd82; font-size: 12px; font-weight: 500; }
+.magi-home__agent-output h3[data-vote="approve"] { color: var(--home-phosphor); }
+.magi-home__agent-output h3[data-vote="reject"] { color: var(--home-alert); }
+.magi-home__agent-output h3[data-vote="abstain"] { color: var(--home-review); }
+.magi-home__agent-output h3 span { color: inherit; font-size: 12px; font-weight: 500; }
 .magi-home__agent-output header strong { color: var(--home-sodium); font-size: 12px; }
 .magi-home__agent-output dl { display: grid; margin: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .magi-home__agent-output dl div { display: grid; min-width: 0; gap: 4px; }
@@ -1330,7 +1398,7 @@
 @media (max-width: 1020px) {
   .magi-home__simulator { min-height: auto; grid-template-rows: auto auto; }
   .magi-home__simulator[data-phase="deliberation"],
-  .magi-home__simulator[data-phase="final"] { grid-template-rows: auto auto auto auto; }
+  .magi-home__simulator[data-phase="final"] { grid-template-rows: auto auto auto; }
   .magi-home__input-dock {
     grid-template-columns: minmax(0, 1fr) 180px;
     grid-template-areas:
@@ -1353,10 +1421,7 @@
   .magi-home { display: block; width: calc(100% - 16px); min-height: calc(100svh - 16px); margin: 8px auto; padding: 13px; overflow: visible; }
   .magi-home__simulator { grid-template-rows: auto auto; padding-top: 6px; }
   .magi-home__simulator[data-phase="deliberation"],
-  .magi-home__simulator[data-phase="final"] { grid-template-rows: auto auto auto auto; }
-  .magi-home__link-strip { align-items: flex-start; flex-direction: column; justify-content: center; gap: 3px; padding-top: 7px; padding-bottom: 7px; }
-  .magi-home__failure-banner { grid-template-columns: 12px minmax(0, 1fr); }
-  .magi-home__failure-banner b { grid-column: 2; justify-self: start; }
+  .magi-home__simulator[data-phase="final"] { grid-template-rows: auto auto auto; }
   .magi-home__deliberation-grid,
   .magi-home__simulator[data-phase="deliberation"] .magi-home__deliberation-grid,
   .magi-home__simulator[data-phase="final"] .magi-home__deliberation-grid { grid-template-columns: 1fr; min-height: auto; }
@@ -1368,8 +1433,8 @@
   .magi-home__simulator[data-phase="deliberation"] .magi-home__decision-stage,
   .magi-home__simulator[data-phase="final"] .magi-home__decision-stage { min-height: auto; }
   .magi-home__simulator[data-phase="standby"] { grid-template-rows: auto auto; }
-  .magi-home__simulator[data-phase="standby"] .magi-home__decision-stage { container-type: inline-size; min-height: auto; padding: 24px 0 32px; }
-  .magi-home__simulator[data-phase="standby"] .magi-home__decision-stage > .magi-network { width: 100%; max-width: 460px; translate: none; transform: scale(0.92); }
+  .magi-home__simulator:is([data-phase="standby"], [data-phase="error"]) .magi-home__decision-stage { container-type: inline-size; min-height: auto; padding: 24px 0 32px; }
+  .magi-home__simulator:is([data-phase="standby"], [data-phase="error"]) .magi-home__decision-stage > .magi-network { width: 100%; max-width: 460px; translate: none; transform: scale(0.92); }
   .magi-home__node-hint { bottom: 10px; }
   .magi-home__calibration-rail,
   .magi-home__calibration-rail.is-left { display: none; }
@@ -1421,9 +1486,6 @@
 
 @media (max-width: 480px) {
   .magi-home__system-status { min-height: 32px; }
-  .magi-home__link-strip { font-size: 9px; letter-spacing: 0.04em; }
-  .magi-home__failure-banner { gap: 10px; padding-right: 10px; }
-  .magi-home__failure-banner strong { font-size: 16px; }
   .magi-home__decision-stage { padding-top: 16px; }
   .magi-home__input-dock {
     grid-template-columns: 1fr;
@@ -1458,7 +1520,6 @@
     opacity: 1;
   }
   .magi-home__system-status > span,
-  .magi-home__link-strip,
   .magi-home__motion-banner,
   .magi-home__system-stack,
   .magi-home__layer-stack,

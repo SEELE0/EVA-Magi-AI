@@ -7,7 +7,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSPrope
 import { useTranslation } from 'react-i18next';
 import { HoneycombReveal } from './HoneycombReveal';
 import { markHoneycombRevealAsPlayed, shouldPlayHoneycombReveal } from './honeycomb-reveal';
-import type { Agent, AgentId, Decision, DecisionRequest, SystemStatus } from '../../domain/decision';
+import { AGENT_IDS, type Agent, type AgentId, type Decision, type DecisionRequest, type SystemStatus } from '../../domain/decision';
 import type { DecisionService } from '../../services/decision-service';
 import { isTerminalDecision, pollDecisionUntilTerminal } from '../../services/poll-decision';
 import { AgentNode } from '../decision-console/ConsolePrimitives';
@@ -145,16 +145,6 @@ function priorityCode(priority: DecisionRequest['priority']) {
   return priority === 'critical' ? 'AAA' : priority === 'normal' ? 'AA' : 'A';
 }
 
-function LinkStrip() {
-  const { t } = useTranslation();
-  return (
-    <section className="magi-home__link-strip" aria-label={t('decision.directStatus')}>
-      <span>DIRECT LINK CONNECTION: MAGI 01</span>
-      <strong>ACCESS MODE: SUPERUSER</strong>
-    </section>
-  );
-}
-
 function MotionBanner({
   subject,
   verdict,
@@ -186,12 +176,10 @@ function FailureBanner({ decisionId, message }: { decisionId?: string; message: 
   return (
     <section className="magi-home__failure-banner" role="alert" aria-live="assertive">
       <div className="magi-home__failure-stripe" aria-hidden="true" />
-      <div>
+      <div className="magi-home__failure-content">
         <span>{t('decision.failure', { code: shortDecisionCode(decisionId) })}</span>
-        <strong>{t('decision.interrupted')}</strong>
-        <small>{message}</small>
+        <strong>{message}</strong>
       </div>
-      <b>{t('decision.retry')}</b>
     </section>
   );
 }
@@ -439,7 +427,16 @@ export function DecisionSimulator({
       } catch {
         // A status refresh must not turn an already completed decision into a UI error.
       }
-      if (completed.status === 'failed') setError(t('decision.nodeFailed'));
+      if (completed.status === 'failed') {
+        const failures = new Map<string, string[]>();
+        for (const agentId of AGENT_IDS) {
+          const message = completed.failures?.[agentId]?.trim();
+          if (!message) continue;
+          const name = completed.agentNames?.[agentId] ?? completed.outputs?.[agentId]?.displayName ?? agentDisplayName(configs[agentId], agentId);
+          failures.set(message, [...(failures.get(message) ?? []), name]);
+        }
+        setError(Array.from(failures, ([message, names]) => `${names.join(' / ')}：${message}`).join('\n') || t('decision.nodeFailed'));
+      }
     } catch (cause) {
       const shouldReportError = mounted.current;
       controller.abort();
@@ -472,7 +469,6 @@ export function DecisionSimulator({
 
   return (
     <div className={`magi-home__simulator phase-${phase}`} data-phase={phase}>
-      {showTerminal ? <LinkStrip /> : null}
       {showTerminal ? <MotionBanner subject={subject} verdict={verdict} isExecuting={isExecuting} /> : null}
       {error ? <FailureBanner decisionId={decision?.id} message={error} /> : null}
 
@@ -547,7 +543,6 @@ export function DecisionSimulator({
           </button>
         ) : null}
 
-        {error ? <p className="magi-home__error" aria-hidden="true">{error}</p> : null}
       </section>
     </div>
   );
