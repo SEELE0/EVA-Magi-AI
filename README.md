@@ -6,10 +6,6 @@
 
 当前已实现 React/Vite 浏览器应用，支持模拟节点与用户自填 API 的真实调用并部署到 Github_pages；
 
-## 后续开发计划
-`backend/` 仍是待开发工作区，
-后续会开发本地客户端或重构为标准前后端项目
-`docs/openapi.yaml` 是未来后端的唯一 REST 契约。
 
 ![1787762978228](image/README/1787762978228.png)
 
@@ -31,6 +27,10 @@ npm run dev
 ```bash
 npm run dev -- --host 0.0.0.0 --port 5174
 ```
+## 后续开发计划
+`backend/` 仍是待开发工作区，
+后续会开发本地客户端或重构为标准前后端项目
+`docs/openapi.yaml` 是未来后端的唯一 REST 契约。
 
 ## 运行模式
 
