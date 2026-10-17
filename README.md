@@ -2,7 +2,7 @@
 
 本项目是一个以 《新世纪福音战士》（新世紀エヴァンゲリオン）中 MAGI 决策系统为基础设定开发的多agent 协同决策项目。
 
-你可以通过 [此链接](https://seele0.github.io/EVA-Magi-AI/) 在线体验😊
+可以通过 [此链接](https://seele0.github.io/EVA-Magi-AI/) 在线体验😊
 
 当前已实现 React/Vite 浏览器应用，支持模拟节点与用户自填 API 的真实调用并部署到 Github_pages；
 
